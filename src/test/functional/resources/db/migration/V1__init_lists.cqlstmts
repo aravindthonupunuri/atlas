@@ -1,0 +1,59 @@
+CREATE KEYSPACE IF NOT EXISTS backpack WITH replication = {'class':'SimpleStrategy','replication_factor':'1'};
+
+CREATE TABLE IF NOT EXISTS backpack.lists (
+    id          timeuuid,
+    title       text static,
+    type        text static,
+    subtype     text static,
+    guest_id    text static,
+    description text static,
+    channel     text static,
+    subchannel  text static,
+    marker      text static,
+    location    text static,
+    notes       text static,
+    state       text static,
+    metadata    text static,
+    agent_id    text static,
+    expiration  date static,
+    created_at  timestamp static,
+    updated_at  timestamp static,
+    test_list   boolean static,
+
+    item_id             timeuuid,
+    item_ref_id         text,
+    item_type           text,
+    item_state          text,
+    item_tcin           text,
+    item_dpci           text,
+    item_barcode        text,
+    item_desc           text,
+    item_channel        text,
+    item_subchannel     text,
+    item_metadata       text,
+    item_notes          text,
+    item_qty            int,
+    item_qty_uom        text,
+    item_req_qty        int,
+    item_created_at     timestamp,
+    item_updated_at     timestamp,
+
+    PRIMARY KEY (id, item_state, item_id)
+) WITH CLUSTERING ORDER BY (item_state ASC, item_id ASC )
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = 'Get a list by id, and all of the items in the list.'
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'};
+
+
+CREATE TABLE IF NOT EXISTS backpack.guest_lists (
+    guest_id    text,
+    type        text,
+    subtype     text,
+    marker      text,
+    id          timeuuid,
+    state       text,
+    PRIMARY KEY (guest_id, type, subtype, marker)
+) WITH CLUSTERING ORDER BY (type DESC, subtype DESC, marker DESC)
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'};

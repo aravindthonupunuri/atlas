@@ -1,0 +1,297 @@
+package com.tgt.lists.atlas.api.service.transform.list_items
+
+
+import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
+import com.tgt.lists.atlas.api.persistence.ListRepository
+import com.tgt.lists.atlas.api.service.transform.TransformationContext
+import com.tgt.lists.atlas.api.transport.ListItemResponseTO
+import com.tgt.lists.atlas.api.util.Constants
+import com.tgt.lists.atlas.api.util.ItemSortFieldGroup
+import com.tgt.lists.atlas.api.util.ItemSortOrderGroup
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.util.ListDataProvider
+import org.jetbrains.annotations.NotNull
+import reactor.core.publisher.Mono
+import spock.lang.Specification
+
+class ListItemsTransformationPipelineTest extends Specification {
+
+    ListItemsTransformationPipeline listItemsTransformationPipeline
+    ListItemSortOrderManager itemSortOrderManager
+    ListRepository listRepository
+    ListDataProvider listDataProvider
+    TransformationContext transformationContext
+
+    def setup() {
+        listItemsTransformationPipeline = new ListItemsTransformationPipeline()
+        listRepository = Mock(ListRepository)
+        itemSortOrderManager = new ListItemSortOrderManager(listRepository)
+        listDataProvider = new ListDataProvider()
+        def sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(itemSortOrderManager)
+        def paginateListItemsTransformationConfiguration = new PaginateListItemsTransformationConfiguration(2)
+        def transformationPipelineConfiguration = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, paginateListItemsTransformationConfiguration)
+        transformationContext = new TransformationContext(transformationPipelineConfiguration)
+    }
+
+    def "Test executePipeline without transform"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        actual.size() == 5
+        actual[0].itemTitle == "first"
+        actual[1].itemTitle == "second"
+        actual[2].itemTitle == "third"
+        actual[3].itemTitle == "fourth"
+        actual[4].itemTitle == "fifth"
+    }
+
+    def "Test executePipeline with sort"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+        transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        actual.size() == 5
+        actual[0].itemTitle == "fifth"
+        actual[1].itemTitle == "first"
+        actual[2].itemTitle == "fourth"
+        actual[3].itemTitle == "second"
+        actual[4].itemTitle == "third"
+    }
+
+    def "Test executePipeline with sort by item position"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        def dbList = new com.tgt.lists.atlas.api.domain.model.List(listId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}", null, null)
+
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_POSITION, ItemSortOrderGroup.ASCENDING))
+        transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        1 * listRepository.find(listId) >> Mono.just(dbList)
+
+        actual.size() == 5
+        actual[0].itemTitle == "second"
+        actual[1].itemTitle == "first"
+        actual[2].itemTitle == "fourth"
+        actual[3].itemTitle == "fifth"
+        actual[4].itemTitle == "third"
+    }
+
+    def "Test executePipeline with sort and page1"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        listItemsTransformationPipeline
+                .addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+                .addStep(new PaginateListItemsTransformationStep(1))
+
+        transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        actual.size() == 2
+        actual[0].itemTitle == "fifth"
+        actual[1].itemTitle == "first"
+        transformationContext.getContextValue(PaginateListItemsTransformationStep.MAX_PAGE_COUNT) == 3
+    }
+
+    def "Test executePipeline with sort and page2"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        listItemsTransformationPipeline
+                .addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+                .addStep(new PaginateListItemsTransformationStep(2))
+
+        transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        actual.size() == 2
+        actual[0].itemTitle == "fourth"
+        actual[1].itemTitle == "second"
+    }
+
+    def "Test executePipeline with sort and page3"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        listItemsTransformationPipeline
+                .addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+                .addStep(new PaginateListItemsTransformationStep(3))
+
+        transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        actual.size() == 1
+        actual[0].itemTitle == "third"
+    }
+
+    def "Test executePipeline with sort and invalid page"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        listItemsTransformationPipeline
+                .addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+                .addStep(new PaginateListItemsTransformationStep(4))
+
+        transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        actual.size() == 0
+    }
+
+    def "Test executePipeline with custom transform and page 2"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        listItemsTransformationPipeline
+                .addStep(new FilterItemStep("second"))
+                .addStep(new PaginateListItemsTransformationStep(2))
+
+        transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        actual.size() == 2
+        actual[0].itemTitle == "fourth"
+        actual[1].itemTitle == "fifth"
+        transformationContext.getContextValue(PaginateListItemsTransformationStep.MAX_PAGE_COUNT) == 2
+    }
+
+    def "Test executePipeline with custom transform, sort and page 2"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        // list with 5 items
+        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
+
+        listItemsTransformationPipeline
+                .addStep(new FilterItemStep("first"))
+                .addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+                .addStep(new PaginateListItemsTransformationStep(2))
+
+        transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
+
+        when:
+        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+
+        then:
+        actual.size() == 2
+        actual[0].itemTitle == "second"
+        actual[1].itemTitle == "third"
+        transformationContext.getContextValue(PaginateListItemsTransformationStep.MAX_PAGE_COUNT) == 2
+    }
+
+    static class FilterItemStep implements ListItemsTransformationStep {
+
+        String itemName
+
+        FilterItemStep(String itemName) {
+            this.itemName = itemName
+        }
+
+        @Override
+        Mono<List<ListItemResponseTO>> execute(@NotNull UUID listId, @NotNull List<ListItemResponseTO> items, @NotNull TransformationContext transformationContext) {
+
+            return Mono.fromCallable {
+                items.findAll { it.itemTitle != itemName }
+            }
+        }
+    }
+}

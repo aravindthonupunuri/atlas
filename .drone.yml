@@ -1,0 +1,57 @@
+pipeline:
+  restore_cache:
+    image: docker.target.com/drone/drone-s3-cache:2
+    pull: true
+    restore: true
+    secrets: [ cache_s3_server, cache_s3_access_key, cache_s3_secret_key, cache_s3_ca_cert ]
+
+  get_dependencies:
+    image: openjdk:11
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx3000M
+      GRADLE_USER_HOME: .gradle
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=1 -Dorg.gradle.parallel=false
+    commands:
+      - ./gradlew downloadDependencies
+
+  rebuild_cache:
+    image: docker.target.com/drone/drone-s3-cache:2
+    rebuild: true
+    secrets: [ cache_s3_server, cache_s3_access_key, cache_s3_secret_key, cache_s3_ca_cert ]
+    mount:
+      - .gradle
+
+  flush_cache:
+    when:
+      event: push
+    image: docker.target.com/drone/drone-s3-cache:2
+    secrets: [ cache_s3_server, cache_s3_access_key, cache_s3_secret_key, cache_s3_ca_cert ]
+    flush: true
+    flush_age: 14
+
+  build:
+    when:
+      event: [push, tag, pull_request]
+      branch: master
+    image: openjdk:11
+    commands:
+      - ./gradlew clean build
+
+  release:
+    when:
+      event: tag
+      ref: refs/tags/*
+    image: openjdk:11
+    commands:
+      - ./gradlew publish -DUSERNAME=$ARTIFACTORY_USERNAME -DPASSWORD=$ARTIFACTORY_PASSWORD -DVERSION="${DRONE_TAG}"
+    secrets: [ ARTIFACTORY_USERNAME, ARTIFACTORY_PASSWORD ]
+
+secrets:
+  cache_s3_server:
+    path: secret/shared/drone/prod-secrets/cache_s3_server
+  cache_s3_access_key:
+    path: secret/shared/drone/prod-secrets/cache_s3_access_key
+  cache_s3_secret_key:
+    path: secret/shared/drone/prod-secrets/cache_s3_secret_key
+  cache_s3_ca_cert:
+    path: secret/shared/drone/prod-secrets/cache_s3_ca_cert

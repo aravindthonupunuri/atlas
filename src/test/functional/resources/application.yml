@@ -1,0 +1,45 @@
+micronaut:
+  application:
+    name: atlastest
+  metrics:
+    enabled: true
+
+resilience4j:
+  circuitbreaker:
+    failure-rate-threshold: 50                        # failure rate threshold in percentage (default: 50)
+    wait-duration-secs-in-open-state: 10              # time cb waits before transitioning from open to half-open (default: 60s)
+    sliding-window-type: TIME_BASED                   # possible values TIME_BASED or COUNT_BASED (default: COUNT_BASED)
+    sliding-window-size: 100                          # seconds for TIME_BASED, request-count for COUNT_BASED (default: 100)
+    minimum-number-of-calls: 10                       # min calls required (per sliding window period) before cb calculates error rate (default: 10)
+    permitted-number-of-calls-in-half-open-state: 10  # min calls permitted when circuit breaker is half open
+
+tracing:
+  zipkin:
+    sampler:
+      probability: 1
+#    http:
+#      url: http://localhost:9411/zipkin
+
+lists-cassandra:
+  keyspace: backpack
+
+cassandra:
+  default:
+    advanced:
+      auth-provider:
+        class: PlainTextAuthProvider
+        username: cassandra
+        password: cassandra
+      metadata:
+        schema:
+          enabled: false # keep it disabled for tests to improve startup performance of short lived sessions
+          refreshed-keyspaces:
+            - "backpack"
+    basic:
+      contact-points:
+        - "127.0.0.1:9042"
+      load-balancing-policy:
+        local-datacenter: datacenter1
+      request:
+        timeout: 1000 # request timeout in ms
+        consistency: ONE

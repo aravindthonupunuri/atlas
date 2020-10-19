@@ -1,0 +1,25 @@
+package com.tgt.lists.atlas.api.transport
+
+import com.fasterxml.jackson.annotation.JsonInclude
+import java.util.*
+import javax.validation.constraints.*
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class ListResponseTO(
+    @field:NotNull(message = "List id must not be empty") val listId: UUID?,
+    @field:NotNull(message = "Channel must not be empty") val channel: String?,
+    @field:NotNull(message = "List type must not be empty") val listType: String?,
+    @field:NotEmpty(message = "List title must not be empty") val listTitle: String?,
+    val shortDescription: String?,
+    val agentId: String?,
+    val defaultList: Boolean? = false,
+    val metadata: Map<String, Any>?,
+    val pendingListItems: List<ListItemResponseTO>? = null,
+    val completedListItems: List<ListItemResponseTO>? = null,
+    val addedTs: String?,
+    val lastModifiedTs: String?,
+    val maxPendingItemsCount: Int? = 0,
+    val maxCompletedItemsCount: Int? = 0,
+    val maxPendingPageCount: Int? = null,
+    val maxCompletedPageCount: Int? = null
+)
