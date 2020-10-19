@@ -5,6 +5,7 @@ import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
+import com.tgt.lists.atlas.api.persistence.DataContextContainerManager
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.GuestListDAO
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
 import com.tgt.lists.micronaut.cassandra.BatchExecutor
@@ -18,7 +19,8 @@ import javax.inject.Singleton
 class ListRepository(
     private val listDAO: ListDAO,
     private val guestListDAO: GuestListDAO,
-    private val batchExecutor: BatchExecutor
+    private val batchExecutor: BatchExecutor,
+    private val dataContextContainerManager: DataContextContainerManager
 ) {
     fun saveList(listEntity: ListEntity): Mono<ListEntity> {
         val now = ZonedDateTime.now()
@@ -64,7 +66,15 @@ class ListRepository(
     }
 
     fun findListById(listId: UUID): Mono<ListEntity> {
-        return Mono.from(listDAO.findListById(listId))
+        return Mono.subscriberContext().flatMap {
+            val context = it
+            dataContextContainerManager.getListEntity(context, listId)?.let {
+                Mono.just(it)
+            } ?: Mono.from(listDAO.findListById(listId)).map {
+                dataContextContainerManager.setListEntity(context, listId, it)
+                it
+            }
+        }
     }
 
     fun findListItemsByListId(listId: UUID): Flux<ListItemEntity> {
