@@ -14,7 +14,7 @@ class DataContextContainerManager {
         const val DATA_CONTEXT_OBJECT = "DATA_CONTEXT_OBJECT"
     }
 
-    fun getListEntity(context: Context, id: UUID) : ListEntity? {
+    fun getListEntity(context: Context, id: UUID): ListEntity? {
         getDataContextContainer(context)?.let {
             return it.listEntityCtxMap.get(id)
         }
@@ -27,11 +27,10 @@ class DataContextContainerManager {
         }
     }
 
-    private fun getDataContextContainer(context: Context) : DataContextContainer? {
+    private fun getDataContextContainer(context: Context): DataContextContainer? {
         return if (!context.isEmpty && context.hasKey(DATA_CONTEXT_OBJECT)) {
             context.get<DataContextContainer>(DATA_CONTEXT_OBJECT)
-        }
-        else {
+        } else {
             logger.debug("No subscriberContext caching enabled for $DATA_CONTEXT_OBJECT")
             null
         }

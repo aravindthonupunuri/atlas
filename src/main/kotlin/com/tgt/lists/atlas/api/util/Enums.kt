@@ -55,10 +55,10 @@ enum class LIST_ITEM_STATE {
 }
 
 enum class LIST_MARKER {
-    D    // default list marker
+    D // default list marker
 }
 
 enum class LIST_STATE {
     A, // active
-    I  // inactive
+    I // inactive
 }

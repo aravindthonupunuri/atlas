@@ -20,11 +20,11 @@ import javax.inject.Singleton
 
 @Singleton
 class CreateListService(
-        @Inject private val listRepository: ListRepository,
-        @Inject private val defaultListManager: DefaultListManager,
-        @Inject private val eventPublisher: EventPublisher,
-        @Value("\${list.expiration-days}") private val expirationDays: Long = 0, // default value of 0 days
-        @Value("\${list.test-mode:false}") private val testMode: Boolean = false
+    @Inject private val listRepository: ListRepository,
+    @Inject private val defaultListManager: DefaultListManager,
+    @Inject private val eventPublisher: EventPublisher,
+    @Value("\${list.expiration-days}") private val expirationDays: Long = 0, // default value of 0 days
+    @Value("\${list.test-mode:false}") private val testMode: Boolean = false
 ) {
     private val logger = KotlinLogging.logger {}
 

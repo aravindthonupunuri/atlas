@@ -12,7 +12,15 @@ class ListMapper {
 
         val mapper = jacksonObjectMapper()
 
-        fun toNewListEntity(guestId: String, listRequestTO: ListRequestTO, listType: String, listSubtype: String? = null, defaultList: Boolean, testList: Boolean, expirationDays: Long): Pair<ListEntity, MetadataMap>  {
+        fun toNewListEntity(
+            guestId: String,
+            listRequestTO: ListRequestTO,
+            listType: String,
+            listSubtype: String? = null,
+            defaultList: Boolean,
+            testList: Boolean,
+            expirationDays: Long
+        ): Pair<ListEntity, MetadataMap> {
 
             val metadata = setMetadataMapFromList(tenantMetaData = listRequestTO.metadata)
 
@@ -38,9 +46,7 @@ class ListMapper {
             return Pair(listEntity, metadata)
         }
 
-        fun setMetadataMapFromList(
-                tenantMetaData: Map<String, Any>? = null
-        ): MetadataMap {
+        fun setMetadataMapFromList(tenantMetaData: Map<String, Any>? = null): MetadataMap {
             val metadata = mutableMapOf<String, Any>()
 
             // Push un-mapped list to cart attributes into cart meta data
@@ -72,17 +78,16 @@ class ListMapper {
         }
 
         fun toListResponseTO(
-                listEntity: ListEntity,
-                metadataMap: MetadataMap,
-                pendingListItems: List<ListItemResponseTO>? = null,
-                completedListItems: List<ListItemResponseTO>? = null,
-                maxPendingItemCount: Int? = 0,
-                maxCompletedItemsCount: Int? = 0,
-                maxPendingPageCount: Int? = 0,
-                maxCompletedPageCount: Int? = 0
+            listEntity: ListEntity,
+            metadataMap: MetadataMap,
+            pendingListItems: List<ListItemResponseTO>? = null,
+            completedListItems: List<ListItemResponseTO>? = null,
+            maxPendingItemCount: Int? = 0,
+            maxCompletedItemsCount: Int? = 0,
+            maxPendingPageCount: Int? = 0,
+            maxCompletedPageCount: Int? = 0
         ): ListResponseTO {
 
-            val listMetadata = getListMetaDataFromMetadataMap(metadataMap)
             val userMetadata = getUserMetaDataFromMetadataMap(metadataMap)
 
             return ListResponseTO(
