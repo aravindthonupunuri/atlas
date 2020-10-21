@@ -11,6 +11,7 @@ import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
 import com.tgt.lists.micronaut.cassandra.BatchExecutor
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 import java.time.ZonedDateTime
 import java.util.*
 import javax.inject.Singleton
@@ -91,5 +92,15 @@ class ListRepository(
 
     fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String, listMarker: String): Mono<GuestListEntity> {
         return Mono.from(guestListDAO.findGuestListByMarker(guestId, listType, listSubtype, listMarker))
+    }
+
+    fun deleteList(listEntity: ListEntity): Mono<ListEntity> {
+        val batchStmts = listOf<BatchableStatement<*>>(
+                listDAO.deleteList(listEntity),
+                guestListDAO.deleteByIdForId(listEntity.guestId!!, listEntity.type!!, listEntity.subtype!!, listEntity.marker!!, listEntity.id!!)
+        )
+        return Mono.from(batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteList"))
+                .map { listEntity }
+                .switchIfEmpty { Mono.just(listEntity) }
     }
 }

@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS backpack.guest_lists (
     id          timeuuid,
     state       text,
     PRIMARY KEY (guest_id, type, subtype, marker, id)
-) WITH CLUSTERING ORDER BY (type DESC, subtype DESC, marker DESC)
+) WITH CLUSTERING ORDER BY (type DESC, subtype DESC, marker DESC, id DESC)
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'};

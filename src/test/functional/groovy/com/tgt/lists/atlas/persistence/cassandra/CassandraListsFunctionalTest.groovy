@@ -152,5 +152,30 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         guestListEntity != null
         guestListEntity.id == listIds[0]
     }
+
+    def "test delete weekly list"() {
+        given:
+        def listId = listIds[0]
+
+        when:
+        ListEntity listEntity1 = listsRepository.findListById(listId).block()
+        ListEntity listEntity2 = listsRepository.deleteList(listEntity1).block()
+
+
+        then:
+        listEntity2 != null
+        listEntity2.title == "weekly"
+    }
+
+    def "test if weekly list is deleted"() {
+        given:
+        def listId = listIds[0]
+
+        when:
+        ListEntity listEntity = listsRepository.findListById(listId).block()
+
+        then:
+        listEntity == null
+    }
 }
 

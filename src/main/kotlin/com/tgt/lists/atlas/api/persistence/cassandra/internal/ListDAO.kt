@@ -37,4 +37,7 @@ interface ListDAO : ICassandraDao {
 
     @Select
     fun findListItemByItemId(id: UUID, itemState: String, itemId: UUID): MappedReactiveResultSet<ListItemExtEntity>
+
+    @Delete
+    fun deleteList(listEntity: ListEntity): BoundStatement
 }
