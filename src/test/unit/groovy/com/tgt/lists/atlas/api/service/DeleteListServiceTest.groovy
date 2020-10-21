@@ -1,85 +1,59 @@
 package com.tgt.lists.atlas.api.service
 
-
-import com.tgt.lists.cart.transport.CartDeleteRequest
-import com.tgt.lists.cart.transport.CartDeleteResponse
-import com.tgt.lists.cart.transport.CartResponse
-import com.tgt.lists.cart.transport.CartType
-import com.tgt.lists.atlas.api.domain.CartManager
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.EventPublisher
-import com.tgt.lists.atlas.api.transport.ListMetaDataTO
-import com.tgt.lists.atlas.api.transport.UserMetaDataTO
-import com.tgt.lists.atlas.api.util.LIST_STATUS
+import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.kafka.model.DeleteListNotifyEvent
-import com.tgt.lists.atlas.util.CartDataProvider
-import com.tgt.lists.atlas.util.TestListChannel
+import com.tgt.lists.atlas.util.ListDataProvider
 import org.apache.kafka.clients.producer.RecordMetadata
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
 class DeleteListServiceTest extends Specification {
-    
-    CartManager cartManager
+
+    ListRepository listRepository
     EventPublisher eventPublisher
     DeleteListService deleteListService
-    CartDataProvider cartDataProvider
+    ListDataProvider listDataProvider
     String guestId = "1234"
 
     def setup() {
-        cartManager = Mock(CartManager)
+        listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
-        deleteListService = new DeleteListService(cartManager, eventPublisher)
-        cartDataProvider = new CartDataProvider()
+        deleteListService = new DeleteListService(listRepository, eventPublisher)
+        listDataProvider = new ListDataProvider()
     }
 
     def "Test deleteListService when the completed cart is not present"() {
         given:
-        UUID listId = UUID.randomUUID()
-        CartDeleteResponse pendingDeleteResponse = cartDataProvider.getCartDeleteResponse(listId)
-        CartDeleteRequest pendingCartDeleteRequest = cartDataProvider.getCartDeleteRequest(listId, false)
-        ListMetaDataTO pendingCartMetadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        CartResponse pendingCartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), "SHOPPING", CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(pendingCartMetadata, new UserMetaDataTO()))
+        UUID listId = Uuids.timeBased()
+        ListEntity listEntity = listDataProvider.createListEntity(listId, "list title", "shopping", "s", guestId, "d")
 
         when:
         def actual = deleteListService.deleteList(guestId,listId).block()
 
         then:
-        1 * cartManager.deleteCart(pendingCartDeleteRequest) >> Mono.just(pendingDeleteResponse)
-        1 * cartManager.getAllCarts(guestId, _) >> Mono.just([pendingCartResponse])
+        1 * listRepository.findListById(listId) >> Mono.just(listEntity)
+        1 * listRepository.deleteList(listEntity) >> Mono.just(listEntity)
         1 * eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(), _ , guestId) >>  Mono.just(GroovyMock(RecordMetadata))
         actual.listId == listId
     }
 
-    def "Test deleteListService when the completed cart is present"() {
+
+    def "Test deleteListService when list not found"() {
         given:
         UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
-        CartDeleteResponse pendingDeleteResponse = cartDataProvider.getCartDeleteResponse(listId)
-        CartDeleteRequest pendingCartDeleteRequest = cartDataProvider.getCartDeleteRequest(listId, false)
-        CartDeleteRequest completedCartDeleteRequest = cartDataProvider.getCartDeleteRequest(completedListId, false)
-        CartDeleteResponse completedDeleteResponse = cartDataProvider.getCartDeleteResponse(completedListId)
-        ListMetaDataTO pendingCartMetadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        CartResponse pendingCartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), "SHOPPING", CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(pendingCartMetadata, new UserMetaDataTO()))
-        ListMetaDataTO completedCartMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        CartResponse completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, "SHOPPING", listId.toString(),
-            cartDataProvider.getMetaData(completedCartMetadata, new UserMetaDataTO()))
-        def recordMetadata = GroovyMock(RecordMetadata)
 
         when:
         def actual = deleteListService.deleteList(guestId,listId).block()
 
         then:
-        1 * cartManager.deleteCart(pendingCartDeleteRequest) >> Mono.just(pendingDeleteResponse)
-        1 * cartManager.deleteCart(completedCartDeleteRequest) >> Mono.just(completedDeleteResponse)
-        1 * eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(), _ , guestId) >>  Mono.just(recordMetadata)
-        1 * eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(), _ , guestId) >>  Mono.just(recordMetadata)
-        1 * cartManager.getAllCarts(guestId, _) >> Mono.just([completedCartResponse, pendingCartResponse])
+        1 * listRepository.findListById(listId) >> Mono.empty()
         actual.listId == listId
     }
 
-    def "Test deleteListService when getting cart fails"() {
+    def "Test deleteListService with exception from findListById"() {
         given:
         UUID listId = UUID.randomUUID()
 
@@ -87,19 +61,21 @@ class DeleteListServiceTest extends Specification {
         deleteListService.deleteList(guestId,listId).block()
 
         then:
-        1 * cartManager.getAllCarts(guestId, _) >> Mono.error(new RuntimeException("some exception"))
+        1 * listRepository.findListById(listId) >> Mono.error(new RuntimeException("some exception"))
         thrown(RuntimeException)
     }
 
-    def "Test deleteListService when no completed and pending"() {
+    def "Test deleteListService with exception from deleteList"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        ListEntity listEntity = listDataProvider.createListEntity(listId, "list title", "shopping", "s", guestId, "d")
 
         when:
-        def actual = deleteListService.deleteList(guestId,listId).block()
+        deleteListService.deleteList(guestId,listId).block()
 
         then:
-        1 * cartManager.getAllCarts(guestId, _) >> Mono.empty()
-        actual.listId == listId
+        1 * listRepository.findListById(listId) >> Mono.just(listEntity)
+        1 * listRepository.deleteList(listEntity) >> Mono.error(new RuntimeException("some exception"))
+        thrown(RuntimeException)
     }
 }
