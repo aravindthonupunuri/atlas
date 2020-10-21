@@ -20,6 +20,8 @@ data class GuestListEntity(
     @ClusteringColumn(2)
     var marker: String? = null,
 
+    @ClusteringColumn(3)
     var id: UUID? = null,
+
     var state: String? = null
 )

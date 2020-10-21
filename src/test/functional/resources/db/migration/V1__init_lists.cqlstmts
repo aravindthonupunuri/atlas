@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS backpack.guest_lists (
     marker      text,
     id          timeuuid,
     state       text,
-    PRIMARY KEY (guest_id, type, subtype, marker)
+    PRIMARY KEY (guest_id, type, subtype, marker, id)
 ) WITH CLUSTERING ORDER BY (type DESC, subtype DESC, marker DESC)
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''

@@ -21,7 +21,7 @@ data class DeleteListNotifyEvent(
     val listTitle: String,
 
     @JsonProperty("list_metadata")
-    val listMetadata: ListMetaDataTO,
+    val listMetadata: ListMetaDataTO?, // TODO Eventually remove this attribute
 
     @JsonProperty("user_meta_data")
     val userMetaData: Map<String, Any>? = null,

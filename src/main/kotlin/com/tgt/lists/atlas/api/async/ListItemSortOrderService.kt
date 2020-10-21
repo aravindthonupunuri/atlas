@@ -44,7 +44,7 @@ class ListItemSortOrderService(
 
         logger.debug("[deleteListItemSortOrder] listId: $listId, deleteListItems: $deleteListItems")
 
-        return deleteListItems.filter { it.listItemMetaDataTO.itemState == LIST_ITEM_STATE.PENDING }
+        return deleteListItems.filter { it.listItemMetaDataTO?.itemState == LIST_ITEM_STATE.PENDING }
                 .takeIf { !it.isNullOrEmpty() }
                 ?.let { listItemSortOrderManager.removeListItemIdFromSortOrder(listId, it.map { it.itemId }.toTypedArray())
                             .map { true }

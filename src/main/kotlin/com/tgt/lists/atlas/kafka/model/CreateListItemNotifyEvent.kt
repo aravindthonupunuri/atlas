@@ -30,7 +30,7 @@ data class CreateListItemNotifyEvent(
     val itemRequestedQuantity: Int?,
 
     @JsonProperty("list_item_metadata")
-    val listItemMetaDataTO: ListItemMetaDataTO,
+    val listItemMetaDataTO: ListItemMetaDataTO?, // TODO Eventually remove this attribute
 
     @JsonProperty("user_meta_data")
     val userItemMetaDataTO: Map<String, Any>? = null,

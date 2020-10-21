@@ -54,11 +54,11 @@ enum class LIST_ITEM_STATE {
     COMPLETED
 }
 
-enum class LIST_MARKER {
-    D // default list marker
+enum class LIST_MARKER(val value: String) {
+    DEFAULT("D") // default list marker
 }
 
-enum class LIST_STATE {
-    A, // active
-    I // inactive
+enum class LIST_STATE(val value: String) {
+    ACTIVE("A"), // active
+    INACTIVE("I") // inactive
 }
