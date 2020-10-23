@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS backpack.lists (
     item_tcin           text,
     item_dpci           text,
     item_barcode        text,
+    item_title          text,
     item_desc           text,
     item_channel        text,
     item_subchannel     text,

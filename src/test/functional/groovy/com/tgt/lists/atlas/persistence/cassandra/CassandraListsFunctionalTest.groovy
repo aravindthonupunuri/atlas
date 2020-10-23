@@ -73,10 +73,10 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
     @Unroll
     def "test add weekly list items #itemRefId"() {
         given:
-        ListItemEntity listItemEntity = dataProvider.createListItemEntity(listId, itemId, itemState, itemType, itemRefId)
+        ListItemEntity listItemEntity = dataProvider.createListItemEntity(listId, itemId, itemState, itemType, itemRefId, null, null, null, null)
 
         when:
-        listsRepository.saveListItem(listItemEntity).block()
+        listsRepository.saveListItems([listItemEntity]).block()
 
         then:
         notThrown(Throwable)

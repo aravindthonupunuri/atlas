@@ -1,0 +1,144 @@
+package com.tgt.lists.atlas.api.service
+
+import com.datastax.oss.driver.api.core.uuid.Uuids
+import com.tgt.lists.atlas.api.domain.*
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.transport.ListItemRequestTO
+import com.tgt.lists.atlas.api.util.ItemType
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.util.UnitOfMeasure
+import com.tgt.lists.atlas.util.CartDataProvider
+import com.tgt.lists.atlas.util.ListDataProvider
+import com.tgt.lists.atlas.util.TestListChannel
+import org.apache.kafka.clients.producer.RecordMetadata
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import spock.lang.Specification
+
+class CreateMultipleListItemsServiceTest extends Specification {
+
+    EventPublisher eventPublisher
+    AddListItemsManager addListItemsManager
+    DeduplicationManager deduplicationManager
+    DeleteListItemsManager deleteListItemsManager
+    InsertListItemsManager insertListItemsManager
+    CreateMultipleListItemsService createMultipleListItemsService
+    ListRepository listRepository
+    CartDataProvider cartDataProvider
+    ListDataProvider listDataProvider
+
+    String guestId = "1234"
+
+    def setup() {
+        eventPublisher = Mock(EventPublisher)
+        listRepository = Mock(ListRepository)
+        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
+        insertListItemsManager = new InsertListItemsManager(listRepository, eventPublisher)
+        deduplicationManager = new DeduplicationManager(listRepository, insertListItemsManager, deleteListItemsManager,
+                true, 10, 10, false)
+        addListItemsManager = new AddListItemsManager(deduplicationManager, insertListItemsManager)
+        createMultipleListItemsService = new CreateMultipleListItemsService(addListItemsManager)
+        listDataProvider = new ListDataProvider()
+        cartDataProvider = new CartDataProvider()
+    }
+
+    def "test createListItem() integrity"() {
+        given:
+        def listId = Uuids.timeBased()
+        def tcin1 = "1234"
+        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "5678"
+        def tenantrefId2 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tcin3 = "1000"
+        def tenantrefId3 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin3)
+        def tcin4 = "9999"
+        def tenantrefId4 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin4)
+        def tcin5 = "1111"
+        def tenantrefId5 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin5)
+
+        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tenantrefId1, TestListChannel.WEB.toString(), tcin1, null,
+                "test item", null, UnitOfMeasure.EACHES, null)
+        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, tenantrefId2, TestListChannel.WEB.toString(), tcin2, null,
+                "test item", null, UnitOfMeasure.EACHES, null)
+        def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, tenantrefId3, TestListChannel.WEB.toString(), tcin3, null,
+                "test item", null, UnitOfMeasure.EACHES, null)
+        def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, tenantrefId4, TestListChannel.WEB.toString(), tcin4, null,
+                "test item", null, UnitOfMeasure.EACHES, null)
+
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId1, tcin1, null, 2, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId1, tcin1, null, 3, "notes1")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId2, tcin2, null, 1, "notes1")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId2, tcin2, null, 2, "notes1")
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId2, tcin2, null, 3, "notes1")
+        ListItemEntity listItemEntity6 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId5, tcin5, null, 1, "notes1")
+        ListItemEntity listItemEntity7 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId5, tcin5, null, 1, "notes1")
+
+        ListItemEntity updatedListItemEntity1 = listDataProvider.createListItemEntity(listId, listItemEntity1.itemId , LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId1, tcin1, null,6, "notes1\nnotes2")
+        ListItemEntity updatedListItemEntity2 = listDataProvider.createListItemEntity(listId, listItemEntity3.itemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId2, tcin2, null,7, "notes3\nnotes4\nnotes5")
+
+        ListItemEntity newListItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased() , LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId3, tcin3,  null, 1, "newitemNote1")
+        ListItemEntity newListItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId3, tcin4,  null, 1, "newitemNote2")
+
+        List<ListItemRequestTO> itemsToAdd = [listItemRequest1, listItemRequest2, listItemRequest3, listItemRequest4]
+
+        def recordMetadata = GroovyMock(RecordMetadata)
+        when:
+        def actual = createMultipleListItemsService.createMultipleListItems(guestId, listId, 1357L, itemsToAdd)
+                .block()
+        then:
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5, listItemEntity6, listItemEntity7)
+        // updating duplicate items
+        1 * listRepository.saveListItems(_ as List<ListItemEntity>) >> { arguments ->
+            final List<ListItemEntity> listItemsEntity = arguments[0]
+            assert listItemsEntity[0].id == listId
+            assert listItemsEntity[0].itemReqQty == listItemEntity1.itemReqQty + listItemEntity2.itemReqQty + 1
+            assert listItemsEntity[1].id == listId
+            assert listItemsEntity[1].itemReqQty == listItemEntity3.itemReqQty + listItemEntity4.itemReqQty + listItemEntity5.itemReqQty + 1
+
+            Mono.just([updatedListItemEntity1, updatedListItemEntity2])
+        }
+        // deleting duplicate items
+        1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity2, listItemEntity4, listItemEntity5])
+        // inserting new items
+        1 * listRepository.saveListItems(_) >> Mono.just([newListItemEntity1, newListItemEntity2])
+        // events published
+        7 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
+        actual.items.size() == 4
+    }
+
+    def "test createListItem() with duplicate items in request"() {
+        given:
+        def listId = Uuids.timeBased()
+        def tcin1 = "1234"
+        def tcinTenantRefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def gItem1 = "item2"
+        def gItemTenantrefId1 = cartDataProvider.getTenantRefId(ItemType.GENERIC_ITEM, gItem1)
+
+        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tcinTenantRefId1, TestListChannel.WEB.toString(), tcin1, null,
+                "test item", null, UnitOfMeasure.EACHES, null)
+
+        def listItemRequest2 = new ListItemRequestTO(ItemType.GENERIC_ITEM, gItemTenantrefId1, TestListChannel.WEB.toString(), null, gItem1,
+                "test item", null, UnitOfMeasure.EACHES, null)
+
+        def listItemRequest3 = new ListItemRequestTO(ItemType.GENERIC_ITEM, gItemTenantrefId1, TestListChannel.WEB.toString(), null, gItem1,
+                "test item", null, UnitOfMeasure.EACHES, null)
+
+        def itemsToAdd = [listItemRequest1, listItemRequest2, listItemRequest3]
+
+        ListItemEntity newListItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tcinTenantRefId1, tcin1,  null, 1, "notes1")
+        ListItemEntity newListItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), gItemTenantrefId1, null,  gItem1, 1, "notes1")
+
+        def recordMetadata = GroovyMock(RecordMetadata)
+
+        when:
+        createMultipleListItemsService.createMultipleListItems(guestId, listId, 1357L, itemsToAdd).block()
+
+        then:
+        1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
+        // inserting new items
+        1 * listRepository.saveListItems(_) >> Mono.just([newListItemEntity1, newListItemEntity2])
+        // events published
+        2 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
+    }
+}

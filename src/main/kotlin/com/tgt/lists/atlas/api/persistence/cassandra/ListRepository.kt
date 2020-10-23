@@ -92,19 +92,26 @@ class ListRepository(
                 }
     }
 
-    fun saveListItem(listItemEntity: ListItemEntity): Mono<ListItemEntity> {
+    fun saveListItems(listItemsEntity: List<ListItemEntity>): Mono<List<ListItemEntity>> {
         val now = ZonedDateTime.now()
-        if (listItemEntity.itemCreatedAt == null) {
-            // new list item getting created
-            listItemEntity.itemCreatedAt = now.toInstant()
-            listItemEntity.itemUpdatedAt = listItemEntity.itemCreatedAt
+        val items = arrayListOf<ListItemEntity>()
+        listItemsEntity.map {
+            if (it.itemCreatedAt == null) {
+                // new list item getting created
+                items.add(it.copy(itemCreatedAt = now.toInstant(), itemUpdatedAt = it.itemCreatedAt))
+            } else {
+                // existing list item update
+                items.add(it.copy(itemUpdatedAt = now.toInstant()))
+            }
+        }
+
+        return if (items.size > 1) {
+            val batchStmts = arrayListOf<BatchableStatement<*>>()
+            listItemsEntity.map { batchStmts.add(listDAO.saveListItemBatch(it)) }
+            Mono.from(batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveListItems"))
         } else {
-            // existing list item update
-            listItemEntity.itemUpdatedAt = now.toInstant()
-        }
-        return Mono.from(listDAO.saveListItem(listItemEntity)).map {
-            listItemEntity
-        }
+            Mono.from(listDAO.saveListItem(listItemsEntity.first()))
+        }.map { items.toList() }
     }
 
     fun findListById(listId: UUID): Mono<ListEntity> {
@@ -142,5 +149,15 @@ class ListRepository(
         )
         return batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteList")
                 .map { listEntity }
+    }
+
+    fun deleteListItems(listItemsEntity: List<ListItemEntity>): Mono<List<ListItemEntity>> {
+        return if (listItemsEntity.size > 1) {
+            val batchStmts = arrayListOf<BatchableStatement<*>>()
+            listItemsEntity.map { batchStmts.add(listDAO.deleteListItemBatch(it)) }
+            Mono.from(batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteListItem"))
+        } else {
+            Mono.from(listDAO.deleteListItem(listItemsEntity.first()))
+        }.map { listItemsEntity }
     }
 }
