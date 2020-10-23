@@ -1,6 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
-
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.cart.transport.CartItemUpdateRequest
 import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.atlas.api.domain.*
@@ -24,23 +24,27 @@ class UpdateListItemServiceTest extends Specification {
     CartManager cartManager
     EventPublisher eventPublisher
     DeduplicationManager deduplicationManager
-    AddMultiItemsManager addMultiItemsManager
+    AddListItemsManager addMultiItemsManager
     UpdateListItemService updateListItemService
     DeleteCartItemsManager deleteCartItemsManager
-    CreateCartItemsManager createCartItemsManager
+    DeleteListItemsManager deleteListItemsManager
     UpdateCartItemsManager updateCartItemsManager
+    InsertListItemsManager insertListItemsManager
     CartDataProvider cartDataProvider
+    ListRepository listRepository
     String guestId = "1234"
     Long locationId = 1375L
 
     def setup() {
         cartManager = Mock(CartManager)
         eventPublisher = Mock(EventPublisher)
+        listRepository = Mock(ListRepository)
+        insertListItemsManager = new InsertListItemsManager(listRepository, eventPublisher)
+        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         deleteCartItemsManager = new DeleteCartItemsManager(cartManager, eventPublisher, true)
-        createCartItemsManager = new CreateCartItemsManager(cartManager, eventPublisher)
         updateCartItemsManager = new UpdateCartItemsManager(cartManager, eventPublisher)
-        deduplicationManager = new DeduplicationManager(cartManager, updateCartItemsManager, deleteCartItemsManager, true, 10, 10, false)
-        addMultiItemsManager = new AddMultiItemsManager(deduplicationManager, createCartItemsManager)
+        deduplicationManager = new DeduplicationManager(listRepository, insertListItemsManager, deleteListItemsManager, true, 10, 10, false)
+        addMultiItemsManager = new AddListItemsManager(deduplicationManager, insertListItemsManager)
         updateListItemService = new UpdateListItemService(cartManager, eventPublisher, updateCartItemsManager, true)
         cartDataProvider = new CartDataProvider()
 

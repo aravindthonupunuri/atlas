@@ -1,10 +1,10 @@
 package com.tgt.lists.atlas.api.service
 
-import com.tgt.lists.cart.transport.CartItemResponse
-import com.tgt.lists.atlas.api.domain.AddMultiItemsManager
+import com.tgt.lists.atlas.api.domain.AddListItemsManager
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.transport.ListItemMultiAddResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
-import com.tgt.lists.atlas.api.transport.toListItemResponseTO
+import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListItemResponseTO
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -13,10 +13,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AddMultipleListItemService(@Inject private val addMultiItemsManager: AddMultiItemsManager) {
+class CreateMultipleListItemsService(@Inject private val addListItemsManager: AddListItemsManager) {
     private val logger = KotlinLogging.logger {}
 
-    fun addMultipleListItem(
+    fun createMultipleListItems(
         guestId: String, // this is NOT the ownerId of list, it represents operation executor who could be different than list owner
         listId: UUID,
         locationId: Long,
@@ -25,15 +25,14 @@ class AddMultipleListItemService(@Inject private val addMultiItemsManager: AddMu
 
         logger.debug("[addMultipleListItem] guestId: $guestId, listId: $listId, locationId: $locationId")
 
-        return addMultiItemsManager.processAddMultiItems(guestId, locationId, listId, listId,
-                LIST_ITEM_STATE.PENDING, items)
+        return addListItemsManager.addListItems(guestId, listId, LIST_ITEM_STATE.PENDING, items)
                 .flatMap { toListItemMultiAddResponseTO(it, listId) }
     }
 
     private fun toListItemMultiAddResponseTO(
-        cartItemResponseList: List<CartItemResponse>,
+        listItems: List<ListItemEntity>,
         listId: UUID
     ): Mono<ListItemMultiAddResponseTO> {
-        return Mono.just(ListItemMultiAddResponseTO(listId, cartItemResponseList.map { toListItemResponseTO(it) }))
+        return Mono.just(ListItemMultiAddResponseTO(listId, listItems.map { toListItemResponseTO(it) }))
     }
 }

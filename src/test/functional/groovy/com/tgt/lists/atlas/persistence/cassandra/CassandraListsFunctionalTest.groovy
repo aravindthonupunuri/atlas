@@ -70,23 +70,29 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         listIds[3]   | "essentials" | listTypes[3] | listSubtypes[3] | guestIds[3] | listMarkers[3]
     }
 
-    @Unroll
     def "test add weekly list items #itemRefId"() {
         given:
-        ListItemEntity listItemEntity = dataProvider.createListItemEntity(listId, itemId, itemState, itemType, itemRefId)
+        ListItemEntity listItemEntity = dataProvider.createListItemEntity(listIds[0], listItemIds[0], "PENDING", "tcin",  "52829076", null, null, null, null)
 
         when:
-        listsRepository.saveListItem(listItemEntity).block()
+        listsRepository.saveListItems([listItemEntity]).block()
 
         then:
         notThrown(Throwable)
+    }
 
-        where:
-        listId       | itemId         | itemState   | itemType  | itemRefId
-        listIds[0]   | listItemIds[0] | "PENDING"   | "tcin"    | "52829076"
-        listIds[0]   | listItemIds[1] | "PENDING"   | "tcin"    | "15833332"
-        listIds[0]   | listItemIds[2] | "COMPLETED" | "generic" | "coffee"
-        listIds[0]   | listItemIds[3] | "COMPLETED" | "offer"   | "100000"
+    def "test add weekly list items by batch #itemRefId"() {
+        given:
+        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], "PENDING", "tcin", "15833332", null, null, null, null)
+        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[2], "COMPLETED", "generic", "coffee", null, null, null, null)
+        ListItemEntity listItemEntity3 = dataProvider.createListItemEntity(listIds[0], listItemIds[3], "COMPLETED", "offer", "100000", null, null, null, null)
+
+
+        when:
+        listsRepository.saveListItems([listItemEntity1, listItemEntity2, listItemEntity3]).block()
+
+        then:
+        notThrown(Throwable)
     }
 
     def "test get list by id"() {
@@ -223,6 +229,18 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         listEntity.title == "weekly"
         listEntity.description == updateDescription
         listEntity.notes == updateNotes
+    }
+
+    def "test delete weekly list items by batch"() {
+        given:
+        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[0], "PENDING", "tcin",  "52829076", null, null, null, null)
+        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], "PENDING", "tcin", "15833332", null, null, null, null)
+
+        when:
+        List<ListItemEntity> deletedListItems = listsRepository.deleteListItems([listItemEntity1, listItemEntity2]).block()
+
+        then:
+        deletedListItems.size() == 2
     }
 
     def "test delete weekly list"() {

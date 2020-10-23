@@ -23,6 +23,9 @@ interface ListDAO : ICassandraDao {
     @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
     fun saveListItem(listItemEntity: ListItemEntity): ReactiveResultSet
 
+    @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)
+    fun saveListItemBatch(listItemEntity: ListItemEntity): BoundStatement
+
     @Select
     @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
     fun findListById(id: UUID): MappedReactiveResultSet<ListEntity>
@@ -40,4 +43,10 @@ interface ListDAO : ICassandraDao {
 
     @Delete
     fun deleteList(listEntity: ListEntity): BoundStatement
+
+    @Delete
+    fun deleteListItemBatch(listItemEntity: ListItemEntity): BoundStatement
+
+    @Delete
+    fun deleteListItem(listItemEntity: ListItemEntity): ReactiveResultSet
 }

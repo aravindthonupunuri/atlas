@@ -21,6 +21,7 @@ data class ListItemEntity(
     override var itemRefId: String? = null,
     override var itemType: String? = null,
     override var itemTcin: String? = null,
+    override var itemTitle: String? = null,
     override var itemDpci: String? = null,
     override var itemBarcode: String? = null,
     override var itemDesc: String? = null,

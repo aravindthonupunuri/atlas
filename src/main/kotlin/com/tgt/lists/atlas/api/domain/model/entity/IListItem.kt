@@ -12,6 +12,7 @@ interface IListItem {
     var itemRefId: String?
     var itemType: String?
     var itemTcin: String?
+    var itemTitle: String?
     var itemDpci: String?
     var itemBarcode: String?
     var itemDesc: String?

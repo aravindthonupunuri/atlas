@@ -1,11 +1,10 @@
 package com.tgt.lists.atlas.api.domain
 
-import com.tgt.lists.cart.transport.*
 import com.tgt.lists.atlas.api.util.CartManagerName
-import com.tgt.lists.atlas.api.util.getListItemMetaDataFromCart
 import com.tgt.lists.atlas.api.util.getUserItemMetaDataFromCart
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.kafka.model.MultiDeleteListItem
+import com.tgt.lists.cart.transport.*
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -137,10 +136,9 @@ class DeleteCartItemsManager(
                     val deletedCartIds = deletedCartItemIds.toSet()
                     val multiDeleteItems = cartItemResponses.filter { deletedCartIds.contains(it.cartItemId) }
                             .map {
-                                val listItemMetaDataTO = getListItemMetaDataFromCart(it.metadata)
                                 val userItemMetaDataTO = getUserItemMetaDataFromCart(it.metadata)
                                 MultiDeleteListItem(it.cartItemId!!, it.tcin, it.tenantItemName, it.requestedQuantity,
-                                        listItemMetaDataTO!!, userItemMetaDataTO?.userMetaData) }
+                                        null, userItemMetaDataTO?.userMetaData) }
                             .toList()
                     eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(),
                             DeleteListItemNotifyEvent(guestId, listId, multiDeleteItems), listId.toString())
@@ -172,11 +170,10 @@ class DeleteCartItemsManager(
         return cartManager.deleteCartItem(deleteCartItemRequest = DeleteCartItemRequest(cartId = cartId,
                 cartItemId = cartItemsReponse.cartItemId!!, forceDeletion = true))
                 .flatMap { cartItemDeleteReponse ->
-                    val listItemMetaDataTO = getListItemMetaDataFromCart(cartItemsReponse.metadata)
                     val userItemMetaDataTO = getUserItemMetaDataFromCart(cartItemsReponse.metadata)
                     val multiDeleteItems = listOf(MultiDeleteListItem(cartItemsReponse.cartItemId!!,
                             cartItemsReponse.tcin, cartItemsReponse.tenantItemName, cartItemsReponse.requestedQuantity,
-                            listItemMetaDataTO!!, userItemMetaDataTO?.userMetaData))
+                            null, userItemMetaDataTO?.userMetaData))
                     eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(),
                             DeleteListItemNotifyEvent(guestId, listId, multiDeleteItems), listId.toString()).map { cartItemDeleteReponse }
                 }

@@ -1,14 +1,11 @@
 package com.tgt.lists.atlas.api.domain
 
-import com.tgt.lists.cart.transport.*
-import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
-import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
-import com.tgt.lists.atlas.api.transport.toCartItemUpdateRequest
 import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.CartManagerName
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.util.getListItemMetaDataFromCart
+import com.tgt.lists.common.components.exception.BadRequestException
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -20,9 +17,9 @@ import javax.inject.Singleton
 
 @Singleton
 class DeduplicationManager(
-    @CartManagerName("DeduplicationManager") @Inject private val cartManager: CartManager,
-    @Inject private val updateCartItemsManager: UpdateCartItemsManager,
-    @Inject private val deleteCartItemsManager: DeleteCartItemsManager,
+    @Inject private val listRepository: ListRepository,
+    @Inject private val insertListItemsManager: InsertListItemsManager,
+    @Inject private val deleteListItemsManager: DeleteListItemsManager,
     @Value("\${list.features.dedupe}") private val isDedupeEnabled: Boolean,
     @Value("\${list.max-pending-item-count}")
     private var maxPendingItemCount: Int = 100, // default max pending item count
@@ -36,80 +33,89 @@ class DeduplicationManager(
     /**
      * Implements logic to find all the duplicate items found in the given bulk item list.
      * The response of this method is a Triple of existing items, updated items and duplicateItemsMap
+     *
+     * Give a pair of (list of updatedItems, duplicateItemsMap)
      */
     fun updateDuplicateItems(
+        guestId: String,
         listId: UUID,
-        cartId: UUID,
-        locationId: Long,
         newItemsMap: Map<String, ListItemRequestTO>,
         itemState: LIST_ITEM_STATE
-    ): Mono<Triple<List<CartItemResponse>, List<CartItemResponse>, MutableMap<String, List<CartItemResponse>>>> {
-
-        return cartManager.getListCartContents(cartId, true)
+    ): Mono<Pair<List<ListItemEntity>, MutableMap<String, List<ListItemEntity>>>> {
+        return listRepository.findListItemsByListId(listId).collectList()
                 .flatMap {
-                    processDedup(it.cart!!.guestId!!, listId, cartId, itemState, it, newItemsMap) }
+                    val existingItems: List<ListItemEntity> = if (itemState == LIST_ITEM_STATE.PENDING) {
+                        it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.PENDING.name }
+                    } else {
+                        it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.COMPLETED.name }
+                    }
+                    processDeduplication(guestId, listId, itemState, existingItems, newItemsMap)
+                }
                 .switchIfEmpty {
                     logger.error("From updateDuplicateItems(), empty cart contents during dedup process")
-                    Mono.just(Triple(emptyList<CartItemResponse>(), emptyList<CartItemResponse>(), mutableMapOf<String, List<CartItemResponse>>()))
+                    Mono.just(Pair(emptyList(), mutableMapOf()))
                 }
     }
 
     /**
      * Implements functionality to verify the final items count does not exceed the limit in both pending and
      * completed cart. It also updates the duplicate cart items already present in the list.
+     *
+     *  Give a triple of (list of existing items, list of updatedItems, duplicateItemsMap)
      */
-    private fun processDedup(
+    private fun processDeduplication(
         guestId: String,
         listId: UUID,
-        cartId: UUID,
         itemState: LIST_ITEM_STATE,
-        cartContents: CartContentsResponse,
+        existingItems: List<ListItemEntity>,
         newItemsMap: Map<String, ListItemRequestTO>
-    ): Mono<Triple<List<CartItemResponse>, List<CartItemResponse>, MutableMap<String, List<CartItemResponse>>>> {
-        if (cartContents.cartItems.isNullOrEmpty()) {
-            logger.debug("From processDedup(), No preexisting items in cart, so skipping dedup process")
-            return Mono.just(Triple(emptyList(), emptyList(), mutableMapOf()))
+    ): Mono<Pair<List<ListItemEntity>, MutableMap<String, List<ListItemEntity>>>> {
+        if (existingItems.isNullOrEmpty()) {
+            logger.debug("[processDeduplication] No existing items in list skipping deduplication process")
+            return Mono.just(Pair(emptyList(), mutableMapOf()))
         }
-        val existingItems = cartContents.cartItems!!.toList() // items prsent in cart
-        val newItems = newItemsMap.values.toList() // new items to be added
 
-        return checkMaxItemsCount(guestId, listId, cartId, existingItems, newItems, itemState,
-                getDuplicateItemsMap(existingItems, newItems, itemState))
-                .flatMap { updateMultiItems(guestId, listId, cartId, newItemsMap, it) }
-                .map { Triple(existingItems, it.first, it.second) }
+        val newItems = newItemsMap.values.toList() // new items to be added
+        val duplicateItemsMap = getDuplicateItemsMap(existingItems, newItems)
+
+        return checkMaxItemsCount(guestId, listId, existingItems, newItems, itemState, duplicateItemsMap)
+                .flatMap { updateDuplicateItems(guestId, listId, newItemsMap, it) }
+                .map { Pair(it.first, it.second) }
     }
 
     /**
      * Implements functionality to update preexisting items and also delete cart items not deduped
      * already existing in the list.
+     *
+     * Give a pair of (list of updatedItems, duplicateItemsMap)
      */
-    private fun updateMultiItems(
+    private fun updateDuplicateItems(
         guestId: String,
         listId: UUID,
-        cartId: UUID,
         newItemsMap: Map<String, ListItemRequestTO>,
-        duplicateItemsMap: MutableMap<String, List<CartItemResponse>>
-    ): Mono<Pair<List<CartItemResponse>, MutableMap<String, List<CartItemResponse>>>> {
-        val dedupDataList = arrayListOf<DedupData>()
+        duplicateItemsMap: MutableMap<String, List<ListItemEntity>>
+    ): Mono<Pair<List<ListItemEntity>, MutableMap<String, List<ListItemEntity>>>> {
+        val dedupeDataList = arrayListOf<DedupeData>()
 
-        duplicateItemsMap.asIterable().map {
+        duplicateItemsMap.map { it ->
             val newItem = newItemsMap[it.key]
             val duplicateItems = it.value
 
             if (newItem != null && !duplicateItems.isNullOrEmpty()) {
-                val sortedExistingItemList = duplicateItems.sortedBy { it.createdAt }
+                val sortedExistingItemList = duplicateItems
+                        .sortedBy { listItem -> listItem.itemCreatedAt }
                 var updatedRequestedQuantity = 0
                 var updatedItemNote = ""
 
-                for (cartItemResponse in sortedExistingItemList) {
-                    if (!cartItemResponse.notes.isNullOrEmpty()) {
+                for (listItem in sortedExistingItemList) {
+                    if (!listItem.itemNotes.isNullOrEmpty()) {
                         updatedItemNote = if (updatedItemNote.isNotEmpty()) {
-                            cartItemResponse.notes.toString() + "\n" + updatedItemNote
+                            listItem.itemNotes.toString() + "\n" + updatedItemNote
                         } else {
-                            cartItemResponse.notes.toString()
+                            listItem.itemNotes.toString()
                         }
                     }
-                    updatedRequestedQuantity += cartItemResponse.requestedQuantity ?: 1
+                    updatedRequestedQuantity += listItem.itemReqQty ?: 1
                 }
 
                 updatedRequestedQuantity += (newItem.requestedQuantity ?: 1)
@@ -119,49 +125,43 @@ class DeduplicationManager(
                     newItem.itemNote + "\n" + updatedItemNote
                 }
 
-                val cartItemUpdateRequest = toCartItemUpdateRequest(sortedExistingItemList.first(),
-                        cartId, sortedExistingItemList.first().cartItemId!!,
-                        ListItemUpdateRequestTO(itemNote = updatedItemNote, requestedQuantity = updatedRequestedQuantity))
+                val itemToUpdate = sortedExistingItemList.first()
+                        .copy(itemNotes = updatedItemNote, itemReqQty = updatedRequestedQuantity)
                 val itemsToDelete = sortedExistingItemList
-                        .filter { it.cartItemId != sortedExistingItemList.first().cartItemId }
+                        .filter { it.itemId != sortedExistingItemList.first().itemId }
 
-                dedupDataList.add(DedupData(cartItemUpdateRequest, itemsToDelete))
+                dedupeDataList.add(DedupeData(itemToUpdate, itemsToDelete))
             }
         }
 
-        val totalItemsToDelete = arrayListOf<CartItemResponse>()
-        dedupDataList.map { totalItemsToDelete.addAll(it.itemsToDelete) }
+        val totalItemsToDelete = arrayListOf<ListItemEntity>()
+        dedupeDataList.map { totalItemsToDelete.addAll(it.itemsToDelete) }
 
-        val totalItemsToUpdate = dedupDataList.map { it.cartItemUpdateRequest }
+        val totalItemsToUpdate = dedupeDataList.map { it.itemToUpdate }
 
         if (totalItemsToUpdate.isNullOrEmpty()) {
-            logger.debug("From updateMultiItems(), No items to dedupe")
+            logger.debug("[updateDuplicateItems] No items to dedupe")
             return Mono.just(Pair(emptyList(), duplicateItemsMap))
         }
 
-        val itemIdsToDelete = totalItemsToDelete.map { it.cartItemId!! }
-        logger.debug("From updateMultiItems(), Items to Update: $totalItemsToUpdate," +
-                " ItemIds to delete: $itemIdsToDelete , Deduplication process")
+        val itemIdsToDelete = totalItemsToDelete.map { it.itemId!! }
+        logger.debug("[updateDuplicateItems] Items to Update: $totalItemsToUpdate ItemIds to delete: $itemIdsToDelete")
 
-        return updateCartItemsManager.updateMultiCartItem(guestId, listId,
-                UpdateMultiCartItemsRequest(cartId, totalItemsToUpdate.toTypedArray()))
-                .zipWith(if (totalItemsToDelete.isNotEmpty()) {
-                    deleteCartItemsManager.deleteMultipleCartItems(guestId, listId, cartId, totalItemsToDelete.toTypedArray())
-                } else { Mono.just(DeleteMultiCartItemsResponse()) })
+        return insertListItemsManager.insertListItems(guestId, listId, totalItemsToUpdate, true)
+                .zipWith(deleteListItemsManager.deleteListItems(guestId, listId, totalItemsToDelete))
                 .map { Pair(it.t1, duplicateItemsMap) }
     }
 
     private fun checkMaxItemsCount(
         guestId: String,
         listId: UUID,
-        cartId: UUID,
-        existingCartItems: List<CartItemResponse>,
+        existingItems: List<ListItemEntity>,
         newItems: List<ListItemRequestTO>,
         itemState: LIST_ITEM_STATE,
-        duplicateItemsMap: MutableMap<String, List<CartItemResponse>> // map of new item ref id to its duplicate existing items
-    ): Mono<MutableMap<String, List<CartItemResponse>>> {
+        duplicateItemsMap: MutableMap<String, List<ListItemEntity>> // map of new item ref id to its duplicate existing items
+    ): Mono<MutableMap<String, List<ListItemEntity>>> {
         // Validate max items count
-        val existingItemsCount = existingCartItems.count() // count before dedup
+        val existingItemsCount = existingItems.count() // count before dedup
         var count = 0
         duplicateItemsMap.keys.stream().forEach { count += (duplicateItemsMap[it]?.count() ?: 0) }
         val duplicateItemsCount = count // total no of duplicated items existing in cart
@@ -179,21 +179,20 @@ class DeduplicationManager(
                 maxCompletedItemsCount
             }
             val itemsCountToDelete = finalItemsCount - maxItemCount
-            val duplicateItems = arrayListOf<CartItemResponse>()
+            val duplicateItems = arrayListOf<ListItemEntity>()
             duplicateItemsMap.values.forEach { duplicateItems.addAll(it) }
             // The result will consists of items to be deleted which are old.
             // existingCartItems -> Items that are present in the cart before dedup process.
             // Filter the duplicate items in existingCartItems since these items will be deleted during the deduplication process in updateMultiItems() method.
             // So the final items to be deleted since the list has reached max items count would be (existingCartItems - duplicate items).
-            val result = existingCartItems.stream()
-                    .filter { cartItemResponse -> duplicateItems.stream()
-                            .noneMatch { it.cartItemId == cartItemResponse.cartItemId } }.collect(Collectors.toList())
-            result.sortBy { it.updatedAt }
-            logger.debug("Exceeding max items count in list, stale items to be delete count" +
+            val result = existingItems.stream()
+                    .filter { listItem -> duplicateItems.stream()
+                            .noneMatch { it.itemId == listItem.itemId } }.collect(Collectors.toList())
+            result.sortBy { it.itemUpdatedAt }
+            logger.debug("[checkMaxItemsCount] Exceeding max items count in list, stale items to be delete count" +
                     " $itemsCountToDelete")
 
-            return deleteCartItemsManager.deleteMultipleCartItems(guestId, listId, cartId,
-                    result.take(itemsCountToDelete).toTypedArray())
+            return deleteListItemsManager.deleteListItems(guestId, listId, result.take(itemsCountToDelete))
                     .map { duplicateItemsMap }
                     .onErrorResume {
                         logger.error { it.message ?: it.cause?.message }
@@ -208,52 +207,35 @@ class DeduplicationManager(
      * Implements functionality to find the duplicates for every new item being added.
      */
     private fun getDuplicateItemsMap(
-        existingCartItems: List<CartItemResponse>,
-        newItems: List<ListItemRequestTO>,
-        itemState: LIST_ITEM_STATE
-    ): MutableMap<String, List<CartItemResponse>> {
-        val itemIdentifierCartItemsMap = mutableMapOf<String, List<CartItemResponse>>()
+        existingItems: List<ListItemEntity>,
+        newItems: List<ListItemRequestTO>
+    ): MutableMap<String, List<ListItemEntity>> {
         if (!isDedupeEnabled) {
-            logger.debug("From getDuplicateItemsMap(), Dedupe turned off")
-            return itemIdentifierCartItemsMap
-        }
-
-        newItems.stream().forEach { listItemRequest ->
-            val preExistingItems = existingCartItems.filter { itemTypeFilter(it, listItemRequest) &&
-                itemFilter(it, listItemRequest) && itemStateFilter(it, itemState) }
-            if (!preExistingItems.isNullOrEmpty()) {
-                itemIdentifierCartItemsMap[listItemRequest.itemRefId] = preExistingItems
+            logger.debug("[getDuplicateItemsMap] Deduplication is turned off")
+            return mutableMapOf()
+        } else {
+            val duplicateItemsMap = mutableMapOf<String, List<ListItemEntity>>()
+            newItems.stream().forEach { listItemRequestTO ->
+                val duplicateItems = existingItems.filter { itemFilter(it, listItemRequestTO) }
+                if (!duplicateItems.isNullOrEmpty()) {
+                    duplicateItemsMap[listItemRequestTO.itemRefId] = duplicateItems
+                }
             }
+
+            logger.debug("DuplicateItemsMap: keys ${duplicateItemsMap.keys} and " +
+                    "values: ${duplicateItemsMap.values.forEach { it.forEach { listItem -> listItem.itemId } }}")
+
+            return duplicateItemsMap
         }
-        logger.debug("DuplicateItemsMap: keys ${itemIdentifierCartItemsMap.keys} " +
-                "and values: ${itemIdentifierCartItemsMap.values.forEach {
-                    it.forEach { it.cartItemId }
-                }}")
-
-        return itemIdentifierCartItemsMap
     }
 
-    private fun itemTypeFilter(cartItemResponse: CartItemResponse, listItemRequest: ListItemRequestTO): Boolean {
-        val cartItemMetadata = cartItemResponse.metadata
-        val listItemMetadata = getListItemMetaDataFromCart(cartItemMetadata)
-        val newItemType = listItemRequest.itemType
-        val existingItemType = listItemMetadata?.itemType
-
-        return newItemType == existingItemType
+    private fun itemFilter(existingItem: ListItemEntity, newItem: ListItemRequestTO): Boolean {
+        return (existingItem.itemType == newItem.itemType.name) &&
+                (newItem.itemRefId == existingItem.itemRefId)
     }
 
-    private fun itemFilter(cartItemResponse: CartItemResponse, listItemRequest: ListItemRequestTO): Boolean {
-        return listItemRequest.itemRefId == cartItemResponse.tenantReferenceId
-    }
-
-    private fun itemStateFilter(cartItemResponse: CartItemResponse, itemState: LIST_ITEM_STATE): Boolean {
-        val existingItemState = getListItemMetaDataFromCart(cartItemResponse.metadata)?.itemState
-                ?: throw RuntimeException("Incorrect item state from itemStateFilter()")
-        return existingItemState == itemState
-    }
-
-    data class DedupData(
-        val cartItemUpdateRequest: CartItemUpdateRequest,
-        val itemsToDelete: List<CartItemResponse>
+    data class DedupeData(
+        val itemToUpdate: ListItemEntity,
+        val itemsToDelete: List<ListItemEntity>
     )
 }
