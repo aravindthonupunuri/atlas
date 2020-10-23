@@ -3,8 +3,7 @@ package com.tgt.lists.atlas.api.transport
 import java.util.*
 import javax.validation.constraints.NotNull
 
-data class ListItemMultiDeleteResponseTO(
+data class ListItemsDeleteResponseTO(
     @field:NotNull(message = "List id must not be empty") val listId: UUID? = null,
-    val successListItemIds: List<UUID>? = null,
-    val failedListItemIds: List<UUID>? = null
+    val itemIds: List<UUID>? = null
 )
