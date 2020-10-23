@@ -108,7 +108,7 @@ class ListRepository(
         return if (items.size > 1) {
             val batchStmts = arrayListOf<BatchableStatement<*>>()
             listItemsEntity.map { batchStmts.add(listDAO.saveListItemBatch(it)) }
-            Mono.from(batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveListItems"))
+            batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveListItems")
         } else {
             Mono.from(listDAO.saveListItem(listItemsEntity.first()))
         }.map { items.toList() }
@@ -155,7 +155,7 @@ class ListRepository(
         return if (listItemsEntity.size > 1) {
             val batchStmts = arrayListOf<BatchableStatement<*>>()
             listItemsEntity.map { batchStmts.add(listDAO.deleteListItemBatch(it)) }
-            Mono.from(batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteListItem"))
+            batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteListItem")
         } else {
             Mono.from(listDAO.deleteListItem(listItemsEntity.first()))
         }.map { listItemsEntity }
