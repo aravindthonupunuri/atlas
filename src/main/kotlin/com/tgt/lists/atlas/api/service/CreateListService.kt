@@ -53,10 +53,9 @@ class CreateListService(
 
         return listRepository.saveList(listEntity)
                 .zipWhen {
-                    val listMetaDataTO = null // TODO Eventually remove this attribute
                     val userMetaDataTO = getUserMetaDataFromMetadataMap(listEntity.metadata)
                     eventPublisher.publishEvent(CreateListNotifyEvent.getEventType(),
-                        CreateListNotifyEvent(guestId, it.id!!, it.type!!, it.title!!, listMetaDataTO, userMetaDataTO?.userMetaData), guestId) }
+                        CreateListNotifyEvent(guestId, it.id!!, it.type!!, it.title!!, userMetaDataTO?.userMetaData), guestId) }
                 .map { it.t1 }
     }
 }

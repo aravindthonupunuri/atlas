@@ -3,7 +3,6 @@ package com.tgt.lists.atlas.kafka.model
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.tgt.lists.atlas.api.transport.ListMetaDataTO
 import com.tgt.lists.atlas.api.util.EventType
 import java.util.*
 
@@ -19,9 +18,6 @@ data class UpdateListNotifyEvent(
 
     @JsonProperty("list_title")
     val listTitle: String?,
-
-    @JsonProperty("list_metadata")
-    val listMetadata: ListMetaDataTO?, // TODO Eventually remove this attribute
 
     @JsonProperty("user_meta_data")
     val userMetaData: Map<String, Any>? = null,

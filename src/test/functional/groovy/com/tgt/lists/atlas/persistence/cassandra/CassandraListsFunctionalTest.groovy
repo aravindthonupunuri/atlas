@@ -153,6 +153,78 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         guestListEntity.id == listIds[0]
     }
 
+    def "test update listEntity"() {
+        given:
+        def listId = listIds[0]
+        def updateDescription = "modified description"
+        def updateNotes = "modified Notes"
+        ListEntity existingListEntity = listsRepository.findListById(listId).block()
+        ListEntity updateListEntity = new ListEntity(listId,
+                existingListEntity.title,
+                existingListEntity.type,
+                existingListEntity.subtype,
+                existingListEntity.guestId,
+                updateDescription,
+                existingListEntity.channel,
+                existingListEntity.subchannel,
+                existingListEntity.marker,
+                existingListEntity.location,
+                updateNotes,
+                existingListEntity.state,
+                null,
+                null,
+                null,
+                existingListEntity.createdAt,
+                null,
+                Boolean.FALSE
+        )
+
+        when:
+        ListEntity listEntity = listsRepository.updateList(existingListEntity, updateListEntity).block()
+
+        then:
+        listEntity != null
+        listEntity.title == "weekly"
+        listEntity.description == updateDescription
+        listEntity.notes == updateNotes
+    }
+
+    def "test update listEntity as well guestEntity"() {
+        given:
+        def listId = listIds[0]
+        def updateDescription = "modified description"
+        def updateNotes = "modified Notes"
+        ListEntity existingListEntity = listsRepository.findListById(listId).block()
+        ListEntity updateListEntity = new ListEntity(listId,
+                existingListEntity.title,
+                existingListEntity.type,
+                existingListEntity.subtype,
+                existingListEntity.guestId,
+                updateDescription,
+                existingListEntity.channel,
+                existingListEntity.subchannel,
+                "update Marker",
+                existingListEntity.location,
+                updateNotes,
+                existingListEntity.state,
+                null,
+                null,
+                null,
+                existingListEntity.createdAt,
+                null,
+                Boolean.FALSE
+        )
+
+        when:
+        ListEntity listEntity = listsRepository.updateList(existingListEntity, updateListEntity).block()
+
+        then:
+        listEntity != null
+        listEntity.title == "weekly"
+        listEntity.description == updateDescription
+        listEntity.notes == updateNotes
+    }
+
     def "test delete weekly list"() {
         given:
         def listId = listIds[0]

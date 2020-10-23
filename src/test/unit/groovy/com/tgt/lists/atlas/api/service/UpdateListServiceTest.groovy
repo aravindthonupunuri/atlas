@@ -1,125 +1,102 @@
 package com.tgt.lists.atlas.api.service
 
-
-import com.tgt.lists.cart.transport.CartPutRequest
-import com.tgt.lists.cart.transport.CartResponse
-import com.tgt.lists.cart.transport.CartType
-import com.tgt.lists.common.components.exception.BadRequestException
-import com.tgt.lists.atlas.api.domain.CartManager
 import com.tgt.lists.atlas.api.domain.DefaultListManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
-import com.tgt.lists.atlas.api.domain.UpdateCartManager
-import com.tgt.lists.atlas.api.transport.ListMetaDataTO
+import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.service.transform.list.UserMetaDataTransformationStep
 import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
 import com.tgt.lists.atlas.api.transport.UserMetaDataTO
-import com.tgt.lists.atlas.api.util.LIST_STATUS
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
-import com.tgt.lists.atlas.util.CartDataProvider
 import com.tgt.lists.atlas.util.TestListChannel
+import com.tgt.lists.common.components.exception.BadRequestException
 import org.apache.kafka.clients.producer.RecordMetadata
+import org.jetbrains.annotations.NotNull
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
 class UpdateListServiceTest extends Specification {
 
+    ListRepository listRepository
     UpdateListService updateListService
-    UpdateCartManager updateCartManager
     DefaultListManager defaultListManager
     EventPublisher eventPublisher
-    CartManager cartManager
-    CartDataProvider cartDataProvider
     String guestId = "1234"
+    String listType = "SHOPPING"
 
     def setup() {
-        cartManager = Mock(CartManager)
+        listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
-        updateCartManager = new UpdateCartManager(cartManager, eventPublisher)
-        defaultListManager = new DefaultListManager(cartManager, updateCartManager, 10, false)
-        updateListService = new UpdateListService(cartManager, defaultListManager, updateCartManager)
-        cartDataProvider = new CartDataProvider()
+        defaultListManager = Mock(DefaultListManager)
+        updateListService = new UpdateListService(listRepository, defaultListManager, eventPublisher)
     }
 
     def "Test updateList() integrity"() {
         given:
-        def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", "updated description", true, null, null)
+        def title = "list title"
+        def updateTitle = "title updated"
+        def channel = TestListChannel.WEB.toString()
+        def desc = "my favorite list"
+        def updateDesc = "description updated"
+        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null)
 
         UUID listId = UUID.randomUUID()
 
-        ListMetaDataTO cartMetadata = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-        CartResponse cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "title", "short description", null, cartDataProvider.getMetaData(cartMetadata, new UserMetaDataTO()))
-        List<CartResponse> cartResponseList = [cartResponse]
-        def cartContents = cartDataProvider.getCartContentsResponse(cartResponse, [])
-
-        ListMetaDataTO updatedCartMetadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        CartResponse updatedCartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(),"SHOPPING", CartType.LIST,"updatedTitle", "updated description",
-            null, cartDataProvider.getMetaData(updatedCartMetadata, new UserMetaDataTO()))
-
-        def cartContentResponse = cartDataProvider.getCartContentsResponse(cartResponse, [])
+        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, null, null, null, null, null, null, null )
+        ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, null, null, null, null, null, null, null )
 
         when:
-        def actual = updateListService.updateList(guestId, listId, ListUpdateRequestTO).block()
+        def actual = updateListService.updateList(guestId, listId, listUpdateRequestTO).block()
 
         then:
-        1 * cartManager.getListCartContents(listId, false) >> Mono.just(cartContentResponse)
-        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-        1 * cartManager.getListCartContents(listId, false) >> Mono.just(cartContents)
-        1 * cartManager.updateCart(listId, _ as CartPutRequest) >> { arguments ->
-            final CartPutRequest request = arguments[1]
-            assert request.tenantCartName == "updatedTitle"
-            assert request.tenantCartDescription == "updated description"
-            Mono.just(updatedCartResponse)
-        }
+        1 * defaultListManager.processDefaultListInd(*_) >> Mono.just(true)
+        1 * listRepository.findListById(_) >> Mono.just(existing)
+        1 * listRepository.updateList(_ ,_) >> Mono.just(updated)
         1 * eventPublisher.publishEvent(UpdateListNotifyEvent.eventType, _, _) >> Mono.just(GroovyMock(RecordMetadata))
 
-        actual.listId == updatedCartResponse.cartId
-        actual.channel == updatedCartResponse.cartChannel
-        actual.listTitle == updatedCartResponse.tenantCartName
-        actual.shortDescription == updatedCartResponse.tenantCartDescription
-        actual.listType == updatedCartResponse.cartSubchannel
-        actual.defaultList == updatedCartMetadata.defaultList
+        actual.listId != null
+        actual.channel == channel
+        actual.listTitle == listUpdateRequestTO.listTitle
+        actual.shortDescription == listUpdateRequestTO.shortDescription
+        actual.defaultList == true
     }
 
-    def "Test updateList() with null field"() {
+    def "Test updateList() integrity with transformation pipeline"() {
         given:
-        def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", null, true, null, null)
+        def title = "list title"
+        def updateTitle = "title updated"
+        def channel = TestListChannel.WEB.toString()
+        def desc = "my favorite list"
+        def updateDesc = "description updated"
+
+        UserMetaDataTransformationStep transformationStep = new UserMetaDataTransformationStep() {
+            @Override
+            Mono<UserMetaDataTO> execute(@NotNull UserMetaDataTO userMetaDataTO) {
+                return Mono.just(userMetaDataTO)
+            }
+        }
+
+        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, transformationStep)
 
         UUID listId = UUID.randomUUID()
 
-        ListMetaDataTO cartMetadata = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-        CartResponse cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(),"SHOPPING", CartType.LIST, "title", "short description", null, cartDataProvider.getMetaData(cartMetadata, new UserMetaDataTO()))
-        List<CartResponse> cartResponseList = [cartResponse]
-        def cartContents = cartDataProvider.getCartContentsResponse(cartResponse, [])
-
-        ListMetaDataTO updatedCartMetadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        CartResponse updatedCartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), "SHOPPING", CartType.LIST, "updatedTitle", "short description",
-            null, cartDataProvider.getMetaData(updatedCartMetadata, new UserMetaDataTO()))
+        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, null, null, null, null, null, null, null )
+        ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, null, null, null, null, null, null, null )
 
         when:
-        def actual = updateListService.updateList(guestId, listId, ListUpdateRequestTO).block()
+        def actual = updateListService.updateList(guestId, listId, listUpdateRequestTO).block()
 
         then:
-        1 * cartManager.getListCartContents(listId, false) >> Mono.just(cartContents)
-        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-        1 * cartManager.getListCartContents(listId, false) >> Mono.just(cartContents)
-        1 * cartManager.updateCart(listId, _ as CartPutRequest) >> { arguments ->
-            final CartPutRequest request = arguments[1]
-            assert request.tenantCartName == "updatedTitle"
-            assert request.tenantCartDescription == "short description"
-            Mono.just(updatedCartResponse)
-        }
+        1 * defaultListManager.processDefaultListInd(*_) >> Mono.just(true)
+        1 * listRepository.findListById(_) >> Mono.just(existing)
+        1 * listRepository.updateList(_ ,_) >> Mono.just(updated)
         1 * eventPublisher.publishEvent(UpdateListNotifyEvent.eventType, _, _) >> Mono.just(GroovyMock(RecordMetadata))
 
-
-        actual.listId == updatedCartResponse.cartId
-        actual.channel == updatedCartResponse.cartChannel
-        actual.listTitle == updatedCartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == updatedCartMetadata.defaultList
+        actual.listId != null
+        actual.channel == channel
+        actual.listTitle == listUpdateRequestTO.listTitle
+        actual.shortDescription == listUpdateRequestTO.shortDescription
+        actual.defaultList == true
     }
 
     def "Test updateList() with false default List value"() {

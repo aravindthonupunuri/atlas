@@ -1,14 +1,15 @@
 package com.tgt.lists.atlas.api.service
 
-import com.tgt.lists.cart.transport.CartContentsResponse
-import com.tgt.lists.cart.transport.CartPutRequest
-import com.tgt.lists.cart.transport.CartResponse
-import com.tgt.lists.common.components.exception.BadRequestException
-import com.tgt.lists.atlas.api.domain.CartManager
 import com.tgt.lists.atlas.api.domain.DefaultListManager
-import com.tgt.lists.atlas.api.domain.UpdateCartManager
-import com.tgt.lists.atlas.api.transport.*
-import com.tgt.lists.atlas.api.util.*
+import com.tgt.lists.atlas.api.domain.EventPublisher
+import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.transport.ListResponseTO
+import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
+import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.getUserMetaDataFromMetadataMap
+import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toListResponseTO
+import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toUpdateListEntity
+import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -17,9 +18,9 @@ import javax.inject.Singleton
 
 @Singleton
 class UpdateListService(
-    @CartManagerName("UpdateListService") @Inject private val cartManager: CartManager,
+    @Inject private val listRepository: ListRepository,
     @Inject private val defaultListManager: DefaultListManager,
-    @Inject private val updateCartManager: UpdateCartManager
+    @Inject private val eventPublisher: EventPublisher
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -32,41 +33,45 @@ class UpdateListService(
         logger.debug("[updateList] guestId: $guestId, listId: $listId")
 
         return defaultListManager.processDefaultListInd(guestId, listUpdateRequestTO.validate().defaultList ?: false, listId)
-            .flatMap { processListUpdate(guestId, listId, listUpdateRequestTO) }
+            .flatMap { processListUpdate(listId, listUpdateRequestTO) }
     }
 
-    private fun processListUpdate(guestId: String, listId: UUID, listUpdateRequestTO: ListUpdateRequestTO): Mono<ListResponseTO> {
-        return cartManager.getListCartContents(listId, false)
-                .flatMap { toCartPutRequest(it, listUpdateRequestTO) }
-                .flatMap { updateCartManager.updateCart(guestId = guestId, cartId = listId, cartPutRequest = it) }
+    private fun processListUpdate(listId: UUID, listUpdateRequestTO: ListUpdateRequestTO): Mono<ListResponseTO> {
+        return listRepository.findListById(listId)
+                .flatMap {
+                    val existingListEntity = it
+                    updateListEntity(existingListEntity, listUpdateRequestTO)
+                }
+                .flatMap {
+                    val existingListEntity = it.first
+                    val updatedListEntity = it.second
+                    persistUpdatedListEntity(existingListEntity, updatedListEntity)
+                }
                 .map { toListResponseTO(it) }
     }
 
-    private fun toCartPutRequest(cartContentsResponse: CartContentsResponse, listUpdateRequest: ListUpdateRequestTO): Mono<CartPutRequest> {
-        val cartResponse = cartContentsResponse.cart ?: throw BadRequestException(AppErrorCodes.BAD_REQUEST_ERROR_CODE(listOf("Cart not found")))
-        val cartMetadata = cartResponse.metadata
-        val listMetadata = getListMetaDataFromCart(cartMetadata)
-        val userMetadata = getUserMetaDataFromCart(cartMetadata)
-        userMetadata?.let { listUpdateRequest.userMetaDataTransformationStep?.let {
-            return it.execute(userMetadata)
-                    .map {
-                        val metaData = it
-                        createCartPutRequest(listUpdateRequest, listMetadata, metaData, cartResponse)
-                    }
-        } }
+    private fun updateListEntity(existingListEntity: ListEntity, listUpdateRequestTO: ListUpdateRequestTO): Mono<Pair<ListEntity, ListEntity>> {
+        val existingUserMetadata = getUserMetaDataFromMetadataMap(existingListEntity.metadata)
 
-        return Mono.just(createCartPutRequest(listUpdateRequest, listMetadata, userMetadata, cartResponse))
+        existingUserMetadata?.let {
+            listUpdateRequestTO.userMetaDataTransformationStep?.let {
+                return it.execute(existingUserMetadata)
+                        .map {
+                            val updatedMetaData = it
+                            toUpdateListEntity(existingListEntity, updatedMetaData, listUpdateRequestTO)
+                        }
+            }
+        }
+        return Mono.just(toUpdateListEntity(existingListEntity, existingUserMetadata, listUpdateRequestTO))
     }
 
-    private fun createCartPutRequest(listUpdateRequest: ListUpdateRequestTO, listMetadata: ListMetaDataTO, metaData: UserMetaDataTO?, cartResponse: CartResponse): CartPutRequest {
-        val updatedListMetaData = setCartMetaDataFromList(
-                defaultList = listUpdateRequest.defaultList ?: (listMetadata.defaultList),
-                tenantMetaData = metaData?.userMetaData
-        )
-
-        return CartPutRequest(
-                tenantCartName = listUpdateRequest.listTitle ?: cartResponse.tenantCartName,
-                tenantCartDescription = listUpdateRequest.shortDescription ?: cartResponse.tenantCartDescription,
-                metadata = updatedListMetaData)
+    private fun persistUpdatedListEntity(existingListEntity: ListEntity, updatedListEntity: ListEntity): Mono<ListEntity> {
+        return listRepository.updateList(existingListEntity, updatedListEntity)
+                .zipWhen {
+                    val userMetaDataTO = getUserMetaDataFromMetadataMap(it.metadata)
+                    eventPublisher.publishEvent(UpdateListNotifyEvent.getEventType(),
+                            UpdateListNotifyEvent(it.guestId!!, it.id!!, it.type!!, it.title, userMetaDataTO?.userMetaData), it.guestId!!)
+                }
+                .map { it.t1 }
     }
 }

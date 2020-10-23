@@ -42,5 +42,11 @@
         <Logger name="com.tgt.lists.api.persistence" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="com.datastax.oss" level="INFO" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="com.tgt.lists.micronaut.cassandra" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
     </Loggers>
 </Configuration>

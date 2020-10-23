@@ -21,9 +21,9 @@ class BaseFunctionalTest extends Specification implements TestPropertyProvider {
     // rinscy/cassandra has ~11 seconds faster startup
     static GenericContainer cassandra =
             new CassandraContainer("rinscy/cassandra:3.11")
-                    .withClasspathResourceMapping("cassandra.yaml",
-                            "/app/cassandra.yaml", BindMode.READ_ONLY)
-                    .withCommand("-Dcassandra.config=/app/cassandra.yaml")
+//                    .withClasspathResourceMapping("cassandra.yaml",
+//                            "/app/cassandra.yaml", BindMode.READ_ONLY)
+//                    .withCommand("-Dcassandra.config=/app/cassandra.yaml")
 
     @Shared
     static boolean cassandraStarted = false
@@ -48,7 +48,7 @@ class BaseFunctionalTest extends Specification implements TestPropertyProvider {
             if (!cassandraStarted) {
                 cassandra.start()
                 cassandraStarted = true
-                sleep(8000) // delay required with cassandra authentication for test to work
+//                sleep(8000) // delay required with cassandra authentication for test to work
             }
             def mappedPort = cassandra.getMappedPort(9042)
             contactPoints = "127.0.0.1:${mappedPort}"

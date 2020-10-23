@@ -26,10 +26,10 @@ lists-cassandra:
 cassandra:
   default:
     advanced:
-      auth-provider:
-        class: PlainTextAuthProvider
-        username: cassandra
-        password: cassandra
+#      auth-provider:
+#        class: PlainTextAuthProvider
+#        username: cassandra
+#        password: cassandra
       metadata:
         schema:
           enabled: false # keep it disabled for tests to improve startup performance of short lived sessions

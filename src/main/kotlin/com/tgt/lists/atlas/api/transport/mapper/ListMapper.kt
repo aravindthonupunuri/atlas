@@ -36,11 +36,23 @@ class ListMapper {
                     location = listRequestTO.locationId.toString(),
                     agentId = listRequestTO.agentId,
                     metadata = mapper.writeValueAsString(listRequestTO.metadata),
-                    state = LIST_STATE.ACTIVE.value,
+                    state = LIST_STATE.ACTIVE.value, // TODO should we default it to Inactive?
                     expiration = getExpirationDate(now, expirationDays),
                     createdAt = now,
                     updatedAt = now,
                     testList = testList)
+        }
+
+        fun toUpdateListEntity(existingEntity: ListEntity, updatedMetaData: UserMetaDataTO?, listUpdateRequestTO: ListUpdateRequestTO): Pair<ListEntity, ListEntity> {
+            // TODO revisit this once all the attributes are set
+            return Pair(existingEntity, existingEntity.copy(
+                    title = listUpdateRequestTO.listTitle ?: existingEntity.title,
+                    description = listUpdateRequestTO.shortDescription ?: existingEntity.description,
+                    marker = if (listUpdateRequestTO.defaultList != null && listUpdateRequestTO.defaultList) LIST_MARKER.DEFAULT.value
+                    else existingEntity.marker,
+                    notes = listUpdateRequestTO.shortDescription ?: existingEntity.notes,
+                    state = existingEntity.state,
+                    metadata = mapper.writeValueAsString(updatedMetaData?.userMetaData)))
         }
 
         fun setMetadataMapFromList(tenantMetaData: Map<String, Any>? = null): MetadataMap {

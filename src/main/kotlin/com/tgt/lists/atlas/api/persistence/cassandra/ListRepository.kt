@@ -11,7 +11,6 @@ import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
 import com.tgt.lists.micronaut.cassandra.BatchExecutor
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 import java.time.ZonedDateTime
 import java.util.*
 import javax.inject.Singleton
@@ -46,9 +45,51 @@ class ListRepository(
                 listDAO.saveList(listEntity),
                 guestListDAO.saveGuestList(guestListEntity)
         )
-        return Mono.from(batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveList")).map {
-            listEntity
-        }
+        return batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveList")
+                .map { listEntity }
+    }
+
+    fun updateList(existingListEntity: ListEntity, updatedListEntity: ListEntity): Mono<ListEntity> {
+        // existing list update
+        updatedListEntity.updatedAt = ZonedDateTime.now().toInstant()
+
+        val updatedGuestListEntity = GuestListEntity(
+                guestId = updatedListEntity.guestId,
+                type = updatedListEntity.type,
+                subtype = updatedListEntity.subtype,
+                marker = updatedListEntity.marker,
+                id = updatedListEntity.id,
+                state = updatedListEntity.state
+        )
+
+        val batchStmts = mutableListOf<BatchableStatement<*>>(
+                listDAO.saveList(updatedListEntity)
+        )
+
+        // add saveGuestList statement iff either marker OR state has changed against existing value
+        return Mono.from(guestListDAO.findGuestListById(
+                existingListEntity.guestId!!,
+                existingListEntity.type!!,
+                existingListEntity.subtype!!,
+                existingListEntity.marker!!,
+                existingListEntity.id!!)
+        )
+                .flatMap {
+                    val existingGuestListEntity = it
+                    if (existingGuestListEntity.state != updatedGuestListEntity.state ||
+                            existingGuestListEntity.marker != updatedGuestListEntity.marker) {
+                        // marker is a ClusteringColumn and update statement isn't supported so delete and save are added to batch execution
+                        batchStmts.add(guestListDAO.deleteByIdForId(
+                                existingGuestListEntity.guestId,
+                                existingGuestListEntity.type,
+                                existingGuestListEntity.subtype,
+                                existingGuestListEntity.marker,
+                                existingGuestListEntity.id))
+                        batchStmts.add(guestListDAO.saveGuestList(updatedGuestListEntity))
+                    }
+                    batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "updateList")
+                            .map { updatedListEntity }
+                }
     }
 
     fun saveListItem(listItemEntity: ListItemEntity): Mono<ListItemEntity> {
@@ -99,8 +140,7 @@ class ListRepository(
                 listDAO.deleteList(listEntity),
                 guestListDAO.deleteByIdForId(listEntity.guestId!!, listEntity.type!!, listEntity.subtype!!, listEntity.marker!!, listEntity.id!!)
         )
-        return Mono.from(batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteList"))
+        return batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteList")
                 .map { listEntity }
-                .switchIfEmpty { Mono.just(listEntity) }
     }
 }
