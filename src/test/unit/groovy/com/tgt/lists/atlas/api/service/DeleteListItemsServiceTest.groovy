@@ -11,6 +11,7 @@ import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.util.CartDataProvider
 import com.tgt.lists.atlas.util.ListDataProvider
+import com.tgt.lists.common.components.exception.BadRequestException
 import org.apache.kafka.clients.producer.RecordMetadata
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -205,7 +206,7 @@ class DeleteListItemsServiceTest extends Specification {
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, listItemId3, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1236", "1236", null, 1, "notes3")
 
         when:
-        def actual = deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], ItemIncludeFields.ALL).block()
+        def actual = deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], null).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
@@ -229,7 +230,7 @@ class DeleteListItemsServiceTest extends Specification {
         def listItemId2 = Uuids.timeBased()
 
         when:
-        deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], ItemIncludeFields.ALL).block()
+        deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], null).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.error(new RuntimeException("some error"))
@@ -273,7 +274,7 @@ class DeleteListItemsServiceTest extends Specification {
         def listItemId2 = Uuids.timeBased()
 
         when:
-        def actual = deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], ItemIncludeFields.ALL).block()
+        def actual = deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], null).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
@@ -282,4 +283,16 @@ class DeleteListItemsServiceTest extends Specification {
         actual.itemIds.size() == 0
     }
 
+    def "Test delete items  when both itemIds and itemIncludeFields given"() {
+        given:
+        def listId = Uuids.timeBased()
+        def listItemId1 = Uuids.timeBased()
+        def listItemId2 = Uuids.timeBased()
+
+        when:
+        deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], ItemIncludeFields.ALL).block()
+
+        then:
+        thrown(BadRequestException)
+    }
 }

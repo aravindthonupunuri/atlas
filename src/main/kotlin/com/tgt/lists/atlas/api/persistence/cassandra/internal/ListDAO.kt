@@ -7,7 +7,6 @@ import com.datastax.oss.driver.api.mapper.annotations.*
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
-import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.micronaut.cassandra.ICassandraDao
 import java.util.*
 
@@ -39,7 +38,7 @@ interface ListDAO : ICassandraDao {
     fun findListItemsByListIdAndItemState(id: UUID, itemState: String): MappedReactiveResultSet<ListItemEntity>
 
     @Select
-    fun findListItemByItemId(id: UUID, itemState: String, itemId: UUID): MappedReactiveResultSet<ListItemExtEntity>
+    fun findListItemByItemId(id: UUID, itemState: String, itemId: UUID): MappedReactiveResultSet<ListItemEntity>
 
     @Delete
     fun deleteList(listEntity: ListEntity): BoundStatement

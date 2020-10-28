@@ -26,7 +26,7 @@ class DeleteListItemsManager(
         listItems: List<ListItemEntity>
     ): Mono<List<ListItemEntity>> {
         return if (listItems.isNullOrEmpty()) {
-            logger.debug("[insertListItems] guestId: $guestId listId:$listId, No list items to delete")
+            logger.debug("[deleteListItems] guestId: $guestId listId:$listId, No list items to delete")
             Mono.just(emptyList())
         } else {
             logger.debug("[deleteListItems] guestId: $guestId listId:$listId")

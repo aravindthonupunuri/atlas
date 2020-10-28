@@ -1,13 +1,10 @@
 package com.tgt.lists.atlas.api.service
 
-import com.tgt.lists.common.components.exception.ResourceNotFoundException
-import com.tgt.lists.atlas.api.domain.CartManager
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
-import com.tgt.lists.atlas.api.transport.toListItemResponseTO
-import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.CartManagerName
+import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListItemResponseTO
 import com.tgt.lists.atlas.api.util.GuestId
-import io.micronaut.context.annotation.Value
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
@@ -16,10 +13,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GetListItemService(
-    @CartManagerName("GetListItemService") @Inject private val cartManager: CartManager,
-    @Value("\${list.features.two-carts}") private val isTwoCartsEnabled: Boolean
-) {
+class GetListItemService(@Inject private val listRepository: ListRepository) {
 
     private val logger = KotlinLogging.logger {}
 
@@ -32,17 +26,10 @@ class GetListItemService(
 
         logger.debug("[getListItem] guestId: $guestId, listId: $listId, listItemId: $listItemId, locationId: $locationId")
 
-        return cartManager.getCartItem(cartItemId = listItemId, cartId = listId)
+        return listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name, listItemId)
                 .switchIfEmpty {
-                    logger.error { "Item is not found in pending list trying to fetch from completed list" }
-                    if (!isTwoCartsEnabled) {
-                        throw ResourceNotFoundException(AppErrorCodes.RESOURCE_NOT_FOUND_ERROR_CODE(listOf("ListItemId: $listItemId not found in List: $listId")))
-                    }
-                    cartManager.getItemInCompletedCart(listId, listItemId)
-                            .switchIfEmpty {
-                                logger.error { "Item  not found in completed list" }
-                                throw ResourceNotFoundException(AppErrorCodes.RESOURCE_NOT_FOUND_ERROR_CODE(listOf("ListItemId: $listItemId not found with List: $listId")))
-                            }
+                    logger.debug { "Item is not found in pending state, check for item in completed state" }
+                    listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name, listItemId)
                 }
                 .map { toListItemResponseTO(it) }
     }

@@ -4,7 +4,6 @@ import com.datastax.oss.driver.api.core.cql.BatchableStatement
 import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
-import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.DataContextContainerManager
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.GuestListDAO
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
@@ -92,6 +91,19 @@ class ListRepository(
                 }
     }
 
+    fun updateListItem(updatedListItemEntity: ListItemEntity, existingListItemEntity: ListItemEntity?): Mono<ListItemEntity> {
+        // existing list item update
+        updatedListItemEntity.itemUpdatedAt = ZonedDateTime.now().toInstant()
+        return if (existingListItemEntity != null && existingListItemEntity.itemState != updatedListItemEntity.itemState) {
+            val batchStmts = arrayListOf<BatchableStatement<*>>()
+            batchStmts.add(listDAO.deleteListItemBatch(existingListItemEntity))
+            batchStmts.add(listDAO.saveListItemBatch(updatedListItemEntity.validate()))
+            batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "updateListItem")
+        } else {
+            Mono.from(listDAO.saveListItem(updatedListItemEntity.validate()))
+        }.map { updatedListItemEntity }
+    }
+
     fun saveListItems(listItemsEntity: List<ListItemEntity>): Mono<List<ListItemEntity>> {
         val now = ZonedDateTime.now()
         val items = arrayListOf<ListItemEntity>()
@@ -107,10 +119,10 @@ class ListRepository(
 
         return if (items.size > 1) {
             val batchStmts = arrayListOf<BatchableStatement<*>>()
-            listItemsEntity.map { batchStmts.add(listDAO.saveListItemBatch(it)) }
+            listItemsEntity.map { batchStmts.add(listDAO.saveListItemBatch(it.validate())) }
             batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveListItems")
         } else {
-            Mono.from(listDAO.saveListItem(listItemsEntity.first()))
+            Mono.from(listDAO.saveListItem(listItemsEntity.first().validate()))
         }.map { items.toList() }
     }
 
@@ -134,7 +146,7 @@ class ListRepository(
         return Flux.from(listDAO.findListItemsByListIdAndItemState(listId, itemState))
     }
 
-    fun findListItemByItemId(listId: UUID, itemState: String, itemId: UUID): Mono<ListItemExtEntity> {
+    fun findListItemByItemId(listId: UUID, itemState: String, itemId: UUID): Mono<ListItemEntity> {
         return Mono.from(listDAO.findListItemByItemId(listId, itemState, itemId))
     }
 

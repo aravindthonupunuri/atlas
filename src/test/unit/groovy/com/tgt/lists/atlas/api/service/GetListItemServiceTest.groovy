@@ -1,14 +1,12 @@
 package com.tgt.lists.atlas.api.service
 
-
-import com.tgt.lists.atlas.api.domain.CartManager
-import com.tgt.lists.atlas.api.domain.ContextContainerManager
-import com.tgt.lists.atlas.api.transport.ListItemMetaDataTO
-import com.tgt.lists.atlas.api.transport.UserItemMetaDataTO
+import com.datastax.oss.driver.api.core.uuid.Uuids
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.util.CartDataProvider
-import com.tgt.lists.atlas.util.TestListChannel
+import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
@@ -16,163 +14,106 @@ class GetListItemServiceTest extends Specification {
 
     GetListItemService getListItemService
     CartDataProvider cartDataProvider
-    ContextContainerManager contextContainerManager
-    CartManager cartManager
+    ListRepository listRepository
+    ListDataProvider listDataProvider
 
     String guestId = "1234"
     Long locationId= 1375
 
     def setup() {
-        contextContainerManager = new ContextContainerManager()
-        cartManager = Mock(CartManager)
-        getListItemService = new GetListItemService(cartManager, true)
+        listRepository = Mock(ListRepository)
+        getListItemService = new GetListItemService(listRepository)
         cartDataProvider = new CartDataProvider()
+        listDataProvider = new ListDataProvider()
     }
 
     def "test getListItemService() integrity"() {
         given:
-        def listId = UUID.randomUUID()
-        def listItemId = UUID.randomUUID()
-        def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def listId = Uuids.timeBased()
+        def listItemId = Uuids.timeBased()
+        def tcin = "1234"
+        def tenantRefId = cartDataProvider.getItemRefId(ItemType.TCIN, tcin)
 
-        ListItemMetaDataTO itemMetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        def cartItemResponse = cartDataProvider.getCartItemResponse(listId, listItemId, tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            null, 1, "test item", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData, new UserItemMetaDataTO()), null, null, null)
-        def listItemMetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse.metadata)
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId, tcin, null, 1, "notes1")
 
         when:
         def actual = getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * cartManager.getCartItem(_ ,_) >> Mono.just(cartItemResponse)
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.just(listItemEntity)
 
-        actual.listItemId == cartItemResponse.cartItemId
-        actual.tcin == cartItemResponse.tcin
-        actual.itemTitle == cartItemResponse.tenantItemName
-        actual.itemNote == cartItemResponse.notes
-        actual.price == cartItemResponse.price
-        actual.listPrice == cartItemResponse.listPrice
-        actual.images == cartItemResponse.images
-        actual.itemType == listItemMetaData.itemType
+        actual.listItemId == listItemEntity.itemId
+        actual.tcin == listItemEntity.itemTcin
+        actual.itemTitle == listItemEntity.itemTitle
+        actual.itemNote == listItemEntity.itemNotes
+        actual.itemType.toString() == listItemEntity.itemType
     }
 
-    def "test getListItemService() when there is no placements"() {
+    def "test getListItemService() when item in completed state"() {
         given:
-        def listId = UUID.randomUUID()
-        def listItemId = UUID.randomUUID()
-        def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def listId = Uuids.timeBased()
+        def listItemId = Uuids.timeBased()
+        def tcin = "1234"
+        def tenantRefId = cartDataProvider.getItemRefId(ItemType.TCIN, tcin)
 
-        ListItemMetaDataTO itemMetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        def cartItemResponse = cartDataProvider.getCartItemResponse(listId, listItemId, tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-                null, 1, "test item", 10, 10, "Stand Alone", "READY",
-                "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData, new UserItemMetaDataTO()), null, null, null)
-        def listItemMetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse.metadata)
-
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId, tcin, null, 1, "notes1")
 
         when:
         def actual = getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * cartManager.getCartItem(_ ,_) >> Mono.just(cartItemResponse)
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.empty()
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name(), listItemId) >> Mono.just(listItemEntity)
 
-        actual.listItemId == cartItemResponse.cartItemId
-        actual.tcin == cartItemResponse.tcin
-        actual.itemTitle == cartItemResponse.tenantItemName
-        actual.itemNote == cartItemResponse.notes
-        actual.price == cartItemResponse.price
-        actual.listPrice == cartItemResponse.listPrice
-        actual.images == cartItemResponse.images
-        actual.itemType == listItemMetaData.itemType
+
+        actual.listItemId == listItemEntity.itemId
+        actual.tcin == listItemEntity.itemTcin
+        actual.itemTitle == listItemEntity.itemTitle
+        actual.itemNote == listItemEntity.itemNotes
+        actual.itemType.toString() == listItemEntity.itemType
     }
 
-    def "test getListItemService() with store in placements call error"() {
+    def "test getListItemService() when item not found in list"() {
         given:
-        def listId = UUID.randomUUID()
-        def listItemId = UUID.randomUUID()
-        def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
-
-        ListItemMetaDataTO itemMetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        def cartItemResponse = cartDataProvider.getCartItemResponse(listId, listItemId, tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            null, 1, "test item", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData, new UserItemMetaDataTO()), null, null, null)
-        def listItemMetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse.metadata)
+        def listId = Uuids.timeBased()
+        def listItemId = Uuids.timeBased()
 
         when:
         def actual = getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * cartManager.getCartItem(_ ,_) >> Mono.just(cartItemResponse)
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.empty()
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name(), listItemId) >> Mono.empty()
 
-        actual.listItemId == cartItemResponse.cartItemId
-        actual.tcin == cartItemResponse.tcin
-        actual.itemTitle == cartItemResponse.tenantItemName
-        actual.itemNote == cartItemResponse.notes
-        actual.price == cartItemResponse.price
-        actual.listPrice == cartItemResponse.listPrice
-        actual.images == cartItemResponse.images
-        actual.itemType == listItemMetaData.itemType
+        actual == null
     }
 
-    def "test getListItemService() with a parent item"() {
+    def "test getListItemService() exception getting item in pending state"() {
         given:
-        def listId = UUID.randomUUID()
-        def listItemId = UUID.randomUUID()
-        def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
-
-        ListItemMetaDataTO itemMetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        def cartItemResponse = cartDataProvider.getCartItemResponse(listId, listItemId, tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            null, 1, "test item", 10, 10, "Variation Parent w/in Collection", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData, new UserItemMetaDataTO()), null, null, null)
-        def listItemMetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse.metadata)
+        def listId = Uuids.timeBased()
+        def listItemId = Uuids.timeBased()
 
         when:
-        def actual = getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
+        getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * cartManager.getCartItem(_ ,_) >> Mono.just(cartItemResponse)
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.error(new RuntimeException("some error"))
 
-        actual.listItemId == cartItemResponse.cartItemId
-        actual.tcin == cartItemResponse.tcin
-        actual.itemTitle == cartItemResponse.tenantItemName
-        actual.itemNote == cartItemResponse.notes
-        actual.price == cartItemResponse.price
-        actual.listPrice == cartItemResponse.listPrice
-        actual.images == cartItemResponse.images
-        actual.itemType == listItemMetaData.itemType
+        thrown(RuntimeException)
     }
 
-    def "test getListItemService() for getting an item from completed_list_items"() {
+    def "test getListItemService() exception getting item in completed state"() {
         given:
-        def listId = UUID.randomUUID()
-        def listItemId = UUID.randomUUID()
-        def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
-
-        ListItemMetaDataTO itemMetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
-        def cartItemResponse = cartDataProvider.getCartItemResponse(listId, listItemId, tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-                null, 1, "test item", 10, 10, "Variation Parent w/in Collection", "READY",
-                "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData, new UserItemMetaDataTO()), null, null, null)
-        def listItemMetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse.metadata)
+        def listId = Uuids.timeBased()
+        def listItemId = Uuids.timeBased()
 
         when:
-        def actual = getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
+        getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * cartManager.getCartItem(listId, _) >> Mono.empty()
-        1 * cartManager.getItemInCompletedCart(listId, listItemId) >> Mono.just(cartItemResponse)
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.empty()
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name(), listItemId) >> Mono.error(new RuntimeException("some error"))
 
-        actual.listItemId == cartItemResponse.cartItemId
-        actual.tcin == cartItemResponse.tcin
-        actual.itemTitle == cartItemResponse.tenantItemName
-        actual.itemNote == cartItemResponse.notes
-        actual.price == cartItemResponse.price
-        actual.listPrice == cartItemResponse.listPrice
-        actual.images == cartItemResponse.images
-        actual.itemType == listItemMetaData.itemType
+        thrown(RuntimeException)
     }
 }

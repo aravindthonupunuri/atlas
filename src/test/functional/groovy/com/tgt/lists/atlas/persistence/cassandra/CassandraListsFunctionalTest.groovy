@@ -70,9 +70,9 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         listIds[3]   | "essentials" | listTypes[3] | listSubtypes[3] | guestIds[3] | listMarkers[3]
     }
 
-    def "test add weekly list items #itemRefId"() {
+    def "test add weekly list item"() {
         given:
-        ListItemEntity listItemEntity = dataProvider.createListItemEntity(listIds[0], listItemIds[0], "PENDING", "tcin",  "52829076", null, null, null, null)
+        ListItemEntity listItemEntity = dataProvider.createListItemEntity(listIds[0], listItemIds[0], "PENDING", "TCIN",  "52829076", "1234", null, null, null)
 
         when:
         listsRepository.saveListItems([listItemEntity]).block()
@@ -81,11 +81,11 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         notThrown(Throwable)
     }
 
-    def "test add weekly list items by batch #itemRefId"() {
+    def "test add weekly list items by batch"() {
         given:
-        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], "PENDING", "tcin", "15833332", null, null, null, null)
-        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[2], "COMPLETED", "generic", "coffee", null, null, null, null)
-        ListItemEntity listItemEntity3 = dataProvider.createListItemEntity(listIds[0], listItemIds[3], "COMPLETED", "offer", "100000", null, null, null, null)
+        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], "PENDING", "TCIN", "15833332", "4567", null, null, null)
+        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[2], "COMPLETED", "GENERIC_ITEM", "coffee", null, "title", null, null)
+        ListItemEntity listItemEntity3 = dataProvider.createListItemEntity(listIds[0], listItemIds[3], "COMPLETED", "OFFER", "100000", null, null, null, null)
 
 
         when:
@@ -136,12 +136,11 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         def itemId = listItemIds[0]
 
         when:
-        ListItemExtEntity listItemExtEntity = listsRepository.findListItemByItemId(listId, itemState, itemId).block()
+        ListItemEntity listItemEntity = listsRepository.findListItemByItemId(listId, itemState, itemId).block()
 
         then:
-        listItemExtEntity != null
-        listItemExtEntity.title == "weekly"
-        listItemExtEntity.itemRefId == "52829076"
+        listItemEntity != null
+        listItemEntity.itemRefId == "52829076"
     }
 
     def "test get guest listid by list marker"() {
@@ -233,8 +232,8 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
     def "test delete weekly list items by batch"() {
         given:
-        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[0], "PENDING", "tcin",  "52829076", null, null, null, null)
-        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], "PENDING", "tcin", "15833332", null, null, null, null)
+        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[0], "PENDING", "TCIN",  "52829076", "1234", null, null, null)
+        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], "PENDING", "TCIN", "15833332", "4567", null, null, null)
 
         when:
         List<ListItemEntity> deletedListItems = listsRepository.deleteListItems([listItemEntity1, listItemEntity2]).block()

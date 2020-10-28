@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
+import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
 import com.tgt.lists.atlas.api.transport.UserItemMetaDataTO
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
@@ -31,7 +32,7 @@ class ListItemMapper {
                     itemId = Uuids.timeBased(),
                     itemRefId = listItemRequestTO.itemRefId,
                     itemType = listItemRequestTO.itemType.name,
-                    itemTcin = listItemRequestTO.tcin,
+                    itemTcin = listItemRequestTO.tcin?.trim(),
                     itemTitle = listItemRequestTO.itemTitle,
                     itemDpci = null,
                     itemBarcode = null,
@@ -47,7 +48,34 @@ class ListItemMapper {
                     itemUpdatedAt = now)
         }
 
-        private fun getUserItemMetaDataFromMetadataMap(userItemMetaData: String?): UserItemMetaDataTO? {
+        fun toUpdateListItemEntity(
+            existingListItemEntity: ListItemEntity,
+            listItemUpdateRequestTO: ListItemUpdateRequestTO
+        ): ListItemEntity {
+
+            return ListItemEntity(
+                    id = existingListItemEntity.id,
+                    itemState = listItemUpdateRequestTO.itemState?.name ?: existingListItemEntity.itemState,
+                    itemId = existingListItemEntity.itemId,
+                    itemRefId = existingListItemEntity.itemRefId,
+                    itemType = existingListItemEntity.itemType,
+                    itemTcin = existingListItemEntity.itemTcin,
+                    itemTitle = listItemUpdateRequestTO.itemTitle,
+                    itemDpci = existingListItemEntity.itemDpci,
+                    itemBarcode = existingListItemEntity.itemBarcode,
+                    itemDesc = existingListItemEntity.itemDesc,
+                    itemChannel = existingListItemEntity.itemChannel,
+                    itemSubchannel = existingListItemEntity.itemSubchannel,
+                    itemMetadata = listItemUpdateRequestTO.metadata.let { mapper.writeValueAsString(listItemUpdateRequestTO.metadata) } ?: existingListItemEntity.itemMetadata,
+                    itemNotes = listItemUpdateRequestTO.itemNote ?: existingListItemEntity.itemNotes,
+                    itemQty = existingListItemEntity.itemQty,
+                    itemQtyUom = existingListItemEntity.itemQtyUom,
+                    itemReqQty = listItemUpdateRequestTO.requestedQuantity ?: existingListItemEntity.itemReqQty,
+                    itemCreatedAt = existingListItemEntity.itemCreatedAt,
+                    itemUpdatedAt = existingListItemEntity.itemUpdatedAt)
+        }
+
+        fun getUserItemMetaDataFromMetadataMap(userItemMetaData: String?): UserItemMetaDataTO? {
             var metadata: UserItemMetaDataTO? = userItemMetaData?.let { mapper.readValue<UserItemMetaDataTO>(it) }
             if (metadata == null) {
                 metadata = UserItemMetaDataTO()

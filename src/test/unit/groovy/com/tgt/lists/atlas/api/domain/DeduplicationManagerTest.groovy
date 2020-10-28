@@ -22,18 +22,17 @@ class DeduplicationManagerTest extends Specification {
     ListRepository listRepository
     DeduplicationManager deduplicationManager
     DeleteListItemsManager deleteListItemsManager
-    InsertListItemsManager insertListItemsManager
+    UpdateListItemManager updateListItemManager
     CartDataProvider cartDataProvider
     ListDataProvider listDataProvider
     String guestId = "1234"
-    Long locationId = 1375L
 
     def setup() {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
         deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
-        insertListItemsManager = new InsertListItemsManager(listRepository, eventPublisher)
-        deduplicationManager = new DeduplicationManager(listRepository, insertListItemsManager, deleteListItemsManager, true, 5, 5, false)
+        updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
+        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager, true, 5, 5, false)
         cartDataProvider = new CartDataProvider()
         listDataProvider = new ListDataProvider()
     }
@@ -55,7 +54,7 @@ class DeduplicationManagerTest extends Specification {
         actual.second.isEmpty()
     }
 
-    def "Test checkIfItemPreExist() with no matching pending items"() {
+    def "Test updateDuplicateItems() with no matching pending items"() {
         given:
         def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
                 "itemNote", 1, UnitOfMeasure.EACHES, null)
@@ -76,7 +75,7 @@ class DeduplicationManagerTest extends Specification {
         actual.second.isEmpty()
     }
 
-    def "Test checkIfItemPreExist() with no matching item type to dedup, so skipping dedup"() {
+    def "Test updateDuplicateItems() with no matching item type to dedup, so skipping dedup"() {
         given:
         def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
                 "itemNote", 1, UnitOfMeasure.EACHES, null)
@@ -84,7 +83,7 @@ class DeduplicationManagerTest extends Specification {
         def listId = UUID.randomUUID()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.GENERIC_ITEM.name(), "tcn1234", null, null,
+                LIST_ITEM_STATE.PENDING.name(), ItemType.GENERIC_ITEM.name(), "tcn1234", null, "title",
                 1, "notes1")
 
         when:
@@ -152,7 +151,7 @@ class DeduplicationManagerTest extends Specification {
 
        def recordMetadata = GroovyMock(RecordMetadata)
 
-        deduplicationManager = new DeduplicationManager(listRepository, insertListItemsManager, deleteListItemsManager,
+        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 5, 5, true) // turning on rolling update
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
@@ -190,7 +189,7 @@ class DeduplicationManagerTest extends Specification {
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
-        deduplicationManager = new DeduplicationManager(listRepository, insertListItemsManager, deleteListItemsManager,
+        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 false, 5, 5, true) // turning on rolling update and dedupe turned off
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
@@ -227,7 +226,7 @@ class DeduplicationManagerTest extends Specification {
                 LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "tcn1111", "1111", "new item",
                 1, "newItemNote")
 
-        deduplicationManager = new DeduplicationManager(listRepository, insertListItemsManager, deleteListItemsManager,
+        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 10, 5, true) // turning on rolling update
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
@@ -267,7 +266,7 @@ class DeduplicationManagerTest extends Specification {
                 "new item", listItemRequest1.requestedQuantity + listItemEntity.itemReqQty,
                 "newItemNote\nitemNote")
 
-        deduplicationManager = new DeduplicationManager(listRepository, insertListItemsManager, deleteListItemsManager,
+        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 5, 5, true) // turning on rolling update
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
@@ -275,12 +274,11 @@ class DeduplicationManagerTest extends Specification {
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
         // updating duplicate items
-        1 * listRepository.saveListItems(_ as List<ListItemEntity>) >> { arguments ->
-            final List<ListItemEntity> listItems = arguments[0]
-            assert listItems.size() == 1
-            assert listItems.first().id == listId
-            assert listItems.first().itemReqQty == listItemRequest1.requestedQuantity + listItemEntity.itemReqQty
-            Mono.just([updatedListItemEntity])
+        1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
+            final ListItemEntity listItem = arguments[0]
+            assert listItem.id == listId
+            assert listItem.itemReqQty == listItemRequest1.requestedQuantity + listItemEntity.itemReqQty
+            Mono.just(updatedListItemEntity)
         }
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
@@ -333,17 +331,19 @@ class DeduplicationManagerTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
-        // updating duplicate items
-        1 * listRepository.saveListItems(_ as List<ListItemEntity>) >> { arguments ->
-            final List<ListItemEntity> listItems = arguments[0]
-            assert listItems.size() == 2
-            assert listItems[0].itemId == listItemEntity1.itemId
-            assert listItems[0].itemReqQty == listItemRequest1.requestedQuantity + listItemEntity1.itemReqQty
-            assert listItems[1].itemId == listItemEntity2.itemId
-            assert listItems[1].itemReqQty == listItemRequest3.requestedQuantity + listItemEntity2.itemReqQty + listItemEntity3.itemReqQty
-
-
-            Mono.just([updatedListItemEntity1, updatedListItemEntity2])
+        // updating duplicate item
+        1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
+            final ListItemEntity listItem = arguments[0]
+            assert listItem.itemId == listItemEntity1.itemId
+            assert listItem.itemReqQty == listItemRequest1.requestedQuantity + listItemEntity1.itemReqQty
+            Mono.just(updatedListItemEntity1)
+        }
+        // updating duplicate item
+        1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
+            final ListItemEntity listItem = arguments[0]
+            assert listItem.itemId == listItemEntity2.itemId
+            assert listItem.itemReqQty == listItemRequest3.requestedQuantity + listItemEntity2.itemReqQty + listItemEntity3.itemReqQty
+            Mono.just(updatedListItemEntity2)
         }
         // deleting duplicate items
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->

@@ -8,6 +8,7 @@ import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
@@ -18,7 +19,7 @@ import javax.inject.Singleton
 @Singleton
 class DeduplicationManager(
     @Inject private val listRepository: ListRepository,
-    @Inject private val insertListItemsManager: InsertListItemsManager,
+    @Inject private val updateListItemManager: UpdateListItemManager,
     @Inject private val deleteListItemsManager: DeleteListItemsManager,
     @Value("\${list.features.dedupe}") private val isDedupeEnabled: Boolean,
     @Value("\${list.max-pending-item-count}")
@@ -147,7 +148,8 @@ class DeduplicationManager(
         val itemIdsToDelete = totalItemsToDelete.map { it.itemId!! }
         logger.debug("[updateDuplicateItems] Items to Update: $totalItemsToUpdate ItemIds to delete: $itemIdsToDelete")
 
-        return insertListItemsManager.insertListItems(guestId, listId, totalItemsToUpdate, true)
+        return Flux.fromIterable(totalItemsToUpdate.asIterable())
+                .flatMap { updateListItemManager.updateListItem(guestId, listId, it) }.collectList()
                 .zipWith(deleteListItemsManager.deleteListItems(guestId, listId, totalItemsToDelete))
                 .map { Pair(it.t1, duplicateItemsMap) }
     }

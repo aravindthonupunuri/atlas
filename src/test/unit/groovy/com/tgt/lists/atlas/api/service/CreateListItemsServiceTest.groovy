@@ -11,19 +11,20 @@ import com.tgt.lists.atlas.api.util.UnitOfMeasure
 import com.tgt.lists.atlas.util.CartDataProvider
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.atlas.util.TestListChannel
+import com.tgt.lists.common.components.exception.BadRequestException
 import org.apache.kafka.clients.producer.RecordMetadata
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-class CreateMultipleListItemsServiceTest extends Specification {
+class CreateListItemsServiceTest extends Specification {
 
     EventPublisher eventPublisher
-    AddListItemsManager addListItemsManager
     DeduplicationManager deduplicationManager
     DeleteListItemsManager deleteListItemsManager
-    InsertListItemsManager insertListItemsManager
-    CreateMultipleListItemsService createMultipleListItemsService
+    CreateListItemsManager createListItemsManager
+    UpdateListItemManager updateListItemManager
+    CreateListItemsService createListItemsService
     ListRepository listRepository
     CartDataProvider cartDataProvider
     ListDataProvider listDataProvider
@@ -34,11 +35,11 @@ class CreateMultipleListItemsServiceTest extends Specification {
         eventPublisher = Mock(EventPublisher)
         listRepository = Mock(ListRepository)
         deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
-        insertListItemsManager = new InsertListItemsManager(listRepository, eventPublisher)
-        deduplicationManager = new DeduplicationManager(listRepository, insertListItemsManager, deleteListItemsManager,
+        updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
+        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 10, 10, false)
-        addListItemsManager = new AddListItemsManager(deduplicationManager, insertListItemsManager)
-        createMultipleListItemsService = new CreateMultipleListItemsService(addListItemsManager)
+        createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher)
+        createListItemsService = new CreateListItemsService(createListItemsManager)
         listDataProvider = new ListDataProvider()
         cartDataProvider = new CartDataProvider()
     }
@@ -47,15 +48,15 @@ class CreateMultipleListItemsServiceTest extends Specification {
         given:
         def listId = Uuids.timeBased()
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "5678"
-        def tenantrefId2 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
         def tcin3 = "1000"
-        def tenantrefId3 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin3)
+        def tenantrefId3 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin3)
         def tcin4 = "9999"
-        def tenantrefId4 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin4)
+        def tenantrefId4 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin4)
         def tcin5 = "1111"
-        def tenantrefId5 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin5)
+        def tenantrefId5 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin5)
 
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tenantrefId1, TestListChannel.WEB.toString(), tcin1, null,
                 "test item", null, UnitOfMeasure.EACHES, null)
@@ -84,20 +85,25 @@ class CreateMultipleListItemsServiceTest extends Specification {
 
         def recordMetadata = GroovyMock(RecordMetadata)
         when:
-        def actual = createMultipleListItemsService.createMultipleListItems(guestId, listId, 1357L, itemsToAdd)
+        def actual = createListItemsService.createListItems(guestId, listId, 1357L, itemsToAdd)
                 .block()
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5, listItemEntity6, listItemEntity7)
-        // updating duplicate items
-        1 * listRepository.saveListItems(_ as List<ListItemEntity>) >> { arguments ->
-            final List<ListItemEntity> listItemsEntity = arguments[0]
-            assert listItemsEntity[0].id == listId
-            assert listItemsEntity[0].itemReqQty == listItemEntity1.itemReqQty + listItemEntity2.itemReqQty + 1
-            assert listItemsEntity[1].id == listId
-            assert listItemsEntity[1].itemReqQty == listItemEntity3.itemReqQty + listItemEntity4.itemReqQty + listItemEntity5.itemReqQty + 1
-
-            Mono.just([updatedListItemEntity1, updatedListItemEntity2])
+        // updating duplicate item
+        1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
+            final ListItemEntity listItem = arguments[0]
+            assert listItem.itemId == listItemEntity1.itemId
+            assert listItem.itemReqQty == listItemEntity1.itemReqQty + listItemEntity2.itemReqQty + 1
+            Mono.just(updatedListItemEntity1)
         }
+        // updating duplicate item
+        1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
+            final ListItemEntity listItem = arguments[0]
+            assert listItem.itemId == listItemEntity3.itemId
+            assert listItem.itemReqQty == listItemEntity3.itemReqQty + listItemEntity4.itemReqQty + listItemEntity5.itemReqQty + 1
+            Mono.just(updatedListItemEntity2)
+        }
+
         // deleting duplicate items
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity2, listItemEntity4, listItemEntity5])
         // inserting new items
@@ -111,9 +117,9 @@ class CreateMultipleListItemsServiceTest extends Specification {
         given:
         def listId = Uuids.timeBased()
         def tcin1 = "1234"
-        def tcinTenantRefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tcinTenantRefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def gItem1 = "item2"
-        def gItemTenantrefId1 = cartDataProvider.getTenantRefId(ItemType.GENERIC_ITEM, gItem1)
+        def gItemTenantrefId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
 
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tcinTenantRefId1, TestListChannel.WEB.toString(), tcin1, null,
                 "test item", null, UnitOfMeasure.EACHES, null)
@@ -132,7 +138,7 @@ class CreateMultipleListItemsServiceTest extends Specification {
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:
-        createMultipleListItemsService.createMultipleListItems(guestId, listId, 1357L, itemsToAdd).block()
+        createListItemsService.createListItems(guestId, listId, 1357L, itemsToAdd).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
@@ -140,5 +146,41 @@ class CreateMultipleListItemsServiceTest extends Specification {
         1 * listRepository.saveListItems(_) >> Mono.just([newListItemEntity1, newListItemEntity2])
         // events published
         2 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
+    }
+
+    def "test ListItemRequestTO tcin item with exception"() {
+        given:
+        def tcin1 = "1234"
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+
+        when:
+        new ListItemRequestTO(ItemType.TCIN, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
+                "test item", null, UnitOfMeasure.EACHES, null)
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "test ListItemRequestTO generic item with exception"() {
+        given:
+        def tcin1 = "1234"
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+
+        when:
+        new ListItemRequestTO(ItemType.GENERIC_ITEM, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
+                "test item", null, UnitOfMeasure.EACHES, null)
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "test ListItemRequestTO offer item with exception"() {
+        given:
+        def tcin1 = "1234"
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+
+        when:
+        new ListItemRequestTO(ItemType.OFFER, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
+                "test item", null, UnitOfMeasure.EACHES, null)
+        then:
+        thrown(BadRequestException)
     }
 }

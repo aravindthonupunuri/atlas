@@ -117,7 +117,7 @@ class TOMapperTest extends Specification {
     def "Test toListItemResponseTO() integrity"() {
         given:
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         ListItemMetaDataTO itemMetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
         def cartItemResponse = cartDataProvider.getCartItemResponse(UUID.randomUUID(), UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
             "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",

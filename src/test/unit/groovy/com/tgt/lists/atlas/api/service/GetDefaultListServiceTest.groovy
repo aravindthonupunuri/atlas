@@ -51,9 +51,9 @@ class GetDefaultListServiceTest extends Specification {
         UUID listId2 = UUID.randomUUID()
 
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListMetaDataTO metadata2 = new ListMetaDataTO(false, LIST_STATUS.PENDING)

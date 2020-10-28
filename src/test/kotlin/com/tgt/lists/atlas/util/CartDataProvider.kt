@@ -99,14 +99,6 @@ class CartDataProvider {
             metadata = metadata, serialNumber = serialNumber, createdAt = createdAt, updatedAt = updatedAt, locationId = "1375")
     }
 
-    fun getCartItemDeleteResponse(cartId: UUID, cartItemId: UUID): CartItemDeleteResponse {
-        return CartItemDeleteResponse(cartId = cartId, cartItemId = cartItemId)
-    }
-
-    fun getDeleteMultiCartItemResponse(cartId: UUID, deletedCartItemIds: List<UUID>, failedCartItemIds: List<UUID>? = null): DeleteMultiCartItemsResponse {
-        return DeleteMultiCartItemsResponse(cartId = cartId, deletedCartItemIds = deletedCartItemIds.toTypedArray(), failedCartItemIds = failedCartItemIds?.toTypedArray(), cartContents = null)
-    }
-
     fun getCartResponse(cartId: UUID, guestId: String?, metadata: Map<String, Any>?): CartResponse {
         return CartResponse(cartId = cartId, guestId = guestId, cartChannel = TestListChannel.WEB.name, tenantCartName = cartId.toString(), metadata = metadata, createdAt = LocalDateTime.now().minusDays(1))
     }
@@ -121,14 +113,6 @@ class CartDataProvider {
 
     fun getCartResponse(cartId: UUID, guestId: String?, cartSubChannel: String, cartNumber: String, metadata: Map<String, Any>?): CartResponse {
         return CartResponse(cartId = cartId, guestId = guestId, cartNumber = cartNumber, cartChannel = TestListChannel.WEB.name, cartSubchannel = cartSubChannel, tenantCartName = cartId.toString(), metadata = metadata)
-    }
-
-    fun getCartPutRequest(metadata: Map<String, Any>): CartPutRequest {
-        return CartPutRequest(metadata = metadata)
-    }
-
-    fun getCartPutRequest(tenantCartName: String?, metadata: Map<String, Any>): CartPutRequest {
-        return CartPutRequest(tenantCartName = tenantCartName, metadata = metadata)
     }
 
     fun getCartContentsResponse(cartId: UUID, itemCount: Int): CartContentsResponse {
@@ -164,14 +148,6 @@ class CartDataProvider {
         return eligibleDiscountList.toTypedArray()
     }
 
-    fun getCartDeleteResponse(cartId: UUID): CartDeleteResponse {
-        return CartDeleteResponse(cartId = cartId)
-    }
-
-    fun getCartDeleteRequest(cartId: UUID, forceDeletion: Boolean?): CartDeleteRequest {
-        return CartDeleteRequest(cartId = cartId, forceDeletion = forceDeletion)
-    }
-
     fun getMetaData(listMetadata: ListMetaDataTO, userMetadata: UserMetaDataTO): MutableMap<String, Any> {
         val metadata = mutableMapOf<String, Any>()
 
@@ -191,10 +167,6 @@ class CartDataProvider {
 
     fun getListMetaDataFromCart(cartMetadata: Map<String, Any>?): ListMetaDataTO? {
         return mapper.readValue<ListMetaDataTO>((cartMetadata?.get(Constants.LIST_METADATA) as? String).toString())
-    }
-
-    fun getUserMetaDataFromCart(cartMetadata: Map<String, Any>?): UserMetaDataTO? {
-        return mapper.readValue<UserMetaDataTO>((cartMetadata?.get(Constants.USER_METADATA) as? String).toString())
     }
 
     fun getItemMetaData(listItemMetadata: ListItemMetaDataTO, userItemMetadata: UserItemMetaDataTO): MutableMap<String, Any> {
@@ -219,28 +191,11 @@ class CartDataProvider {
         return mapper.readValue<ListItemMetaDataTO>((cartMetadata?.get(Constants.LIST_ITEM_METADATA) as? String).toString())
     }
 
-    fun getItemUserMetaDataFromCart(cartMetadata: Map<String, Any>?): UserItemMetaDataTO? {
-        return mapper.readValue<UserItemMetaDataTO>((cartMetadata?.get(Constants.USER_ITEM_METADATA) as? String).toString())
-    }
-
-    fun getListItemUpdateRequest(itemState: LIST_ITEM_STATE): ListItemUpdateRequestTO {
-        return ListItemUpdateRequestTO(itemState = itemState)
-    }
-
-    fun getDeleteMultiCartItemsResponse(cartId: UUID, deletedCartItemIds: List<UUID>, failedCartItemIds: List<UUID>): DeleteMultiCartItemsResponse {
-        return DeleteMultiCartItemsResponse(cartId = cartId, deletedCartItemIds = deletedCartItemIds.toTypedArray(),
-            failedCartItemIds = failedCartItemIds.toTypedArray())
-    }
-
     fun getListItemRequestTO(itemType: ItemType, tcin: String, channel: String): ListItemRequestTO {
-        return ListItemRequestTO(itemType = itemType, itemRefId = getTenantRefId(itemType, tcin), channel = channel, tcin = tcin, itemTitle = null)
+        return ListItemRequestTO(itemType = itemType, itemRefId = getItemRefId(itemType, tcin), channel = channel, tcin = tcin, itemTitle = null)
     }
 
-    fun jsonToCartPostRequest(json: String): CartPostRequest {
-        return mapper.readValue<CartPostRequest>(json)
-    }
-
-    fun getTenantRefId(itemType: ItemType, id: String): String {
+    fun getItemRefId(itemType: ItemType, id: String): String {
         return ItemRefIdBuilder.buildItemRefId(itemType, id)
     }
 }

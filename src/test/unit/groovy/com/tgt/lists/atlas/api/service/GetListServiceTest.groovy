@@ -53,9 +53,9 @@ class GetListServiceTest extends Specification {
         UUID completedListId = UUID.randomUUID()
 
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
@@ -130,7 +130,7 @@ class GetListServiceTest extends Specification {
         UUID completedListId = UUID.randomUUID()
 
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
@@ -186,7 +186,7 @@ class GetListServiceTest extends Specification {
         UUID completedListId = UUID.randomUUID()
 
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
         ListItemMetaDataTO item2MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
@@ -216,7 +216,7 @@ class GetListServiceTest extends Specification {
         given:
         UUID listId = UUID.randomUUID()
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
@@ -247,7 +247,7 @@ class GetListServiceTest extends Specification {
         UUID listId = UUID.randomUUID()
         UUID completedListId = UUID.randomUUID()
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
@@ -281,7 +281,7 @@ class GetListServiceTest extends Specification {
         UUID listId = UUID.randomUUID()
         UUID completedListId = UUID.randomUUID()
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
         ListItemMetaDataTO item2MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
@@ -312,7 +312,7 @@ class GetListServiceTest extends Specification {
         UUID listId = UUID.randomUUID()
         UUID completedListId = UUID.randomUUID()
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
@@ -371,7 +371,7 @@ class GetListServiceTest extends Specification {
         UUID listId = UUID.randomUUID()
         UUID completedListId = UUID.randomUUID()
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
@@ -431,7 +431,7 @@ class GetListServiceTest extends Specification {
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListItemMetaDataTO item1MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
             TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
@@ -479,7 +479,7 @@ class GetListServiceTest extends Specification {
         UUID listId = UUID.randomUUID()
         UUID completedListId = UUID.randomUUID()
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
@@ -537,7 +537,7 @@ class GetListServiceTest extends Specification {
         ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
         ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
             TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
@@ -582,7 +582,7 @@ class GetListServiceTest extends Specification {
         ListMetaDataTO completedMetadata = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
         ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         def listId = UUID.randomUUID()
         def completedListId = UUID.randomUUID()
@@ -636,9 +636,9 @@ class GetListServiceTest extends Specification {
         ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
         ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getTenantRefId(ItemType.GENERIC_ITEM, gItem1)
+        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
         def listId = UUID.randomUUID()
 
         def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
@@ -701,9 +701,9 @@ class GetListServiceTest extends Specification {
         ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
         ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getTenantRefId(ItemType.GENERIC_ITEM, gItem1)
+        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
 
         def listId = UUID.randomUUID()
         def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
@@ -767,9 +767,9 @@ class GetListServiceTest extends Specification {
         ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
         def listId = UUID.randomUUID()
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getTenantRefId(ItemType.GENERIC_ITEM, gItem1)
+        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
 
         def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
             TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
@@ -830,9 +830,9 @@ class GetListServiceTest extends Specification {
         ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
         ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getTenantRefId(ItemType.GENERIC_ITEM, gItem1)
+        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
 
         def listId = UUID.randomUUID()
         def cartResponse = cartDataProvider.getCartResponse(listId, guestId, TestListChannel.WEB.toString(), CartType.LIST,
@@ -880,9 +880,9 @@ class GetListServiceTest extends Specification {
         ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
         ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getTenantRefId(ItemType.GENERIC_ITEM, gItem1)
+        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
 
         def listId = UUID.randomUUID()
         def cartResponse = cartDataProvider.getCartResponse(listId, guestId, TestListChannel.WEB.toString(), CartType.LIST,
@@ -929,9 +929,9 @@ class GetListServiceTest extends Specification {
         ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
         ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
         def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getTenantRefId(ItemType.GENERIC_ITEM, gItem1)
+        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
 
         def listId = UUID.randomUUID()
         def cartResponse = cartDataProvider.getCartResponse(listId, guestId, TestListChannel.WEB.toString(), CartType.LIST,
