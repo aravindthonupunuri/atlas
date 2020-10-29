@@ -1,87 +1,68 @@
 package com.tgt.lists.atlas.api.service
 
-import com.tgt.lists.cart.transport.CartType
-import com.tgt.lists.cart.types.SearchCartsFieldGroup
-import com.tgt.lists.cart.types.SearchCartsFieldGroups
-import com.tgt.lists.atlas.api.domain.CartManager
-import com.tgt.lists.atlas.api.domain.ContextContainerManager
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
-import com.tgt.lists.atlas.api.persistence.ListRepository
+import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformationPipeline
 import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformationPipelineConfiguration
 import com.tgt.lists.atlas.api.service.transform.list_items.SortListItemsTransformationConfiguration
 import com.tgt.lists.atlas.api.service.transform.list_items.SortListItemsTransformationStep
-import com.tgt.lists.atlas.api.transport.ListItemMetaDataTO
-import com.tgt.lists.atlas.api.transport.ListMetaDataTO
-import com.tgt.lists.atlas.api.transport.UserItemMetaDataTO
-import com.tgt.lists.atlas.api.transport.UserMetaDataTO
-import com.tgt.lists.atlas.api.util.*
-import com.tgt.lists.atlas.util.CartDataProvider
-import com.tgt.lists.atlas.util.TestListChannel
+import com.tgt.lists.atlas.api.util.ItemIncludeFields
+import com.tgt.lists.atlas.api.util.ItemSortFieldGroup
+import com.tgt.lists.atlas.api.util.ItemSortOrderGroup
+import com.tgt.lists.atlas.api.util.ItemType
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.util.LIST_MARKER
+import com.tgt.lists.atlas.util.ListDataProvider
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-import java.time.LocalDateTime
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class GetListServiceTest extends Specification {
 
     GetListService getListService
-    CartManager cartManager
-    CartDataProvider cartDataProvider
     ListItemSortOrderManager itemSortOrderManager
     ListRepository listRepository
-    ContextContainerManager contextContainerManager
-
+    ListPreferenceRepository listPreferenceRepository
+    ListDataProvider dataProvider
 
     Long locationId = 1375
     String guestId = "1234"
 
     def setup() {
-        cartManager = Mock(CartManager)
+        dataProvider = new ListDataProvider()
         listRepository = Mock(ListRepository)
-        itemSortOrderManager = new ListItemSortOrderManager(listRepository)
-        contextContainerManager = new ContextContainerManager()
+        listPreferenceRepository = Mock(ListPreferenceRepository)
+        itemSortOrderManager = new ListItemSortOrderManager(listPreferenceRepository)
         SortListItemsTransformationConfiguration sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(itemSortOrderManager)
         ListItemsTransformationPipelineConfiguration transformationPipelineConfiguration = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, null)
-        getListService = new GetListService(cartManager, transformationPipelineConfiguration, contextContainerManager, true)
-        cartDataProvider = new CartDataProvider()
+        getListService = new GetListService(listRepository, transformationPipelineConfiguration)
     }
 
-    def "Test getListService() integrity"() {
+    def "Test getListService() integrity ItemIncludeFields = ALL with 1 of each pending and completed"() {
         given:
         UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item1MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        ListItemMetaDataTO item2MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
+        def completedListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
-
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-                "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-                "some-url", "some-image", cartDataProvider.getItemMetaData(item1MetaData, new UserItemMetaDataTO()), null, null, null)
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1])
-
-        def completedCartItemResponse1 = cartDataProvider.getCartItemResponse(completedListId, UUID.randomUUID(), tenantrefId2, TestListChannel.WEB.toString(), tcin2,
-            "tcin 2", 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(item2MetaData, new UserItemMetaDataTO()), null, null, null)
-        def completedCartResult = cartDataProvider.getCartContentsResponse(completedCartResponse, [completedCartItemResponse1])
-
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse1.metadata)
-        def listItem2MetaData = cartDataProvider.getListItemMetaDataFromCart(completedCartItemResponse1.metadata)
-
-        def fieldGroups = new SearchCartsFieldGroups([SearchCartsFieldGroup.CART])
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
         listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
@@ -90,63 +71,47 @@ class GetListServiceTest extends Specification {
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.just(completedCartResult)
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([pendingListEntity, completedListEntity].toArray())
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 1
-        pendingItems[0].listItemId == cartItemResponse1.cartItemId
-        pendingItems[0].tcin == cartItemResponse1.tcin
-        pendingItems[0].itemTitle == cartItemResponse1.shortDescription
-        pendingItems[0].itemNote == cartItemResponse1.notes
-        pendingItems[0].price == cartItemResponse1.price
-        pendingItems[0].listPrice == cartItemResponse1.listPrice
-        pendingItems[0].images == cartItemResponse1.images
-        pendingItems[0].itemType == listItem1MetaData.itemType
+        pendingItems[0].listItemId == listItemEntity1.itemId
+        pendingItems[0].tcin == listItemEntity1.itemTcin
+        pendingItems[0].itemTitle == listItemEntity1.itemTitle
+        pendingItems[0].itemNote == listItemEntity1.itemNotes
+        pendingItems[0].itemType == ItemType.TCIN
 
         def completedItems = actual.completedListItems
         completedItems.size() == 1
-        completedItems[0].listItemId == completedCartItemResponse1.cartItemId
-        completedItems[0].tcin == completedCartItemResponse1.tcin
-        completedItems[0].itemTitle == completedCartItemResponse1.shortDescription
-        completedItems[0].itemNote == completedCartItemResponse1.notes
-        completedItems[0].price == completedCartItemResponse1.price
-        completedItems[0].listPrice == completedCartItemResponse1.listPrice
-        completedItems[0].images == completedCartItemResponse1.images
-        completedItems[0].itemType == listItem2MetaData.itemType
+        completedItems[0].listItemId == listItemEntity2.itemId
+        completedItems[0].tcin == listItemEntity2.itemTcin
+        completedItems[0].itemTitle == listItemEntity2.itemTitle
+        completedItems[0].itemNote == listItemEntity2.itemNotes
+        completedItems[0].itemType == ItemType.TCIN
     }
 
-    def "Test getListService() when getting completed cart contents fails when include items is ALL with 1 pending TCIN item"() {
+    def "Test getListService() ItemIncludeFields = ALL with no pending items"() {
         given:
         UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "1235"
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item1MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
+        def completedListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
-
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(item1MetaData, new UserItemMetaDataTO()), null, null, null)
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1])
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse1.metadata)
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
         listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
@@ -155,242 +120,43 @@ class GetListServiceTest extends Specification {
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.error(new RuntimeException("some exception"))
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([completedListEntity].toArray())
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
-
-        def pendingItems = actual.pendingListItems
-        pendingItems.size() == 1
-        pendingItems[0].listItemId == cartItemResponse1.cartItemId
-        pendingItems[0].tcin == cartItemResponse1.tcin
-        pendingItems[0].itemTitle == cartItemResponse1.shortDescription
-        pendingItems[0].itemNote == cartItemResponse1.notes
-        pendingItems[0].price == cartItemResponse1.price
-        pendingItems[0].listPrice == cartItemResponse1.listPrice
-        pendingItems[0].images == cartItemResponse1.images
-        pendingItems[0].itemType == listItem1MetaData.itemType
-
-        actual.completedListItems.size() == 0
-    }
-
-    def "Test getListService() when getting pending cart contents fails when include items is ALL"() {
-        given:
-        UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
-
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item2MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
-
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
-
-        def completedCartItemResponse1 = cartDataProvider.getCartItemResponse(completedListId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 2", 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(item2MetaData, new UserItemMetaDataTO()), null, null, null)
-        def completedCartResult = cartDataProvider.getCartContentsResponse(completedCartResponse, [completedCartItemResponse1])
-
-        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
-
-        when:
-        getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
-
-        then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.just(completedCartResult)
-        1 * cartManager.getListCartContents(listId,true) >> Mono.error(new RuntimeException("some exception"))
-        thrown(RuntimeException)
-    }
-
-    def "Test getListService() when searching completed cart fails when include items is COMPLETED"() {
-        given:
-        UUID listId = UUID.randomUUID()
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item1MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-                TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-
-        def cartItemResponse1 = cartDataProvider.getCartItemResponseForGenericItems(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-                "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-                "some-url", "some-image", cartDataProvider.getItemMetaData(item1MetaData, new UserItemMetaDataTO()), null, null, null)
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1])
-
-        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
-
-        when:
-        def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.COMPLETED).block()
-
-        then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.empty()
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
-        actual.completedListItems.isEmpty()
-    }
-
-    def "Test getListService() when getting completed cart contents fails when include items is COMPLETED"() {
-        given:
-        UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item1MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
-
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-                "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-                "some-url", "some-image", cartDataProvider.getItemMetaData(item1MetaData, new UserItemMetaDataTO()), null, null, null)
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1])
-
-        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
-
-        when:
-        def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.COMPLETED).block()
-
-        then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.error(new RuntimeException("some exception"))
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
-        actual.completedListItems.isEmpty()
-    }
-
-    def "Test getListService() when getting pending cart contents fails when include items is COMPLETED"() {
-        given:
-        UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item2MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
-
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
-
-        def completedCartItemResponse1 = cartDataProvider.getCartItemResponse(completedListId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 2", 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(item2MetaData, new UserItemMetaDataTO()), null, null, null)
-        def completedCartResult = cartDataProvider.getCartContentsResponse(completedCartResponse, [completedCartItemResponse1])
-
-        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
-
-        when:
-        getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.COMPLETED).block()
-
-        then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.just(completedCartResult)
-        1 * cartManager.getListCartContents(listId,true) >> Mono.error(new RuntimeException("some exception"))
-        thrown(RuntimeException)
-    }
-
-    def "Test getListService() when there is no pending items"() {
-        given:
-        UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item2MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
-
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
-
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, null)
-
-        def completedCartItemResponse1 = cartDataProvider.getCartItemResponse(completedListId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 2", 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(item2MetaData, new UserItemMetaDataTO()), null, null, null)
-        def completedCartResult = cartDataProvider.getCartContentsResponse(completedCartResponse, [completedCartItemResponse1])
-
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem2MetaData = cartDataProvider.getListItemMetaDataFromCart(completedCartItemResponse1.metadata)
-
-        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
-
-        when:
-        def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
-
-        then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.just(completedCartResult)
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
-
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 0
 
         def completedItems = actual.completedListItems
         completedItems.size() == 1
-        completedItems[0].listItemId == completedCartItemResponse1.cartItemId
-        completedItems[0].tcin == completedCartItemResponse1.tcin
-        completedItems[0].itemTitle == completedCartItemResponse1.shortDescription
-        completedItems[0].itemNote == completedCartItemResponse1.notes
-        completedItems[0].price == completedCartItemResponse1.price
-        completedItems[0].listPrice == completedCartItemResponse1.listPrice
-        completedItems[0].images == completedCartItemResponse1.images
-        completedItems[0].itemType == listItem2MetaData.itemType
+        completedItems[0].listItemId == listItemEntity2.itemId
+        completedItems[0].tcin == listItemEntity2.itemTcin
+        completedItems[0].itemTitle == listItemEntity2.itemTitle
+        completedItems[0].itemNote == listItemEntity2.itemNotes
+        completedItems[0].itemType == ItemType.TCIN
     }
 
-    def "Test getListService() when there is no completed items with 1 pending TCIN item"() {
+    def "Test getListService() ItemIncludeFields = ALL with no completed items"() {
         given:
         UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
+
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
 
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item1MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
 
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
 
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(item1MetaData, new UserItemMetaDataTO()), null, null, null)
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1])
-
-        def completedCartResult = cartDataProvider.getCartContentsResponse(completedCartResponse, null)
-
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse1.metadata)
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
         listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
@@ -399,50 +165,43 @@ class GetListServiceTest extends Specification {
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.just(completedCartResult)
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([pendingListEntity].toArray())
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 1
-        pendingItems[0].listItemId == cartItemResponse1.cartItemId
-        pendingItems[0].tcin == cartItemResponse1.tcin
-        pendingItems[0].itemTitle == cartItemResponse1.shortDescription
-        pendingItems[0].itemNote == cartItemResponse1.notes
-        pendingItems[0].price == cartItemResponse1.price
-        pendingItems[0].listPrice == cartItemResponse1.listPrice
-        pendingItems[0].images == cartItemResponse1.images
-        pendingItems[0].itemType == listItem1MetaData.itemType
+        pendingItems[0].listItemId == listItemEntity1.itemId
+        pendingItems[0].tcin == listItemEntity1.itemTcin
+        pendingItems[0].itemTitle == listItemEntity1.itemTitle
+        pendingItems[0].itemNote == listItemEntity1.itemNotes
+        pendingItems[0].itemType == ItemType.TCIN
 
-        actual.completedListItems.size() == 0
+        def completedItems = actual.completedListItems
+        completedItems.size() == 0
     }
 
-    def "Test getListService() integrity when item include field is PENDING with 1 pending TCIN item"() {
+    def "Test getListService() ItemIncludeFields = PENDING with 1 pending TCIN item"() {
         given:
         UUID listId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListItemMetaDataTO item1MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tcin1 = "1234"
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
 
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
 
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(item1MetaData, new UserItemMetaDataTO()), null, null, null)
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1])
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
 
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse1.metadata)
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
         listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
@@ -451,53 +210,43 @@ class GetListServiceTest extends Specification {
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.PENDING).block()
 
         then:
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListIdAndItemState(listId, "P") >> Flux.just([pendingListEntity].toArray())
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 1
-        pendingItems[0].listItemId == cartItemResponse1.cartItemId
-        pendingItems[0].tcin == cartItemResponse1.tcin
-        pendingItems[0].itemTitle == cartItemResponse1.shortDescription
-        pendingItems[0].itemNote == cartItemResponse1.notes
-        pendingItems[0].price == cartItemResponse1.price
-        pendingItems[0].listPrice == cartItemResponse1.listPrice
-        pendingItems[0].images == cartItemResponse1.images
-        pendingItems[0].itemType == listItem1MetaData.itemType
+        pendingItems[0].listItemId == listItemEntity1.itemId
+        pendingItems[0].tcin == listItemEntity1.itemTcin
+        pendingItems[0].itemTitle == listItemEntity1.itemTitle
+        pendingItems[0].itemNote == listItemEntity1.itemNotes
+        pendingItems[0].itemType == ItemType.TCIN
 
-        actual.completedListItems.size() == 0
+        def completedItems = actual.completedListItems
+        completedItems.size() == 0
     }
 
-    def "Test getListService() when item include field is COMPLETED"() {
+    def "Test getListService() ItemIncludeFields = COMPLETED with 1 completed TCIN item"() {
         given:
         UUID listId = UUID.randomUUID()
-        UUID completedListId = UUID.randomUUID()
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO item2MetaData = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
+        def tcin2 = "1235"
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, null)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
+        def completedListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 
-        def completedCartItemResponse1 = cartDataProvider.getCartItemResponse(completedListId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 2", 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(item2MetaData, new UserItemMetaDataTO()), null, null, null)
-        def completedCartResult = cartDataProvider.getCartContentsResponse(completedCartResponse, [completedCartItemResponse1])
 
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem2MetaData = cartDataProvider.getListItemMetaDataFromCart(completedCartItemResponse1.metadata)
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
         listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
@@ -506,154 +255,47 @@ class GetListServiceTest extends Specification {
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.COMPLETED).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.just(completedCartResult)
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListIdAndItemState(listId, LIST_ITEM_STATE.COMPLETED.value) >> Flux.just([completedListEntity].toArray())
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
-
-        actual.pendingListItems.size() == 0
-
-        def completedItems = actual.completedListItems
-        completedItems.size() == 1
-        completedItems[0].listItemId == completedCartItemResponse1.cartItemId
-        completedItems[0].tcin == completedCartItemResponse1.tcin
-        completedItems[0].itemTitle == completedCartItemResponse1.shortDescription
-        completedItems[0].itemNote == completedCartItemResponse1.notes
-        completedItems[0].price == completedCartItemResponse1.price
-        completedItems[0].listPrice == completedCartItemResponse1.listPrice
-        completedItems[0].images == completedCartItemResponse1.images
-        completedItems[0].itemType == listItem2MetaData.itemType
-    }
-
-    def "Test getListService() when include only pending items with 1 pending TCIN item"() {
-        given:
-        def listId = UUID.randomUUID()
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData1, new UserItemMetaDataTO()), null, null, null)
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1])
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse1.metadata)
-
-        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
-
-        when:
-        def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.PENDING).block()
-
-        then:
-        1 * cartManager.getListCartContents(_,true) >> Mono.just(cartResult)
-
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
-        pendingItems.size() == 1
-        pendingItems[0].listItemId == cartItemResponse1.cartItemId
-        pendingItems[0].tcin == cartItemResponse1.tcin
-        pendingItems[0].itemTitle == cartItemResponse1.shortDescription
-        pendingItems[0].itemNote == cartItemResponse1.notes
-        pendingItems[0].price == cartItemResponse1.price
-        pendingItems[0].listPrice == cartItemResponse1.listPrice
-        pendingItems[0].images == cartItemResponse1.images
-        pendingItems[0].itemType == listItem1MetaData.itemType
-    }
-
-    def "Test getListService() when include only completed items"() {
-        given:
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListMetaDataTO completedMetadata = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-        ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.COMPLETED)
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-
-        def listId = UUID.randomUUID()
-        def completedListId = UUID.randomUUID()
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def completedCartResponse = cartDataProvider.getCartResponse(completedListId, guestId, listId.toString(),
-            cartDataProvider.getMetaData(completedMetadata, new UserMetaDataTO()))
-
-        def completedCartItemResponse1 = cartDataProvider.getCartItemResponse(completedListId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 2", 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData2, new UserItemMetaDataTO()), null, null, null)
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, null)
-        def completedCartResult = cartDataProvider.getCartContentsResponse(completedCartResponse, [completedCartItemResponse1])
-
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(completedCartItemResponse1.metadata)
-
-        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
-
-        when:
-        def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
-
-        then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.just(completedCartResponse)
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
-        1 * cartManager.getListCartContents(completedListId,true) >> Mono.just(completedCartResult)
-
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        pendingItems.size() == 0
 
         def completedItems = actual.completedListItems
         completedItems.size() == 1
-        completedItems[0].listItemId == completedCartItemResponse1.cartItemId
-        completedItems[0].tcin == completedCartItemResponse1.tcin
-        completedItems[0].itemTitle == completedCartItemResponse1.shortDescription
-        completedItems[0].itemNote == completedCartItemResponse1.notes
-        completedItems[0].price == completedCartItemResponse1.price
-        completedItems[0].listPrice == completedCartItemResponse1.listPrice
-        completedItems[0].images == completedCartItemResponse1.images
-        completedItems[0].itemType == listItem1MetaData.itemType
+        completedItems[0].listItemId == listItemEntity2.itemId
+        completedItems[0].tcin == listItemEntity2.itemTcin
+        completedItems[0].itemTitle == listItemEntity2.itemTitle
+        completedItems[0].itemNote == listItemEntity2.itemNotes
+        completedItems[0].itemType == ItemType.TCIN
     }
 
     def "Test getListService() item and sorting based on title and descending order with 1 TCIN item and 1 GENERIC item in pending list"() {
         given:
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-        def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
-        def listId = UUID.randomUUID()
+        UUID listId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tcin1, TestListChannel.WEB.toString(), tenantrefId1,
-            "item 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData1, new UserItemMetaDataTO()), null, null, null)
-        def cartItemResponse2 = cartDataProvider.getCartItemResponseForGenericItems(listId, UUID.randomUUID(), gTenantRefItemId1, TestListChannel.WEB.toString(), null,
-            gItem1, 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData2, new UserItemMetaDataTO()), null, null, null)
+        def tcin1 = "1234"
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "1235"
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1, cartItemResponse2])
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse1.metadata)
-        def listItem2MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse2.metadata)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
+        def pendingListEntity2 = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
+
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
         listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.DESCENDING))
@@ -662,312 +304,270 @@ class GetListServiceTest extends Specification {
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.empty()
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([pendingListEntity, pendingListEntity2].toArray())
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 2
+        pendingItems[0].listItemId == listItemEntity2.itemId
+        pendingItems[0].tcin == listItemEntity2.itemTcin
+        pendingItems[0].itemTitle == listItemEntity2.itemTitle
+        pendingItems[0].itemNote == listItemEntity2.itemNotes
+        pendingItems[0].itemType == ItemType.TCIN
 
-        pendingItems[0].listItemId == cartItemResponse2.cartItemId
-        pendingItems[0].tcin == cartItemResponse2.tcin
-        pendingItems[0].itemTitle == cartItemResponse2.tenantItemName
-        pendingItems[0].itemNote == cartItemResponse2.notes
-        pendingItems[0].price == cartItemResponse2.price
-        pendingItems[0].listPrice == cartItemResponse2.listPrice
-        pendingItems[0].images == cartItemResponse2.images
-        pendingItems[0].itemType == listItem2MetaData.itemType
-
-
-        pendingItems[1].listItemId == cartItemResponse1.cartItemId
-        pendingItems[1].tcin == cartItemResponse1.tcin
-        pendingItems[1].itemTitle == cartItemResponse1.shortDescription
-        pendingItems[1].itemNote == cartItemResponse1.notes
-        pendingItems[1].price == cartItemResponse1.price
-        pendingItems[1].listPrice == cartItemResponse1.listPrice
-        pendingItems[1].images == cartItemResponse1.images
-        pendingItems[1].itemType == listItem1MetaData.itemType
+        pendingItems[1].listItemId == listItemEntity1.itemId
+        pendingItems[1].tcin == listItemEntity1.itemTcin
+        pendingItems[1].itemTitle == listItemEntity1.itemTitle
+        pendingItems[1].itemNote == listItemEntity1.itemNotes
+        pendingItems[1].itemType == ItemType.TCIN
     }
 
     def "Test getListService() sorting based on itemCreatedDate with Ascending order"() {
         given:
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-        def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
+        UUID listId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        def listId = UUID.randomUUID()
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData1, new UserItemMetaDataTO()), null, LocalDateTime.now(), null)
-        def cartItemResponse2 = cartDataProvider.getCartItemResponseForGenericItems(listId, UUID.randomUUID(), gTenantRefItemId1, TestListChannel.WEB.toString(), null,
-            gItem1, 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData2, new UserItemMetaDataTO()), null, LocalDateTime.now().minusDays(1), null)
+        def tcin1 = "1234"
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "1235"
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1, cartItemResponse2])
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse1.metadata)
-        def listItem2MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse2.metadata)
+        def listItemEntity1CreatedDate = Instant.now().minus(1, ChronoUnit.DAYS)
+        def listItemEntity2CreatedDate = Instant.now()
+
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, listItemEntity1CreatedDate, null )
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null, listItemEntity2CreatedDate, null )
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
+        def pendingListEntity2 = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
+
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ADDED_DATE, ItemSortOrderGroup.DESCENDING))
 
         when:
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.empty()
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([pendingListEntity, pendingListEntity2].toArray())
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 2
+        pendingItems[0].listItemId == listItemEntity2.itemId
+        pendingItems[0].tcin == listItemEntity2.itemTcin
+        pendingItems[0].itemTitle == listItemEntity2.itemTitle
+        pendingItems[0].itemNote == listItemEntity2.itemNotes
+        pendingItems[0].itemType == ItemType.TCIN
 
-        pendingItems[0].listItemId == cartItemResponse2.cartItemId
-        pendingItems[0].tcin == cartItemResponse2.tcin
-        pendingItems[0].itemTitle == cartItemResponse2.tenantItemName
-        pendingItems[0].itemNote == cartItemResponse2.notes
-        pendingItems[0].price == cartItemResponse2.price
-        pendingItems[0].listPrice == cartItemResponse2.listPrice
-        pendingItems[0].images == cartItemResponse2.images
-        pendingItems[0].itemType == listItem2MetaData.itemType
-
-        pendingItems[1].listItemId == cartItemResponse1.cartItemId
-        pendingItems[1].tcin == cartItemResponse1.tcin
-        pendingItems[1].itemTitle == cartItemResponse1.shortDescription
-        pendingItems[1].itemNote == cartItemResponse1.notes
-        pendingItems[1].price == cartItemResponse1.price
-        pendingItems[1].listPrice == cartItemResponse1.listPrice
-        pendingItems[1].images == cartItemResponse1.images
-        pendingItems[1].itemType == listItem1MetaData.itemType
-
+        pendingItems[1].listItemId == listItemEntity1.itemId
+        pendingItems[1].tcin == listItemEntity1.itemTcin
+        pendingItems[1].itemTitle == listItemEntity1.itemTitle
+        pendingItems[1].itemNote == listItemEntity1.itemNotes
+        pendingItems[1].itemType == ItemType.TCIN
     }
 
     def "Test getListService() sorting based on itemUpdated with Ascending order"() {
         given:
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
-        def listId = UUID.randomUUID()
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-        def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
+        UUID listId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId,
-            TestListChannel.WEB.toString(), CartType.LIST, "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "note", 10, 10, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData1, new UserItemMetaDataTO()), null, null, LocalDateTime.now())
-        def cartItemResponse2 = cartDataProvider.getCartItemResponseForGenericItems(listId, UUID.randomUUID(), gTenantRefItemId1, TestListChannel.WEB.toString(), null,
-            gItem1, 1, "some note 2", 20, 20, "Stand Alone", "READY",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData2, new UserItemMetaDataTO()), null, null, LocalDateTime.now().minusDays(1))
+        def tcin1 = "1234"
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "1235"
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1, cartItemResponse2])
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listItem1MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse1.metadata)
-        def listItem2MetaData = cartDataProvider.getListItemMetaDataFromCart(cartItemResponse2.metadata)
+        def listItemEntity1UpdateDate = Instant.now().minus(1, ChronoUnit.DAYS)
+        def listItemEntity2UpdateDate = Instant.now()
+
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, null, listItemEntity2UpdateDate )
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null, null, listItemEntity1UpdateDate )
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
+        def pendingListEntity2 = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
+
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.LAST_MODIFIED_DATE, ItemSortOrderGroup.ASCENDING))
 
         when:
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.empty()
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([pendingListEntity, pendingListEntity2].toArray())
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 2
+        pendingItems[0].listItemId == listItemEntity2.itemId
+        pendingItems[0].tcin == listItemEntity2.itemTcin
+        pendingItems[0].itemTitle == listItemEntity2.itemTitle
+        pendingItems[0].itemNote == listItemEntity2.itemNotes
+        pendingItems[0].itemType == ItemType.TCIN
 
-        pendingItems[0].listItemId == cartItemResponse2.cartItemId
-        pendingItems[0].tcin == cartItemResponse2.tcin
-        pendingItems[0].itemTitle == cartItemResponse2.tenantItemName
-        pendingItems[0].itemNote == cartItemResponse2.notes
-        pendingItems[0].price == cartItemResponse2.price
-        pendingItems[0].listPrice == cartItemResponse2.listPrice
-        pendingItems[0].images == cartItemResponse2.images
-        pendingItems[0].itemType == listItem2MetaData.itemType
-
-        pendingItems[1].listItemId == cartItemResponse1.cartItemId
-        pendingItems[1].tcin == cartItemResponse1.tcin
-        pendingItems[1].itemTitle == cartItemResponse1.shortDescription
-        pendingItems[1].itemNote == cartItemResponse1.notes
-        pendingItems[1].price == cartItemResponse1.price
-        pendingItems[1].listPrice == cartItemResponse1.listPrice
-        pendingItems[1].images == cartItemResponse1.images
-        pendingItems[1].itemType == listItem1MetaData.itemType
+        pendingItems[1].listItemId == listItemEntity1.itemId
+        pendingItems[1].tcin == listItemEntity1.itemTcin
+        pendingItems[1].itemTitle == listItemEntity1.itemTitle
+        pendingItems[1].itemNote == listItemEntity1.itemNotes
+        pendingItems[1].itemType == ItemType.TCIN
     }
 
     def "Test getListService() item sorting based on itemPosition with guest preferred Sort order"() {
         given:
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-        def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
+        UUID listId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        def listId = UUID.randomUUID()
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId, TestListChannel.WEB.toString(), CartType.LIST,
-            "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "PENDING",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData1, new UserItemMetaDataTO()), null, null, null)
-        def cartItemResponse2 = cartDataProvider.getCartItemResponseForGenericItems(listId, UUID.randomUUID(), gTenantRefItemId1, TestListChannel.WEB.toString(), null,
-            gItem1, 1, "some note 2", 20, 20, "Stand Alone", "PENDING",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData2, new UserItemMetaDataTO()), null, null, null)
+        def tcin1 = "1234"
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "1235"
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1, cartItemResponse2])
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null)
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null)
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
+        def pendingListEntity2 = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listResponse = new com.tgt.lists.atlas.api.domain.model.List(listId, cartItemResponse1.cartItemId.toString() + "," + cartItemResponse2.cartItemId.toString(),
-            null, null)
+        def listPreference = new ListPreferenceEntity(listId, guestId, listItemId2.toString() + "," + listItemId1.toString())
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.DESCENDING))
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_POSITION, ItemSortOrderGroup.ASCENDING))
 
         when:
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.empty()
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
-        0 * listRepository.find(_) >> Mono.just(listResponse)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([pendingListEntity, pendingListEntity2].toArray())
+        listPreferenceRepository.getListPreference(_, _) >> Mono.just(listPreference)
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 2
-        pendingItems[0].listItemId == cartItemResponse1.cartItemId
-        pendingItems[1].listItemId == cartItemResponse2.cartItemId
+        pendingItems[0].listItemId == listItemEntity2.itemId
+        pendingItems[1].listItemId == listItemEntity1.itemId
     }
 
     def "Test getListService() item sorting based on itemPosition with guest preferred Sort order for empty list"() {
         given:
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-        def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
+        UUID listId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        def listId = UUID.randomUUID()
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId, TestListChannel.WEB.toString(), CartType.LIST,
-            "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "PENDING",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData1, new UserItemMetaDataTO()), null, null, null)
-        def cartItemResponse2 = cartDataProvider.getCartItemResponseForGenericItems(listId, UUID.randomUUID(), gTenantRefItemId1, TestListChannel.WEB.toString(), null,
-            gItem1, 1, "some note 2", 20, 20, "Stand Alone", "PENDING",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData2, new UserItemMetaDataTO()), null, null, null)
+        def tcin1 = "1234"
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "1235"
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1, cartItemResponse2])
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listResponse = new com.tgt.lists.atlas.api.domain.model.List(listId, ",,", null, null)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null)
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null)
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
+        def pendingListEntity2 = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.DESCENDING))
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_POSITION, ItemSortOrderGroup.ASCENDING))
 
         when:
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.empty()
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([pendingListEntity, pendingListEntity2].toArray())
+        listPreferenceRepository.getListPreference(_, _) >> Mono.empty()
 
-        0 * listRepository.find(_) >> Mono.just(listResponse)
-
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 2
-        pendingItems[0].listItemId == cartItemResponse1.cartItemId
-        pendingItems[1].listItemId == cartItemResponse2.cartItemId
+        pendingItems[0].listItemId == listItemEntity1.itemId
+        pendingItems[1].listItemId == listItemEntity2.itemId
     }
 
     def "Test getListService() item sorting based on itemPosition when items are missing in SortOrder but present in Pending Items"() {
         given:
-        ListMetaDataTO metadata = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-        ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
-        def tcin1 = "1235"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-        def gItem1 = "item 2"
-        def gTenantRefItemId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
+        UUID listId = UUID.randomUUID()
+        UUID listItemId1 = UUID.randomUUID()
+        UUID listItemId2 = UUID.randomUUID()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
 
-        def listId = UUID.randomUUID()
-        def cartResponse = cartDataProvider.getCartResponse(listId, guestId, TestListChannel.WEB.toString(), CartType.LIST,
-            "My list", "My first list", null, cartDataProvider.getMetaData(metadata, new UserMetaDataTO()))
-        def cartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), tenantrefId1, TestListChannel.WEB.toString(), tcin1,
-            "tcin 1", 1, "some note 1", 10, 10, "Stand Alone", "PENDING",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData1, new UserItemMetaDataTO()), null, null, null)
-        def cartItemResponse2 = cartDataProvider.getCartItemResponseForGenericItems(listId, UUID.randomUUID(), gTenantRefItemId1, TestListChannel.WEB.toString(), null,
-            gItem1, 1, "some note 2", 20, 20, "Stand Alone", "PENDING",
-            "some-url", "some-image", cartDataProvider.getItemMetaData(itemMetaData2, new UserItemMetaDataTO()), null, null, null)
+        def tcin1 = "1234"
+        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "1235"
+        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def cartResult = cartDataProvider.getCartContentsResponse(cartResponse, [cartItemResponse1, cartItemResponse2])
-        def listMetaData = cartDataProvider.getListMetaDataFromCart(cartResponse.metadata)
-        def listResponse = new com.tgt.lists.atlas.api.domain.model.List(listId, cartItemResponse1.cartItemId.toString(), null, null)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null)
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null)
+        def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
+        def pendingListEntity2 = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
+
+        def listPreference = new ListPreferenceEntity(listId, guestId, listItemId1.toString())
 
         ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.DESCENDING))
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_POSITION, ItemSortOrderGroup.ASCENDING))
 
         when:
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        1 * cartManager.getCompletedListCart(listId) >> Mono.empty()
-        1 * cartManager.getListCartContents(listId,true) >> Mono.just(cartResult)
-        0 * listRepository.find(_) >> Mono.just(listResponse)
+        listRepository.findListAndItemsByListId(listId) >> Flux.just([pendingListEntity, pendingListEntity2].toArray())
+        listPreferenceRepository.getListPreference(_, _) >> Mono.just(listPreference)
 
-        actual.listId == cartResponse.cartId
-        actual.channel == cartResponse.cartChannel
-        actual.listTitle == cartResponse.tenantCartName
-        actual.shortDescription == cartResponse.tenantCartDescription
-        actual.listType == cartResponse.cartSubchannel
-        actual.defaultList == listMetaData.defaultList
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
 
         def pendingItems = actual.pendingListItems
         pendingItems.size() == 2
-        pendingItems[0].listItemId == cartItemResponse1.cartItemId
-        pendingItems[1].listItemId == cartItemResponse2.cartItemId
+        pendingItems[0].listItemId == listItemEntity1.itemId
+        pendingItems[1].listItemId == listItemEntity2.itemId
     }
 }

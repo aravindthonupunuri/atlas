@@ -7,6 +7,7 @@ import com.datastax.oss.driver.api.mapper.annotations.*
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.micronaut.cassandra.ICassandraDao
 import java.util.*
 
@@ -35,9 +36,21 @@ interface ListDAO : ICassandraDao {
 
     @Select
     @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
+    fun findListAndItemsByListIdAndItemState(id: UUID, itemState: String?): MappedReactiveResultSet<ListItemExtEntity>
+
+    @Select
+    @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
     fun findListItemsByListIdAndItemState(id: UUID, itemState: String): MappedReactiveResultSet<ListItemEntity>
 
     @Select
+    @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
+    fun findListAndItemsByListId(id: UUID): MappedReactiveResultSet<ListItemExtEntity>
+
+    @Select
+    fun findListAndItemByItemId(id: UUID, itemState: String, itemId: UUID): MappedReactiveResultSet<ListItemExtEntity>
+
+    @Select
+    @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
     fun findListItemByItemId(id: UUID, itemState: String, itemId: UUID): MappedReactiveResultSet<ListItemEntity>
 
     @Delete

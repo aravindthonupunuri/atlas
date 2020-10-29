@@ -46,12 +46,12 @@ class UpdateListItemsStateServiceTest extends Specification {
         def tcin2 = "4567"
         def tenantRefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, "title", 1, "note")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId2, tcin2, "title", 1, "note")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")
 
 
-        ListItemEntity updatesListItemEntity1 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), tenantRefId2, tcin2, "title", 1, "note")
-        ListItemEntity updatesListItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), tenantRefId2, tcin2, "title", 1, "note")
+        ListItemEntity updatesListItemEntity1 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")
+        ListItemEntity updatesListItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
@@ -63,13 +63,13 @@ class UpdateListItemsStateServiceTest extends Specification {
         // updating item1
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedlistItem = arguments[0]
-            assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.name()
+            assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.value
             Mono.just(updatesListItemEntity1)
         }
         // updating item2
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedlistItem = arguments[0]
-            assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.name()
+            assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.value
             Mono.just(updatesListItemEntity2)
         }
 
@@ -89,10 +89,10 @@ class UpdateListItemsStateServiceTest extends Specification {
         def tcin2 = "4567"
         def tenantRefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, "title", 1, "note")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), tenantRefId2, tcin2, "title", 1, "note")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")
 
-        ListItemEntity updatesListItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, "title", 1, "note")
+        ListItemEntity updatesListItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
@@ -104,7 +104,7 @@ class UpdateListItemsStateServiceTest extends Specification {
         // updating item1
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedlistItem = arguments[0]
-            assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.name()
+            assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.value
             Mono.just(updatesListItemEntity1)
         }
         1 * eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(), _, _) >> Mono.just(recordMetadata)
@@ -139,10 +139,10 @@ class UpdateListItemsStateServiceTest extends Specification {
         def tcin2 = "4567"
         def tenantRefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, "title", 1, "note")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId2, tcin2, "title", 1, "note")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")
 
-        ListItemEntity updatesListItemEntity1 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), tenantRefId2, tcin2, "title", 1, "note")
+        ListItemEntity updatesListItemEntity1 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
@@ -154,7 +154,7 @@ class UpdateListItemsStateServiceTest extends Specification {
         // updating item1
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedlistItem = arguments[0]
-            assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.name()
+            assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.value
             Mono.just(updatesListItemEntity1)
         }
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> Mono.error(new BadRequestException("some exception"))

@@ -1,4 +1,4 @@
-package com.tgt.lists.atlas.api.async
+package com.tgt.lists.atlas.api.service
 
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
 import com.tgt.lists.atlas.api.transport.EditItemSortOrderRequestTO
@@ -19,15 +19,16 @@ class ListItemSortOrderService(
     private val logger = KotlinLogging.logger { ListItemSortOrderService::class.java.name }
 
     fun saveListItemSortOrder(
+        guestId: String,
         listId: UUID,
         itemId: UUID,
         listItemMetaDataTO: ListItemMetaDataTO
     ): Mono<Boolean> {
 
-        logger.debug("[saveListItemSortOrder] listId: $listId, itemId: $itemId")
+        logger.debug("[saveListItemSortOrder] guestId: $guestId listId: $listId, itemId: $itemId")
 
         return if (listItemMetaDataTO.itemState == LIST_ITEM_STATE.PENDING) {
-            listItemSortOrderManager.saveNewListItemOrder(listId, itemId).map { true }
+            listItemSortOrderManager.saveNewListItemOrder(guestId, listId, itemId).map { true }
                     .onErrorResume {
                         logger.error("Exception while saving list item sort order", it)
                         Mono.just(false)
@@ -38,15 +39,16 @@ class ListItemSortOrderService(
     }
 
     fun deleteListItemSortOrder(
+        guestId: String,
         listId: UUID,
         deleteListItems: List<MultiDeleteListItem>
     ): Mono<Boolean> {
 
-        logger.debug("[deleteListItemSortOrder] listId: $listId, deleteListItems: $deleteListItems")
+        logger.debug("[deleteListItemSortOrder] guestId: $guestId listId: $listId, deleteListItems: $deleteListItems")
 
         return deleteListItems.filter { it.listItemMetaDataTO?.itemState == LIST_ITEM_STATE.PENDING }
                 .takeIf { !it.isNullOrEmpty() }
-                ?.let { listItemSortOrderManager.removeListItemIdFromSortOrder(listId, it.map { it.itemId }.toTypedArray())
+                ?.let { listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, it.map { it.itemId }.toTypedArray())
                             .map { true }
                             .onErrorResume {
                                 logger.error("Exception while deleting list item sort order", it)
@@ -61,9 +63,10 @@ class ListItemSortOrderService(
 
         logger.debug("[editListItemSortOrder] editItemSortOrderRequestTO: $editItemSortOrderRequestTO")
 
-        return listItemSortOrderManager.updateListItemSortOrder(editItemSortOrderRequestTO.listId,
-                editItemSortOrderRequestTO.primaryItemId, editItemSortOrderRequestTO.secondaryItemId,
-                editItemSortOrderRequestTO.direction).map { true }
+        return listItemSortOrderManager.updateListItemSortOrder(editItemSortOrderRequestTO.guestId,
+                editItemSortOrderRequestTO.listId, editItemSortOrderRequestTO.primaryItemId,
+                editItemSortOrderRequestTO.secondaryItemId, editItemSortOrderRequestTO.direction)
+                .map { true }
                 .onErrorResume {
                     logger.error("Exception while editing list sort order", it)
                     Mono.just(false)

@@ -1,10 +1,10 @@
 package com.tgt.lists.atlas.api.domain
 
-import com.tgt.lists.common.components.exception.InternalServerException
-import com.tgt.lists.atlas.api.domain.model.GuestPreference
-import com.tgt.lists.atlas.api.persistence.GuestPreferenceRepository
+import com.tgt.lists.atlas.api.domain.model.entity.GuestPreferenceEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
 import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.util.Direction
+import com.tgt.lists.common.components.exception.InternalServerException
 import io.micronaut.context.annotation.Requires
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -19,59 +19,57 @@ class GuestPreferenceSortOrderManager(@Inject private val guestPreferenceReposit
 
     private val log = KotlinLogging.logger { GuestPreferenceSortOrderManager::class.java.name }
 
-    fun saveNewOrder(guestId: String, listId: UUID): Mono<GuestPreference> {
-        return guestPreferenceRepository.find(guestId)
+    fun saveNewOrder(guestId: String, listId: UUID): Mono<GuestPreferenceEntity> {
+        return guestPreferenceRepository.findGuestPreference(guestId)
             .flatMap {
                 val dbGuestPreference = it
                 val sortOrder = dbGuestPreference.listSortOrder
-                sortOrder.split(",").toSet().takeIf { !it.contains(listId.toString()) }
+                sortOrder?.split(",")?.toSet().takeIf { !it!!.contains(listId.toString()) }
                     ?.let {
-                        val newSortOrder = addListIdToSortOrder(listId, sortOrder, 0)
-                        guestPreferenceRepository.update(guestId, newSortOrder).map { dbGuestPreference.copy(listSortOrder = newSortOrder) }
+                        val newSortOrder = addListIdToSortOrder(listId, sortOrder!!, 0)
+                        guestPreferenceRepository.saveGuestPreference(dbGuestPreference.copy(listSortOrder = newSortOrder))
                     } ?: Mono.just(it)
-            }.switchIfEmpty { guestPreferenceRepository.save(GuestPreference(guestId, listId.toString())) }
+            }.switchIfEmpty { guestPreferenceRepository.saveGuestPreference(GuestPreferenceEntity(guestId = guestId, listSortOrder = listId.toString())) }
     }
 
-    fun updateSortOrder(guestId: String, primaryListId: UUID, secondaryListId: UUID, direction: Direction): Mono<GuestPreference> {
+    fun updateSortOrder(guestId: String, primaryListId: UUID, secondaryListId: UUID, direction: Direction): Mono<GuestPreferenceEntity> {
         if (primaryListId == secondaryListId) {
-            return Mono.just(GuestPreference(guestId, ""))
+            return Mono.just(GuestPreferenceEntity(guestId = guestId, listSortOrder = ""))
         }
 
-        return guestPreferenceRepository.find(guestId)
+        return guestPreferenceRepository.findGuestPreference(guestId)
             .flatMap {
-                val newSortOrder = editListIdPosSortOrder(primaryListId, secondaryListId, direction, it.listSortOrder)
+                val newSortOrder = it.listSortOrder?.let { it1 -> editListIdPosSortOrder(primaryListId, secondaryListId, direction, it1) }
                 if (newSortOrder == it.listSortOrder) {
                     Mono.just(it)
-                } else {
-                    guestPreferenceRepository.update(guestId, newSortOrder).map { GuestPreference(guestId, newSortOrder) }
-                }
+                } else { guestPreferenceRepository.saveGuestPreference(GuestPreferenceEntity(guestId = guestId, listSortOrder = newSortOrder!!)) }
             }
                 .switchIfEmpty {
                     log.error("Unable to find guest $guestId in the repository")
                     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-                    Mono.just<GuestPreference>(null)
+                    Mono.just<GuestPreferenceEntity>(null)
                 }
     }
 
-    fun removeListIdFromSortOrder(guestId: String, listId: UUID): Mono<GuestPreference> {
-        return guestPreferenceRepository.find(guestId)
+    fun removeListIdFromSortOrder(guestId: String, listId: UUID): Mono<GuestPreferenceEntity> {
+        return guestPreferenceRepository.findGuestPreference(guestId)
             .flatMap {
-                val sortOrders = it.listSortOrder.split(",").toMutableSet()
-                if (!sortOrders.contains(listId.toString())) {
+                val sortOrders = it.listSortOrder?.split(",")?.toMutableSet()
+                if (!sortOrders!!.contains(listId.toString())) {
                     throw InternalServerException(AppErrorCodes.LIST_SORT_ORDER_ERROR_CODE(listOf("The primary list id to move is not present $listId"))) // this is not a bad request b'cose of order of events
                 } else {
-                    val newSortOrder = removeListIdFromSortOrder(listId, it.listSortOrder)
-                    guestPreferenceRepository.update(guestId, newSortOrder).map { GuestPreference(guestId, newSortOrder) } }
+                    val newSortOrder = removeListIdFromSortOrder(listId, it.listSortOrder!!)
+                    guestPreferenceRepository.saveGuestPreference(GuestPreferenceEntity(guestId = guestId, listSortOrder = newSortOrder))
                 }
-            .switchIfEmpty { Mono.just(GuestPreference(guestId, "")) }
+            }.switchIfEmpty { Mono.just(GuestPreferenceEntity(guestId = guestId, listSortOrder = "")) }
     }
 
-    fun getGuestPreference(guestId: String): Mono<GuestPreference> {
-        return guestPreferenceRepository.find(guestId)
-            .switchIfEmpty { Mono.just(GuestPreference(guestId, "")) }
+    fun getGuestPreference(guestId: String): Mono<GuestPreferenceEntity> {
+        return guestPreferenceRepository.findGuestPreference(guestId)
+            .switchIfEmpty { Mono.just(GuestPreferenceEntity(guestId = guestId, listSortOrder = "")) }
             .onErrorResume {
                 log.error("Exception while getting sort order: ", it)
-                Mono.just(GuestPreference(guestId, ""))
+                Mono.just(GuestPreferenceEntity(guestId = guestId, listSortOrder = ""))
             }
     }
 

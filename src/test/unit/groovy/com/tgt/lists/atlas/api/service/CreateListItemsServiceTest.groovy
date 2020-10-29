@@ -67,19 +67,19 @@ class CreateListItemsServiceTest extends Specification {
         def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, tenantrefId4, TestListChannel.WEB.toString(), tcin4, null,
                 "test item", null, UnitOfMeasure.EACHES, null)
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId1, tcin1, null, 2, "notes1")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId1, tcin1, null, 3, "notes1")
-        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId2, tcin2, null, 1, "notes1")
-        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId2, tcin2, null, 2, "notes1")
-        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId2, tcin2, null, 3, "notes1")
-        ListItemEntity listItemEntity6 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId5, tcin5, null, 1, "notes1")
-        ListItemEntity listItemEntity7 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId5, tcin5, null, 1, "notes1")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, null, 2, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, null, 3, "notes1")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, null, 1, "notes1")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, null, 2, "notes1")
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, null, 3, "notes1")
+        ListItemEntity listItemEntity6 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId5, tcin5, null, 1, "notes1")
+        ListItemEntity listItemEntity7 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId5, tcin5, null, 1, "notes1")
 
-        ListItemEntity updatedListItemEntity1 = listDataProvider.createListItemEntity(listId, listItemEntity1.itemId , LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId1, tcin1, null,6, "notes1\nnotes2")
-        ListItemEntity updatedListItemEntity2 = listDataProvider.createListItemEntity(listId, listItemEntity3.itemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId2, tcin2, null,7, "notes3\nnotes4\nnotes5")
+        ListItemEntity updatedListItemEntity1 = listDataProvider.createListItemEntity(listId, listItemEntity1.itemId , LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, null,6, "notes1\nnotes2")
+        ListItemEntity updatedListItemEntity2 = listDataProvider.createListItemEntity(listId, listItemEntity3.itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, null,7, "notes3\nnotes4\nnotes5")
 
-        ListItemEntity newListItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased() , LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId3, tcin3,  null, 1, "newitemNote1")
-        ListItemEntity newListItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantrefId3, tcin4,  null, 1, "newitemNote2")
+        ListItemEntity newListItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased() , LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId3, tcin3,  null, 1, "newitemNote1")
+        ListItemEntity newListItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId3, tcin4,  null, 1, "newitemNote2")
 
         List<ListItemRequestTO> itemsToAdd = [listItemRequest1, listItemRequest2, listItemRequest3, listItemRequest4]
 
@@ -132,8 +132,8 @@ class CreateListItemsServiceTest extends Specification {
 
         def itemsToAdd = [listItemRequest1, listItemRequest2, listItemRequest3]
 
-        ListItemEntity newListItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tcinTenantRefId1, tcin1,  null, 1, "notes1")
-        ListItemEntity newListItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), gItemTenantrefId1, null,  gItem1, 1, "notes1")
+        ListItemEntity newListItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tcinTenantRefId1, tcin1,  null, 1, "notes1")
+        ListItemEntity newListItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, gItemTenantrefId1, null,  gItem1, 1, "notes1")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 

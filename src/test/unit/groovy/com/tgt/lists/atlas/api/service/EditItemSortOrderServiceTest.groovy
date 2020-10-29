@@ -24,6 +24,7 @@ class EditItemSortOrderServiceTest extends Specification {
     EventPublisher eventPublisher
     CartDataProvider cartDataProvider
     EditItemSortOrderService editItemSortOrderService
+    def guestId = "1234"
 
     def setup() {
         cartDataProvider = new CartDataProvider()
@@ -40,7 +41,7 @@ class EditItemSortOrderServiceTest extends Specification {
         UUID primaryItemId = UUID.randomUUID()
         UUID secondaryItemId = primaryItemId
         Direction direction = Direction.ABOVE
-        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(listId, primaryItemId, secondaryItemId, direction)
+        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
 
         def pendingCartResponse = cartDataProvider.getCartResponse(listId, "1234",
                 TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
@@ -74,7 +75,7 @@ class EditItemSortOrderServiceTest extends Specification {
         UUID primaryItemId = UUID.randomUUID()
         UUID secondaryItemId = UUID.randomUUID()
         Direction direction = Direction.ABOVE
-        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(listId, primaryItemId, secondaryItemId, direction)
+        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
 
         def pendingCartResponse = cartDataProvider.getCartResponse(listId, "1234",
                 TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
@@ -110,7 +111,7 @@ class EditItemSortOrderServiceTest extends Specification {
         UUID secondaryItemId = UUID.randomUUID()
         Direction direction = Direction.ABOVE
 
-        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(listId, primaryItemId, secondaryItemId, direction)
+        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
 
         def pendingCartResponse = cartDataProvider.getCartResponse(listId, "1234",
                 TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])

@@ -34,19 +34,19 @@ class GetListItemServiceTest extends Specification {
         def tcin = "1234"
         def tenantRefId = cartDataProvider.getItemRefId(ItemType.TCIN, tcin)
 
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId, tcin, null, 1, "notes1")
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId, tcin, null, 1, "notes1")
 
         when:
         def actual = getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, listItemId) >> Mono.just(listItemEntity)
 
         actual.listItemId == listItemEntity.itemId
         actual.tcin == listItemEntity.itemTcin
         actual.itemTitle == listItemEntity.itemTitle
         actual.itemNote == listItemEntity.itemNotes
-        actual.itemType.toString() == listItemEntity.itemType
+        actual.itemType.toString() == ItemType.TCIN.toString()
     }
 
     def "test getListItemService() when item in completed state"() {
@@ -56,21 +56,21 @@ class GetListItemServiceTest extends Specification {
         def tcin = "1234"
         def tenantRefId = cartDataProvider.getItemRefId(ItemType.TCIN, tcin)
 
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId, tcin, null, 1, "notes1")
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId, tcin, null, 1, "notes1")
 
         when:
         def actual = getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.empty()
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name(), listItemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, listItemId) >> Mono.empty()
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.value, listItemId) >> Mono.just(listItemEntity)
 
 
         actual.listItemId == listItemEntity.itemId
         actual.tcin == listItemEntity.itemTcin
         actual.itemTitle == listItemEntity.itemTitle
         actual.itemNote == listItemEntity.itemNotes
-        actual.itemType.toString() == listItemEntity.itemType
+        actual.itemType.toString() == ItemType.TCIN.toString()
     }
 
     def "test getListItemService() when item not found in list"() {
@@ -82,8 +82,8 @@ class GetListItemServiceTest extends Specification {
         def actual = getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.empty()
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name(), listItemId) >> Mono.empty()
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, listItemId) >> Mono.empty()
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.value, listItemId) >> Mono.empty()
 
         actual == null
     }
@@ -97,7 +97,7 @@ class GetListItemServiceTest extends Specification {
         getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.error(new RuntimeException("some error"))
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, listItemId) >> Mono.error(new RuntimeException("some error"))
 
         thrown(RuntimeException)
     }
@@ -111,8 +111,8 @@ class GetListItemServiceTest extends Specification {
         getListItemService.getListItem(guestId, locationId, listId, listItemId).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), listItemId) >> Mono.empty()
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name(), listItemId) >> Mono.error(new RuntimeException("some error"))
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, listItemId) >> Mono.empty()
+        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.value, listItemId) >> Mono.error(new RuntimeException("some error"))
 
         thrown(RuntimeException)
     }

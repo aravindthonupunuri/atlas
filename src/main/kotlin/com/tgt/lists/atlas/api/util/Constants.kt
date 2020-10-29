@@ -12,4 +12,5 @@ object Constants {
     const val LIST_ITEM_STATE_KEY = "LIST_ITEM_STATE"
     const val LIST_DEFAULT_LOCATION_ID = "3991"
     const val SYSTEM_PROFILE_ID = "00000000"
+    const val DEFAULT_GUEST_ID = "D"
 }

@@ -48,9 +48,9 @@ class SortListsTransformationStep(
         } else {
             listsTransformationPipelineConfiguration.guestPreferenceSortOrderManager!!.getGuestPreference(guestId)
                     .map {
-                        it.listSortOrder.split(",").mapIndexed {
+                        it.listSortOrder?.split(",")?.mapIndexed {
                             index, s -> s to index
-                        }.toMap()
+                        }?.toMap()
                     }
         }
     }

@@ -41,9 +41,9 @@ class DeleteListItemsServiceTest extends Specification {
         def listId = UUID.randomUUID()
         def recordMetadata = GroovyMock(RecordMetadata)
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1234", "1234", null, 1, "notes1")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1235", "1235", null, 1, "notes2")
-        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1236", "1236", null, 1, "notes3")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.ALL).block()
@@ -67,15 +67,15 @@ class DeleteListItemsServiceTest extends Specification {
         def listId = UUID.randomUUID()
         def recordMetadata = GroovyMock(RecordMetadata)
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1234", "1234", null, 1, "notes1")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1235", "1235", null, 1, "notes2")
-        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1236", "1236", null, 1, "notes3")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.name()) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 3
@@ -93,15 +93,15 @@ class DeleteListItemsServiceTest extends Specification {
         def listId = UUID.randomUUID()
         def recordMetadata = GroovyMock(RecordMetadata)
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), "item1234", "1234", null, 1, "notes1")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), "item1235", "1235", null, 1, "notes2")
-        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), "item1236", "1236", null, 1, "notes3")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.COMPLETED).block()
 
         then:
-        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.COMPLETED.name()) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.COMPLETED.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 3
@@ -124,7 +124,7 @@ class DeleteListItemsServiceTest extends Specification {
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.name()) >> Flux.empty()
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.empty()
 
         actual.listId == listId
         actual.itemIds.size() == 0
@@ -151,7 +151,7 @@ class DeleteListItemsServiceTest extends Specification {
         deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.name()) >> Flux.error(new RuntimeException("some exception"))
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.error(new RuntimeException("some exception"))
 
         thrown(RuntimeException)
     }
@@ -160,15 +160,15 @@ class DeleteListItemsServiceTest extends Specification {
         given:
         def listId = UUID.randomUUID()
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1234", "1234", null, 1, "notes1")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1235", "1235", null, 1, "notes2")
-        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1236", "1236", null, 1, "notes3")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
         when:
         deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.name()) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> Mono.error(new RuntimeException("some error"))
 
         thrown(RuntimeException)
@@ -178,15 +178,15 @@ class DeleteListItemsServiceTest extends Specification {
         given:
         def listId = UUID.randomUUID()
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1234", "1234", null, 1, "notes1")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1235", "1235", null, 1, "notes2")
-        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1236", "1236", null, 1, "notes3")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
         when:
         deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.name()) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> Mono.error(new RuntimeException("some error"))
 
         thrown(RuntimeException)
@@ -201,9 +201,9 @@ class DeleteListItemsServiceTest extends Specification {
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1234", "1234", null, 1, "notes1")
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1235", "1235", null, 1, "notes2")
-        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, listItemId3, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "item1236", "1236", null, 1, "notes3")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, listItemId3, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], null).block()
@@ -261,7 +261,7 @@ class DeleteListItemsServiceTest extends Specification {
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.name()) >> Flux.empty()
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.empty()
 
         actual.listId == listId
         actual.itemIds.size() == 0

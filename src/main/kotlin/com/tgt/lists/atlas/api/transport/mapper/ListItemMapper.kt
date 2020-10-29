@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
@@ -28,10 +29,10 @@ class ListItemMapper {
 
             return ListItemEntity(
                     id = listId,
-                    itemState = LIST_ITEM_STATE.PENDING.name,
+                    itemState = LIST_ITEM_STATE.PENDING.value,
                     itemId = Uuids.timeBased(),
                     itemRefId = listItemRequestTO.itemRefId,
-                    itemType = listItemRequestTO.itemType.name,
+                    itemType = listItemRequestTO.itemType.value,
                     itemTcin = listItemRequestTO.tcin?.trim(),
                     itemTitle = listItemRequestTO.itemTitle,
                     itemDpci = null,
@@ -55,7 +56,7 @@ class ListItemMapper {
 
             return ListItemEntity(
                     id = existingListItemEntity.id,
-                    itemState = listItemUpdateRequestTO.itemState?.name ?: existingListItemEntity.itemState,
+                    itemState = listItemUpdateRequestTO.itemState?.value ?: existingListItemEntity.itemState,
                     itemId = existingListItemEntity.itemId,
                     itemRefId = existingListItemEntity.itemRefId,
                     itemType = existingListItemEntity.itemType,
@@ -101,11 +102,37 @@ class ListItemMapper {
                     offerCount = 0,
                     images = null,
                     metadata = getUserItemMetaDataFromMetadataMap(listItemEntity.itemMetadata)?.userMetaData,
-                    itemType = ItemType.valueOf(listItemEntity.itemType!!),
+                    itemType = ItemType.values().first { it.value == listItemEntity.itemType!! },
                     relationshipType = null,
-                    itemState = LIST_ITEM_STATE.valueOf(listItemEntity.itemState!!),
+                    itemState = LIST_ITEM_STATE.values().first { it.value == listItemEntity.itemState!! },
                     addedTs = listItemEntity.itemCreatedAt.toString(),
                     lastModifiedTs = listItemEntity.itemUpdatedAt.toString()
+            )
+        }
+
+        fun toListItemResponseTO(
+            listItemExtEntity: ListItemExtEntity
+        ): ListItemResponseTO {
+
+            return ListItemResponseTO(
+                    listItemId = listItemExtEntity.itemId,
+                    itemRefId = listItemExtEntity.itemRefId!!,
+                    channel = listItemExtEntity.itemChannel,
+                    tcin = listItemExtEntity.itemTcin,
+                    itemTitle = listItemExtEntity.itemTitle ?: listItemExtEntity.itemDesc,
+                    requestedQuantity = listItemExtEntity.itemReqQty,
+                    unitOfMeasure = listItemExtEntity.itemQtyUom?.let { UnitOfMeasure.valueOf(it) },
+                    itemNote = listItemExtEntity.itemNotes,
+                    price = null,
+                    listPrice = null,
+                    offerCount = 0,
+                    images = null,
+                    metadata = getUserItemMetaDataFromMetadataMap(listItemExtEntity.itemMetadata)?.userMetaData,
+                    itemType = ItemType.values().first { it.value == listItemExtEntity.itemType!! },
+                    relationshipType = null,
+                    itemState = LIST_ITEM_STATE.values().first { it.value == listItemExtEntity.itemState!! },
+                    addedTs = listItemExtEntity.itemCreatedAt.toString(),
+                    lastModifiedTs = listItemExtEntity.itemUpdatedAt.toString()
             )
         }
     }

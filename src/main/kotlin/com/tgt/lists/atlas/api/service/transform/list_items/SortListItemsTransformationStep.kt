@@ -17,16 +17,16 @@ class SortListItemsTransformationStep(
     val sortOrderBy: ItemSortOrderGroup? = null
 ) : ListItemsTransformationStep {
 
-    override fun execute(listId: UUID, items: List<ListItemResponseTO>, transformationContext: TransformationContext): Mono<List<ListItemResponseTO>> {
+    override fun execute(guestId: String, listId: UUID, items: List<ListItemResponseTO>, transformationContext: TransformationContext): Mono<List<ListItemResponseTO>> {
 
         if (!items.isEmpty()) {
             return if (sortFieldBy == ItemSortFieldGroup.ITEM_POSITION) {
                 return if (transformationContext.getContextValue(LIST_ITEM_STATE_KEY) == LIST_ITEM_STATE.PENDING) {
 
                     (transformationContext.transformationPipelineConfiguration as ListItemsTransformationPipelineConfiguration).sortListItemsTransformationConfiguration?.let {
-                        it.itemSortOrderManager?.getList(listId)
+                        it.itemSortOrderManager?.getList(guestId, listId)
                                 ?.map {
-                                    reArrangeItems(it.listItemSortOrder.split(","), items)
+                                    reArrangeItems(it.itemSortOrder!!.split(","), items)
                                 }
                     } ?: Mono.just(items)
                 } else {

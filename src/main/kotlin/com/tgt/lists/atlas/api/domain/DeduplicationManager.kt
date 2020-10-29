@@ -46,9 +46,9 @@ class DeduplicationManager(
         return listRepository.findListItemsByListId(listId).collectList()
                 .flatMap {
                     val existingItems: List<ListItemEntity> = if (itemState == LIST_ITEM_STATE.PENDING) {
-                        it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.PENDING.name }
+                        it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.PENDING.value }
                     } else {
-                        it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.COMPLETED.name }
+                        it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.COMPLETED.value }
                     }
                     processDeduplication(guestId, listId, itemState, existingItems, newItemsMap)
                 }
@@ -232,7 +232,7 @@ class DeduplicationManager(
     }
 
     private fun itemFilter(existingItem: ListItemEntity, newItem: ListItemRequestTO): Boolean {
-        return (existingItem.itemType == newItem.itemType.name) &&
+        return (existingItem.itemType == newItem.itemType.value) &&
                 (newItem.itemRefId == existingItem.itemRefId)
     }
 

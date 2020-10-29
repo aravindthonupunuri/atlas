@@ -63,7 +63,7 @@ class DeleteListItemsService(
             // deleting all items in list
             listRepository.findListItemsByListId(listId)
         } else {
-            listRepository.findListItemsByListIdAndItemState(listId, itemState.name)
+            listRepository.findListItemsByListIdAndItemState(listId, itemState.value)
         }.collectList().flatMap { deleteItems(guestId, listId, it) }
     }
 

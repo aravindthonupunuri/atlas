@@ -4,7 +4,7 @@ package com.tgt.lists.atlas.api.service.transform.list
 import com.tgt.lists.atlas.api.domain.CartManager
 import com.tgt.lists.atlas.api.domain.ContextContainerManager
 import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
-import com.tgt.lists.atlas.api.domain.model.GuestPreference
+import com.tgt.lists.atlas.api.domain.model.entity.GuestPreferenceEntity
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.util.ListSortFieldGroup
 import com.tgt.lists.atlas.api.util.ListSortOrderGroup
@@ -86,7 +86,7 @@ class SortListsTransformationStepTest extends Specification {
 
         def lists = [list1,list2,list3,list4,list5]
 
-        def guestPreference = new GuestPreference(guestId, "${list2.listId},${list1.listId},${list4.listId},${list5.listId},${list3.listId}", null, null)
+        def guestPreference = new GuestPreferenceEntity(guestId, "${list2.listId},${list1.listId},${list4.listId},${list5.listId},${list3.listId}")
         transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(cartManager, contextContainerManager, guestPreferenceSortOrderManager, true)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
         listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))

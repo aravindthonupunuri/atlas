@@ -22,11 +22,11 @@ class ListItemsTransformationPipeline {
     /**
      * Execute all steps of pipeline
      */
-    fun executePipeline(listId: UUID, items: List<ListItemResponseTO>, transformationContext: TransformationContext): Mono<List<ListItemResponseTO>> {
+    fun executePipeline(guestId: String, listId: UUID, items: List<ListItemResponseTO>, transformationContext: TransformationContext): Mono<List<ListItemResponseTO>> {
         var response: Mono<List<ListItemResponseTO>>? = null
         steps.forEach {
             val step = it
-            response = response?.flatMap { step.execute(listId, it, transformationContext) } ?: step.execute(listId, items, transformationContext)
+            response = response?.flatMap { step.execute(guestId, listId, it, transformationContext) } ?: step.execute(guestId, listId, items, transformationContext)
         }
         return response ?: Mono.just(items)
     }

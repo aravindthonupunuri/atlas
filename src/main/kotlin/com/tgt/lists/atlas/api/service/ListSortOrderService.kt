@@ -1,9 +1,8 @@
-package com.tgt.lists.atlas.api.async
+package com.tgt.lists.atlas.api.service
 
 import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
 import com.tgt.lists.atlas.api.transport.EditListSortOrderRequestTO
-import com.tgt.lists.atlas.api.transport.ListMetaDataTO
 import com.tgt.lists.atlas.api.util.LIST_STATUS
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -22,40 +21,38 @@ class ListSortOrderService(
     fun saveListSortOrder(
         guestId: String, // list owner guest id
         listId: UUID,
-        listMetadata: ListMetaDataTO
+        listStatus: LIST_STATUS
     ): Mono<Boolean> {
 
         logger.debug("[saveListSortOrder] guestId: $guestId, listId: $listId")
 
-        return if (listMetadata.listStatus == LIST_STATUS.PENDING) {
-            guestPreferenceSortOrderManager.saveNewOrder(guestId, listId).map { true }
+        return if (listStatus == LIST_STATUS.PENDING) {
+            guestPreferenceSortOrderManager.saveNewOrder(guestId, listId)
+                    .map { true }
                     .onErrorResume {
                         logger.error("Exception while saving list sort order", it)
                         Mono.just(false)
                     }
-        } else {
-            Mono.just(true)
-        }
+        } else { Mono.just(true) }
     }
 
     fun deleteListSortOrder(
         guestId: String,
         listId: UUID,
-        listMetadata: ListMetaDataTO
+        listStatus: LIST_STATUS
     ): Mono<Boolean> {
 
         logger.debug("[deleteListSortOrder] guestId: $guestId, listId: $listId")
 
-        return if (listMetadata.listStatus == LIST_STATUS.PENDING) {
-            listItemSortOrderManager.deleteById(listId)
-                    .flatMap { guestPreferenceSortOrderManager.removeListIdFromSortOrder(guestId, listId) }.map { true }
+        return if (listStatus == LIST_STATUS.PENDING) {
+            listItemSortOrderManager.deleteById(guestId, listId)
+                    .flatMap { guestPreferenceSortOrderManager.removeListIdFromSortOrder(guestId, listId) }
+                    .map { true }
                     .onErrorResume {
                         logger.error("Exception while deleting list sort order", it)
                         Mono.just(false)
                     }
-        } else {
-            Mono.just(true)
-        }
+        } else { Mono.just(true) }
     }
 
     fun editListSortOrder(

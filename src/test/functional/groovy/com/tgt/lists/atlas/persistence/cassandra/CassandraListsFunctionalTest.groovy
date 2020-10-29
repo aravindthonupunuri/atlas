@@ -7,6 +7,8 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.util.ItemType
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.util.ListDataProvider
 import io.micronaut.test.annotation.MicronautTest
 import org.slf4j.Logger
@@ -72,7 +74,7 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
     def "test add weekly list item"() {
         given:
-        ListItemEntity listItemEntity = dataProvider.createListItemEntity(listIds[0], listItemIds[0], "PENDING", "TCIN",  "52829076", "1234", null, null, null)
+        ListItemEntity listItemEntity = dataProvider.createListItemEntity(listIds[0], listItemIds[0], LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value,  "52829076", "1234", null, null, null)
 
         when:
         listsRepository.saveListItems([listItemEntity]).block()
@@ -83,9 +85,9 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
     def "test add weekly list items by batch"() {
         given:
-        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], "PENDING", "TCIN", "15833332", "4567", null, null, null)
-        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[2], "COMPLETED", "GENERIC_ITEM", "coffee", null, "title", null, null)
-        ListItemEntity listItemEntity3 = dataProvider.createListItemEntity(listIds[0], listItemIds[3], "COMPLETED", "OFFER", "100000", null, null, null, null)
+        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "15833332", "4567", null, null, null)
+        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[2], LIST_ITEM_STATE.COMPLETED.value, ItemType.GENERIC_ITEM.value, "coffee", null, "title", null, null)
+        ListItemEntity listItemEntity3 = dataProvider.createListItemEntity(listIds[0], listItemIds[3], LIST_ITEM_STATE.COMPLETED.value, ItemType.OFFER.value, "100000", null, null, null, null)
 
 
         when:
@@ -118,12 +120,34 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         listItemEntities.size() == 4
     }
 
+    def "test get list and items by listId"() {
+        given:
+        def listId = listIds[0]
+
+        when:
+        List<ListItemExtEntity> listItemExtEntities = listsRepository.findListAndItemsByListId(listId).collect(Collectors.toList()).block()
+
+        then:
+        listItemExtEntities.size() == 4
+    }
+
+    def "test get list and items by listId, item state"() {
+        given:
+        def listId = listIds[0]
+
+        when:
+        List<ListItemExtEntity> listItemExtEntities = listsRepository.findListAndItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value).collect(Collectors.toList()).block()
+
+        then:
+        listItemExtEntities.size() == 2
+    }
+
     def "test get list items by itemState PENDING"() {
         given:
         def listId = listIds[0]
 
         when:
-        List<ListItemEntity> listItemEntities = listsRepository.findListItemsByListIdAndItemState(listId, "PENDING").collect(Collectors.toList()).block()
+        List<ListItemEntity> listItemEntities = listsRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value).collect(Collectors.toList()).block()
 
         then:
         listItemEntities.size() == 2
@@ -132,7 +156,7 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
     def "test get list item by id"() {
         given:
         def listId = listIds[0]
-        def itemState = "PENDING"
+        def itemState = LIST_ITEM_STATE.PENDING.value
         def itemId = listItemIds[0]
 
         when:
@@ -232,8 +256,8 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
     def "test delete weekly list items by batch"() {
         given:
-        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[0], "PENDING", "TCIN",  "52829076", "1234", null, null, null)
-        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], "PENDING", "TCIN", "15833332", "4567", null, null, null)
+        ListItemEntity listItemEntity1 = dataProvider.createListItemEntity(listIds[0], listItemIds[0], LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value,  "52829076", "1234", null, null, null)
+        ListItemEntity listItemEntity2 = dataProvider.createListItemEntity(listIds[0], listItemIds[1], LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "15833332", "4567", null, null, null)
 
         when:
         List<ListItemEntity> deletedListItems = listsRepository.deleteListItems([listItemEntity1, listItemEntity2]).block()

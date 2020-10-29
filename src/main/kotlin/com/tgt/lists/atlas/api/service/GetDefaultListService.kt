@@ -1,21 +1,20 @@
 package com.tgt.lists.atlas.api.service
 
-import com.tgt.lists.cart.transport.CartResponse
-import com.tgt.lists.atlas.api.domain.CartManager
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformationPipeline
 import com.tgt.lists.atlas.api.transport.ListResponseTO
-import com.tgt.lists.atlas.api.util.CartManagerName
 import com.tgt.lists.atlas.api.util.ItemIncludeFields
-import com.tgt.lists.atlas.api.util.getListMetaDataFromCart
+import com.tgt.lists.atlas.api.util.LIST_MARKER
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class GetDefaultListService(
-    @CartManagerName("GetDefaultListService") @Inject private val cartManager: CartManager,
+    @Inject private val listRepository: ListRepository,
     @Inject private val getListService: GetListService,
     @Value("\${list.list-type}") private val listType: String
 ) {
@@ -30,28 +29,13 @@ class GetDefaultListService(
 
         logger.debug("[getDefaultList] guestId: $guestId, locationId: $locationId")
 
-        return cartManager.getAllCarts(guestId = guestId)
-            .flatMap {
-                processGetDefaultList(it, guestId, locationId, listItemsTransformationPipeline, includeItems)
-            }
-    }
-
-    fun processGetDefaultList(
-        cartResponseList: List<CartResponse>,
-        guestId: String,
-        locationId: Long,
-        listItemsTransformationPipeline: ListItemsTransformationPipeline,
-        includeItems: ItemIncludeFields
-    ): Mono<ListResponseTO> {
-        if (cartResponseList.isEmpty()) { return Mono.empty() }
-        val defaultListId = cartResponseList.first { cartResponse ->
-            val metadata = getListMetaDataFromCart(cartResponse.metadata)
-            metadata.defaultList && listType == cartResponse.cartSubchannel
-        }.cartId
-        return if (defaultListId != null) {
-            getListService.getList(guestId, locationId, defaultListId, listItemsTransformationPipeline, includeItems)
-        } else {
-            Mono.empty()
-        }
+        val listSubType = null // TODO Revisit the logic, not every list can have a sub-type
+        val listMarker = LIST_MARKER.DEFAULT.value
+        return listRepository.findGuestListByMarker(guestId, listType, listSubType, listMarker)
+                .switchIfEmpty { Mono.empty() }
+                .flatMap {
+                    val defaultGuestList = it
+                    getListService.getList(guestId, locationId, defaultGuestList.id!!, listItemsTransformationPipeline, includeItems)
+                }
     }
 }

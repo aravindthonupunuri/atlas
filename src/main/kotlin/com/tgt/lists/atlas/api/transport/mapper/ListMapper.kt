@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.transport.*
 import com.tgt.lists.atlas.api.util.*
 
@@ -41,6 +42,28 @@ class ListMapper {
                     createdAt = now,
                     updatedAt = now,
                     testList = testList)
+        }
+
+        fun toListEntity(
+            listItemExtEntity: ListItemExtEntity?
+        ): ListEntity {
+            return ListEntity(
+                    id = listItemExtEntity?.id,
+                    guestId = listItemExtEntity?.guestId,
+                    type = listItemExtEntity?.type,
+                    subtype = listItemExtEntity?.subtype,
+                    title = listItemExtEntity?.title,
+                    channel = listItemExtEntity?.channel,
+                    marker = listItemExtEntity?.marker,
+                    description = listItemExtEntity?.description,
+                    location = listItemExtEntity?.location,
+                    agentId = listItemExtEntity?.agentId,
+                    metadata = listItemExtEntity?.metadata,
+                    state = listItemExtEntity?.state,
+                    expiration = listItemExtEntity?.expiration,
+                    createdAt = listItemExtEntity?.createdAt,
+                    updatedAt = listItemExtEntity?.itemUpdatedAt,
+                    testList = listItemExtEntity?.testList)
         }
 
         fun toUpdateListEntity(existingEntity: ListEntity, updatedMetaData: UserMetaDataTO?, listUpdateRequestTO: ListUpdateRequestTO): Pair<ListEntity, ListEntity> {

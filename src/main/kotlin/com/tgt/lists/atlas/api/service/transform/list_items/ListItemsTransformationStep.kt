@@ -13,5 +13,5 @@ interface ListItemsTransformationStep {
      *                                pipeline steps to read or write additional step specific data that will available at the
      *                                end of pipeline processing for pipeline caller's consumption.
      */
-    fun execute(listId: UUID, items: List<ListItemResponseTO>, transformationContext: TransformationContext): Mono<List<ListItemResponseTO>>
+    fun execute(guestId: String, listId: UUID, items: List<ListItemResponseTO>, transformationContext: TransformationContext): Mono<List<ListItemResponseTO>>
 }

@@ -41,9 +41,9 @@ data class ListItemEntity(
 
     fun validate(): ListItemEntity {
         return when (this.itemType) {
-            ItemType.GENERIC_ITEM.name -> validateGenericItem(this)
-            ItemType.TCIN.name -> validateTcinItem(this)
-            ItemType.OFFER.name -> validateOfferItem(this)
+            ItemType.GENERIC_ITEM.value -> validateGenericItem(this)
+            ItemType.TCIN.value -> validateTcinItem(this)
+            ItemType.OFFER.value -> validateOfferItem(this)
             else -> throw InternalServerException(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE(arrayListOf("Invalid Item Type")))
         }
     }

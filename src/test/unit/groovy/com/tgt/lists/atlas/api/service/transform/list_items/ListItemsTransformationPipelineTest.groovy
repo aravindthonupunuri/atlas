@@ -1,8 +1,8 @@
 package com.tgt.lists.atlas.api.service.transform.list_items
 
-
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
-import com.tgt.lists.atlas.api.persistence.ListRepository
+import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.util.Constants
@@ -18,14 +18,15 @@ class ListItemsTransformationPipelineTest extends Specification {
 
     ListItemsTransformationPipeline listItemsTransformationPipeline
     ListItemSortOrderManager itemSortOrderManager
-    ListRepository listRepository
+    ListPreferenceRepository listPreferenceRepository
     ListDataProvider listDataProvider
     TransformationContext transformationContext
+    String guestId = "1234"
 
     def setup() {
         listItemsTransformationPipeline = new ListItemsTransformationPipeline()
-        listRepository = Mock(ListRepository)
-        itemSortOrderManager = new ListItemSortOrderManager(listRepository)
+        listPreferenceRepository = Mock(ListPreferenceRepository)
+        itemSortOrderManager = new ListItemSortOrderManager(listPreferenceRepository)
         listDataProvider = new ListDataProvider()
         def sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(itemSortOrderManager)
         def paginateListItemsTransformationConfiguration = new PaginateListItemsTransformationConfiguration(2)
@@ -46,7 +47,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 5
@@ -73,7 +74,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 5
@@ -96,16 +97,16 @@ class ListItemsTransformationPipelineTest extends Specification {
         ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
-        def dbList = new com.tgt.lists.atlas.api.domain.model.List(listId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}", null, null)
+        def dbList = new ListPreferenceEntity(listId, guestId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}")
 
         listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_POSITION, ItemSortOrderGroup.ASCENDING))
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
-        1 * listRepository.find(listId) >> Mono.just(dbList)
+        1 * listPreferenceRepository.getListPreference(_, _) >> Mono.just(dbList)
 
         actual.size() == 5
         actual[0].itemTitle == "second"
@@ -134,7 +135,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 2
@@ -162,7 +163,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 2
@@ -189,7 +190,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 1
@@ -215,7 +216,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 0
@@ -240,7 +241,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 2
@@ -269,7 +270,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
-        def actual = listItemsTransformationPipeline.executePipeline(listId, itemList, transformationContext).block()
+        def actual = listItemsTransformationPipeline.executePipeline(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 2
@@ -287,7 +288,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         }
 
         @Override
-        Mono<List<ListItemResponseTO>> execute(@NotNull UUID listId, @NotNull List<ListItemResponseTO> items, @NotNull TransformationContext transformationContext) {
+        Mono<List<ListItemResponseTO>> execute(@NotNull String guestId, @NotNull UUID listId, @NotNull List<ListItemResponseTO> items, @NotNull TransformationContext transformationContext) {
 
             return Mono.fromCallable {
                 items.findAll { it.itemTitle != itemName }

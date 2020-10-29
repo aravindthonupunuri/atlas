@@ -1,7 +1,8 @@
 package com.tgt.lists.atlas.api.service.transform.list_items
 
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
-import com.tgt.lists.atlas.api.persistence.ListRepository
+import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.util.Constants
@@ -16,13 +17,14 @@ class SortListItemsTransformationStepTest extends Specification {
 
     SortListItemsTransformationStep sortListItemsTransformationStep
     TransformationContext transformationContext
-    ListRepository listRepository
+    ListPreferenceRepository listPreferenceRepository
     ListDataProvider listDataProvider
+    String guestId = "1234"
 
     def setup() {
         listDataProvider = new ListDataProvider()
-        listRepository = Mock(ListRepository)
-        ListItemSortOrderManager itemSortOrderManager = new ListItemSortOrderManager(listRepository)
+        listPreferenceRepository = Mock(ListPreferenceRepository)
+        ListItemSortOrderManager itemSortOrderManager = new ListItemSortOrderManager(listPreferenceRepository)
         SortListItemsTransformationConfiguration sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(itemSortOrderManager)
         ListItemsTransformationPipelineConfiguration transformationPipelineContext = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, null)
         transformationContext = new TransformationContext(transformationPipelineContext)
@@ -44,7 +46,7 @@ class SortListItemsTransformationStepTest extends Specification {
 
         when:
 
-        def actual = sortListItemsTransformationStep.execute(listId, itemList, transformationContext).block()
+        def actual = sortListItemsTransformationStep.execute(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 5
@@ -67,17 +69,17 @@ class SortListItemsTransformationStepTest extends Specification {
         ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
-        def dbList = new com.tgt.lists.atlas.api.domain.model.List(listId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}", null, null)
+        def dbList = new ListPreferenceEntity(listId, guestId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}")
 
         sortListItemsTransformationStep = new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_POSITION, ItemSortOrderGroup.ASCENDING)
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.PENDING)
 
         when:
 
-        def actual = sortListItemsTransformationStep.execute(listId, itemList, transformationContext).block()
+        def actual = sortListItemsTransformationStep.execute(guestId, listId, itemList, transformationContext).block()
 
         then:
-        1 * listRepository.find(listId) >> Mono.just(dbList)
+        1 * listPreferenceRepository.getListPreference(_, _) >> Mono.just(dbList)
 
         actual.size() == 5
         actual[0].itemTitle == "second"
@@ -99,17 +101,17 @@ class SortListItemsTransformationStepTest extends Specification {
         ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
-        def dbList = new com.tgt.lists.atlas.api.domain.model.List(listId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}", null, null)
+        def dbList = new ListPreferenceEntity(listId, guestId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}")
 
         sortListItemsTransformationStep = new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_POSITION, ItemSortOrderGroup.ASCENDING)
         transformationContext.addContextValue(Constants.LIST_ITEM_STATE_KEY, LIST_ITEM_STATE.COMPLETED)
 
         when:
 
-        def actual = sortListItemsTransformationStep.execute(listId, itemList, transformationContext).block()
+        def actual = sortListItemsTransformationStep.execute(guestId, listId, itemList, transformationContext).block()
 
         then:
-        0 * listRepository.find(listId) >> Mono.just(dbList)
+        0 * listPreferenceRepository.getListPreference(_, _) >> Mono.just(dbList)
 
         actual.size() == 5
         actual[0].itemTitle == "first"

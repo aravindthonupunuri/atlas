@@ -49,9 +49,9 @@ enum class LIST_STATUS(val value: String) {
     COMPLETED("completed")
 }
 
-enum class LIST_ITEM_STATE {
-    PENDING,
-    COMPLETED
+enum class LIST_ITEM_STATE(val value: String) {
+    PENDING("P"),
+    COMPLETED("C")
 }
 
 enum class LIST_MARKER(val value: String) {

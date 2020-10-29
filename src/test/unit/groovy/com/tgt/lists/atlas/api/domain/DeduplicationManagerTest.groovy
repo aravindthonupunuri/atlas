@@ -62,7 +62,7 @@ class DeduplicationManagerTest extends Specification {
         def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "tcn5678", "5678", null,
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn5678", "5678", null,
                 1, "notes1")
 
         when:
@@ -83,7 +83,7 @@ class DeduplicationManagerTest extends Specification {
         def listId = UUID.randomUUID()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.GENERIC_ITEM.name(), "tcn1234", null, "title",
+                LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "tcn1234", null, "title",
                 1, "notes1")
 
         when:
@@ -115,7 +115,7 @@ class DeduplicationManagerTest extends Specification {
         def listId = UUID.randomUUID()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "tcn1111", "1111", null,
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", null,
                 1, "newItemNote")
 
         when:
@@ -146,7 +146,7 @@ class DeduplicationManagerTest extends Specification {
         def listId = UUID.randomUUID()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "tcn1111", "1111", "new item",
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
                 1, "newItemNote")
 
        def recordMetadata = GroovyMock(RecordMetadata)
@@ -184,7 +184,7 @@ class DeduplicationManagerTest extends Specification {
         def listId = UUID.randomUUID()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "tcn1234", "1234", "new item",
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
                 1, "newItemNote")
 
         def recordMetadata = GroovyMock(RecordMetadata)
@@ -223,7 +223,7 @@ class DeduplicationManagerTest extends Specification {
         def listId = UUID.randomUUID()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "tcn1111", "1111", "new item",
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
                 1, "newItemNote")
 
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
@@ -258,11 +258,11 @@ class DeduplicationManagerTest extends Specification {
         def recordMetadata = GroovyMock(RecordMetadata)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "tcn1234", "1234", "new item",
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
                 1, "newItemNote")
 
         ListItemEntity updatedListItemEntity = listDataProvider.createListItemEntity(listId, listItemEntity.itemId,
-                LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), listItemEntity.itemRefId, listItemEntity.itemTcin,
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listItemEntity.itemRefId, listItemEntity.itemTcin,
                 "new item", listItemRequest1.requestedQuantity + listItemEntity.itemReqQty,
                 "newItemNote\nitemNote")
 
@@ -303,15 +303,15 @@ class DeduplicationManagerTest extends Specification {
         def listId = UUID.randomUUID()
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), "tcn1234", "1234", "new item",
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
                 1, "note1")
 
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.GENERIC_ITEM.name(), "itm3456", null, "genericItem1",
+                LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1",
                 1, "note2")
 
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.name(), ItemType.GENERIC_ITEM.name(), "itm3456", null, "genericItem1",
+                LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1",
                 1, "note3")
 
         ListItemEntity updatedListItemEntity1 = listDataProvider.createListItemEntity(listId, listItemEntity1.itemId,

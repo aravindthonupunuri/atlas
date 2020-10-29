@@ -67,7 +67,7 @@ class UpdateListItemsStateService(
                 val item = items.firstOrNull { it.itemId == itemId }
                 if (item != null) {
                     val itemState = item.itemState!!
-                    if (itemState == listItemState.name) {
+                    if (itemState == listItemState.value) {
                         itemsAlreadyUpdated.add(itemId)
                     } else {
                         itemsToUpdate.add(item)
@@ -99,7 +99,7 @@ class UpdateListItemsStateService(
             Mono.just(itemsToUpdate)
         } else {
             Flux.fromIterable(itemsToUpdate.asIterable()).flatMap {
-                updateListItemManager.updateListItem(guestId, listId, it.copy(itemState = listItemState.name), it)
+                updateListItemManager.updateListItem(guestId, listId, it.copy(itemState = listItemState.value), it)
             }.collectList()
         }
     }

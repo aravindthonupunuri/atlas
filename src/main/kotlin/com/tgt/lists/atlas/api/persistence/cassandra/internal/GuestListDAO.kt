@@ -19,7 +19,8 @@ interface GuestListDAO : ICassandraDao {
 
     @Select
     @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
-    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String, listMarker: String): MappedReactiveResultSet<GuestListEntity>
+    // listSubtype can be null since not all lists also has a sub-type
+    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String): MappedReactiveResultSet<GuestListEntity>
 
     @Delete(entityClass = [GuestListEntity::class])
     fun deleteByIdForId(guestId: String?, type: String?, subtype: String?, marker: String?, id: UUID?): BoundStatement

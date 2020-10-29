@@ -10,6 +10,7 @@ class PaginateListItemsTransformationStepTest extends Specification {
     PaginateListItemsTransformationStep paginateListItemsTransformationStep
     TransformationContext transformationContext
     ListDataProvider listDataProvider
+    String guestId = "1234"
 
     def setup() {
         listDataProvider = new ListDataProvider()
@@ -35,7 +36,7 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
         when:
 
-        def actual = paginateListItemsTransformationStep.execute(listId, itemList, transformationContext).block()
+        def actual = paginateListItemsTransformationStep.execute(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 2
@@ -59,7 +60,7 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
         when:
 
-        def actual = paginateListItemsTransformationStep.execute(listId, itemList, transformationContext).block()
+        def actual = paginateListItemsTransformationStep.execute(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 2
@@ -83,7 +84,7 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
         when:
 
-        def actual = paginateListItemsTransformationStep.execute(listId, itemList, transformationContext).block()
+        def actual = paginateListItemsTransformationStep.execute(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 1
@@ -106,7 +107,7 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
         when:
 
-        def actual = paginateListItemsTransformationStep.execute(listId, itemList, transformationContext).block()
+        def actual = paginateListItemsTransformationStep.execute(guestId, listId, itemList, transformationContext).block()
 
         then:
         actual.size() == 0

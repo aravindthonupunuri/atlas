@@ -46,8 +46,8 @@
 //        def tcin1 = "1234"
 //        def tenantRefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 //
-//        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, "title", 1, "note")
-//        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemUpdateRequest.requestedQuantity, listItemUpdateRequest.itemNote)
+//        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
+//        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemUpdateRequest.requestedQuantity, listItemUpdateRequest.itemNote)
 //
 //
 //        def recordMetadata = GroovyMock(RecordMetadata)
@@ -56,7 +56,7 @@
 //        def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 //
 //        then:
-//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), itemId) >> Mono.just(listItemEntity)
+//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
 //        // updating duplicate items
 //        1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
 //            final ListItemEntity updatedlistItem = arguments[0]
@@ -84,8 +84,8 @@
 //        def tcin1 = "1234"
 //        def tenantRefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
 //
-//        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, "title", 1, "note")
-//        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemUpdateRequest.requestedQuantity, listItemUpdateRequest.itemNote)
+//        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
+//        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemUpdateRequest.requestedQuantity, listItemUpdateRequest.itemNote)
 //
 //        def recordMetadata = GroovyMock(RecordMetadata)
 //
@@ -93,8 +93,8 @@
 //        def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 //
 //        then:
-//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), itemId) >> Mono.empty()
-//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name(), itemId) >> Mono.just(listItemEntity)
+//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.empty()
+//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.value, itemId) >> Mono.just(listItemEntity)
 //        // updating duplicate items
 //        1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
 //            final ListItemEntity updatedlistItem = arguments[0]
@@ -122,8 +122,8 @@
 //        def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 //
 //        then:
-//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), itemId) >> Mono.empty()
-//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name(), itemId) >> Mono.empty()
+//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.empty()
+//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.value, itemId) >> Mono.empty()
 //
 //        actual == null
 //    }
@@ -151,8 +151,8 @@
 //        def tcin1 = "1234"
 //        def tenantRefId1 = cartDataProvider.getTenantRefId(ItemType.TCIN, tcin1)
 //
-//        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, "title", 1, "note", null)
-//        ListItemEntity updatedListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.COMPLETED.name(), ItemType.TCIN.name(), tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemUpdateRequest.requestedQuantity, listItemUpdateRequest.itemNote, objectMapper.writeValueAsString(listItemUpdateRequest.metadata))
+//        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note", null)
+//        ListItemEntity updatedListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemUpdateRequest.requestedQuantity, listItemUpdateRequest.itemNote, objectMapper.writeValueAsString(listItemUpdateRequest.metadata))
 //
 //        def recordMetadata = GroovyMock(RecordMetadata)
 //
@@ -161,7 +161,7 @@
 //
 //        then:
 //
-//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name(), itemId) >> Mono.just(listItemEntity)
+//        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
 //        // updating duplicate items
 //        1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
 //            final ListItemEntity updatedListItem = arguments[0]

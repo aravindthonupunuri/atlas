@@ -58,3 +58,24 @@ CREATE TABLE IF NOT EXISTS backpack.guest_lists (
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'};
+
+
+CREATE TABLE IF NOT EXISTS backpack.guest_preference (
+    guest_id          text,
+    list_sort_order   text,
+    PRIMARY KEY (guest_id)
+) WITH caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'};
+
+
+CREATE TABLE IF NOT EXISTS backpack.list_preference (
+    list_id            timeuuid,
+    guest_id           text,
+    item_sort_order    text,
+    PRIMARY KEY (list_id, guest_id)
+) WITH CLUSTERING ORDER BY (guest_id DESC)
+      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+      AND comment = ''
+      AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'};
+

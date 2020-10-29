@@ -56,10 +56,10 @@ class UpdateListItemService(
         listId: UUID,
         listItemId: UUID
     ): Mono<ListItemEntity> {
-        return listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.name, listItemId)
+        return listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, listItemId)
                 .switchIfEmpty {
                     logger.debug { "Item is not found in pending state, check for item in completed state" }
-                    listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.name, listItemId)
+                    listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.value, listItemId)
                 }
     }
 }

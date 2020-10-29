@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.cql.BatchableStatement
 import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.DataContextContainerManager
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.GuestListDAO
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
@@ -142,6 +143,14 @@ class ListRepository(
         return Flux.from(listDAO.findListItemsByListId(listId))
     }
 
+    fun findListAndItemsByListId(listId: UUID): Flux<ListItemExtEntity> {
+        return Flux.from(listDAO.findListAndItemsByListId(listId))
+    }
+
+    fun findListAndItemsByListIdAndItemState(listId: UUID, itemState: String): Flux<ListItemExtEntity> {
+        return Flux.from(listDAO.findListAndItemsByListIdAndItemState(listId, itemState))
+    }
+
     fun findListItemsByListIdAndItemState(listId: UUID, itemState: String): Flux<ListItemEntity> {
         return Flux.from(listDAO.findListItemsByListIdAndItemState(listId, itemState))
     }
@@ -150,7 +159,11 @@ class ListRepository(
         return Mono.from(listDAO.findListItemByItemId(listId, itemState, itemId))
     }
 
-    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String, listMarker: String): Mono<GuestListEntity> {
+    fun findListAndItemByItemId(listId: UUID, itemState: String, itemId: UUID): Mono<ListItemExtEntity> {
+        return Mono.from(listDAO.findListAndItemByItemId(listId, itemState, itemId))
+    }
+
+    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String): Mono<GuestListEntity> {
         return Mono.from(guestListDAO.findGuestListByMarker(guestId, listType, listSubtype, listMarker))
     }
 
