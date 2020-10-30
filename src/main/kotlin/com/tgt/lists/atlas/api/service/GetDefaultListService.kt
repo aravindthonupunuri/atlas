@@ -24,12 +24,12 @@ class GetDefaultListService(
         guestId: String, // this is NOT the ownerId of list, it represents operation executor who could be different than list owner
         locationId: Long,
         listItemsTransformationPipeline: ListItemsTransformationPipeline,
-        includeItems: ItemIncludeFields
+        includeItems: ItemIncludeFields,
+        listSubType: String? = null
     ): Mono<ListResponseTO> {
 
         logger.debug("[getDefaultList] guestId: $guestId, locationId: $locationId")
 
-        val listSubType = null // TODO Revisit the logic, not every list can have a sub-type
         val listMarker = LIST_MARKER.DEFAULT.value
         return listRepository.findGuestListByMarker(guestId, listType, listSubType, listMarker)
                 .switchIfEmpty { Mono.empty() }
