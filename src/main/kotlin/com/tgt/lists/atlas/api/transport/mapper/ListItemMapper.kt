@@ -12,7 +12,6 @@ import com.tgt.lists.atlas.api.transport.UserItemMetaDataTO
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.util.UnitOfMeasure
-import com.tgt.lists.atlas.api.util.getLocalInstant
 import java.util.*
 
 class ListItemMapper {
@@ -25,8 +24,7 @@ class ListItemMapper {
             listItemRequestTO: ListItemRequestTO
         ): ListItemEntity {
 
-            val now = getLocalInstant()
-
+            // Do not set created or updated time in here, set it in the repository instead
             return ListItemEntity(
                     id = listId,
                     itemState = LIST_ITEM_STATE.PENDING.value,
@@ -44,9 +42,7 @@ class ListItemMapper {
                     itemNotes = listItemRequestTO.itemNote,
                     itemQty = null,
                     itemQtyUom = null,
-                    itemReqQty = listItemRequestTO.requestedQuantity,
-                    itemCreatedAt = now,
-                    itemUpdatedAt = now)
+                    itemReqQty = listItemRequestTO.requestedQuantity)
         }
 
         fun toUpdateListItemEntity(

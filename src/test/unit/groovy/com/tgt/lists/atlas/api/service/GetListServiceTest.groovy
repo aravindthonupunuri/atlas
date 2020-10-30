@@ -8,18 +8,12 @@ import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformat
 import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformationPipelineConfiguration
 import com.tgt.lists.atlas.api.service.transform.list_items.SortListItemsTransformationConfiguration
 import com.tgt.lists.atlas.api.service.transform.list_items.SortListItemsTransformationStep
-import com.tgt.lists.atlas.api.util.ItemIncludeFields
-import com.tgt.lists.atlas.api.util.ItemSortFieldGroup
-import com.tgt.lists.atlas.api.util.ItemSortOrderGroup
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.util.LIST_MARKER
+import com.tgt.lists.atlas.api.util.*
 import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 class GetListServiceTest extends Specification {
@@ -336,14 +330,15 @@ class GetListServiceTest extends Specification {
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
+        def currentLocalInstant = dataProvider.getLocalDateTimeInstant()
 
         def tcin1 = "1234"
         def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
         def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def listItemEntity1CreatedDate = Instant.now().minus(1, ChronoUnit.DAYS)
-        def listItemEntity2CreatedDate = Instant.now()
+        def listItemEntity1CreatedDate = currentLocalInstant.minus(1, ChronoUnit.DAYS)
+        def listItemEntity2CreatedDate = currentLocalInstant
 
         def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, listItemEntity1CreatedDate, null )
@@ -391,14 +386,15 @@ class GetListServiceTest extends Specification {
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
+        def currentLocalInstant = dataProvider.getLocalDateTimeInstant()
 
         def tcin1 = "1234"
         def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
         def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
 
-        def listItemEntity1UpdateDate = Instant.now().minus(1, ChronoUnit.DAYS)
-        def listItemEntity2UpdateDate = Instant.now()
+        def listItemEntity1UpdateDate = currentLocalInstant.minus(1, ChronoUnit.DAYS)
+        def listItemEntity2UpdateDate = currentLocalInstant
 
         def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, null, listItemEntity2UpdateDate )

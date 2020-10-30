@@ -8,10 +8,10 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.DataContextContainerManager
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.GuestListDAO
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
+import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.micronaut.cassandra.BatchExecutor
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.time.ZonedDateTime
 import java.util.*
 import javax.inject.Singleton
 
@@ -23,14 +23,13 @@ class ListRepository(
     private val dataContextContainerManager: DataContextContainerManager
 ) {
     fun saveList(listEntity: ListEntity): Mono<ListEntity> {
-        val now = ZonedDateTime.now()
         if (listEntity.createdAt == null) {
             // new list getting created
-            listEntity.createdAt = now.toInstant()
+            listEntity.createdAt = getLocalInstant()
             listEntity.updatedAt = listEntity.createdAt
         } else {
             // existing list update
-            listEntity.updatedAt = now.toInstant()
+            listEntity.updatedAt = getLocalInstant()
         }
 
         val guestListEntity = GuestListEntity(
@@ -51,7 +50,7 @@ class ListRepository(
 
     fun updateList(existingListEntity: ListEntity, updatedListEntity: ListEntity): Mono<ListEntity> {
         // existing list update
-        updatedListEntity.updatedAt = ZonedDateTime.now().toInstant()
+        updatedListEntity.updatedAt = getLocalInstant()
 
         val updatedGuestListEntity = GuestListEntity(
                 guestId = updatedListEntity.guestId,
@@ -94,7 +93,7 @@ class ListRepository(
 
     fun updateListItem(updatedListItemEntity: ListItemEntity, existingListItemEntity: ListItemEntity?): Mono<ListItemEntity> {
         // existing list item update
-        updatedListItemEntity.itemUpdatedAt = ZonedDateTime.now().toInstant()
+        updatedListItemEntity.itemUpdatedAt = getLocalInstant()
         return if (existingListItemEntity != null && existingListItemEntity.itemState != updatedListItemEntity.itemState) {
             val batchStmts = arrayListOf<BatchableStatement<*>>()
             batchStmts.add(listDAO.deleteListItemBatch(existingListItemEntity))
@@ -106,15 +105,15 @@ class ListRepository(
     }
 
     fun saveListItems(listItemsEntity: List<ListItemEntity>): Mono<List<ListItemEntity>> {
-        val now = ZonedDateTime.now()
+        val now = getLocalInstant()
         val items = arrayListOf<ListItemEntity>()
         listItemsEntity.map {
             if (it.itemCreatedAt == null) {
                 // new list item getting created
-                items.add(it.copy(itemCreatedAt = now.toInstant(), itemUpdatedAt = it.itemCreatedAt))
+                items.add(it.copy(itemCreatedAt = now, itemUpdatedAt = it.itemCreatedAt))
             } else {
                 // existing list item update
-                items.add(it.copy(itemUpdatedAt = now.toInstant()))
+                items.add(it.copy(itemUpdatedAt = now))
             }
         }
 

@@ -6,6 +6,8 @@ import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.util.ItemRefIdBuilder
 import com.tgt.lists.atlas.api.util.ItemType
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 class ListDataProvider {
@@ -51,5 +53,9 @@ class ListDataProvider {
         guestId = listEntity.guestId, marker = listEntity.marker, itemRefId = listItemEntity.itemRefId, itemTcin = listItemEntity.itemTcin,
         description = listEntity.description, itemDesc = listItemEntity.itemDesc, itemTitle = listItemEntity.itemTitle,
         itemCreatedAt = listItemEntity.itemCreatedAt, itemUpdatedAt = listItemEntity.itemUpdatedAt)
+    }
+
+    fun getLocalDateTimeInstant(): Instant {
+        return LocalDateTime.now().toInstant(ZoneOffset.UTC)
     }
 }

@@ -23,8 +23,7 @@ class ListMapper {
             expirationDays: Long
         ): ListEntity {
 
-            val now = getLocalInstant()
-
+            // Do not set created or updated time in here, set it in the repository instead
             return ListEntity(
                     id = Uuids.timeBased(),
                     guestId = guestId,
@@ -38,9 +37,7 @@ class ListMapper {
                     agentId = listRequestTO.agentId,
                     metadata = mapper.writeValueAsString(listRequestTO.metadata),
                     state = LIST_STATE.ACTIVE.value, // TODO should we default it to Inactive?
-                    expiration = getExpirationDate(now, expirationDays),
-                    createdAt = now,
-                    updatedAt = now,
+                    expiration = getExpirationDate(getLocalInstant(), expirationDays),
                     testList = testList)
         }
 
@@ -75,6 +72,7 @@ class ListMapper {
                     else existingEntity.marker,
                     notes = listUpdateRequestTO.shortDescription ?: existingEntity.notes,
                     state = existingEntity.state,
+                    updatedAt = getLocalInstant(),
                     metadata = mapper.writeValueAsString(updatedMetaData?.userMetaData)))
         }
 
