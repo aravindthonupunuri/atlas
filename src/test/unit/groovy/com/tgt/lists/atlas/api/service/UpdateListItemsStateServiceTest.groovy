@@ -42,9 +42,9 @@ class UpdateListItemsStateServiceTest extends Specification {
         def itemId1 = Uuids.timeBased()
         def itemId2 = Uuids.timeBased()
         def tcin1 = "1234"
-        def tenantRefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "4567"
-        def tenantRefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
+        def tenantRefId2 = listDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")
@@ -85,9 +85,9 @@ class UpdateListItemsStateServiceTest extends Specification {
         def itemId2 = Uuids.timeBased()
         def itemId3 = Uuids.timeBased()
         def tcin1 = "1234"
-        def tenantRefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "4567"
-        def tenantRefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
+        def tenantRefId2 = listDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")
@@ -135,9 +135,9 @@ class UpdateListItemsStateServiceTest extends Specification {
         def itemId1 = Uuids.timeBased()
         def itemId2 = Uuids.timeBased()
         def tcin1 = "1234"
-        def tenantRefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "4567"
-        def tenantRefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
+        def tenantRefId2 = listDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId2, tcin2, "title", 1, "note")

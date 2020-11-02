@@ -49,15 +49,15 @@ class ListItemMapper {
             existingListItemEntity: ListItemEntity,
             listItemUpdateRequestTO: ListItemUpdateRequestTO
         ): ListItemEntity {
-
+            listItemUpdateRequestTO.validateRefId(ItemType.values().first { it.value == existingListItemEntity.itemType!! })
             return ListItemEntity(
                     id = existingListItemEntity.id,
                     itemState = listItemUpdateRequestTO.itemState?.value ?: existingListItemEntity.itemState,
                     itemId = existingListItemEntity.itemId,
-                    itemRefId = existingListItemEntity.itemRefId,
-                    itemType = existingListItemEntity.itemType,
-                    itemTcin = existingListItemEntity.itemTcin,
-                    itemTitle = listItemUpdateRequestTO.itemTitle,
+                    itemRefId = listItemUpdateRequestTO.itemRefId ?: existingListItemEntity.itemRefId,
+                    itemType = listItemUpdateRequestTO.itemType?.value ?: existingListItemEntity.itemType,
+                    itemTcin = listItemUpdateRequestTO.tcin ?: existingListItemEntity.itemTcin,
+                    itemTitle = listItemUpdateRequestTO.itemTitle ?: existingListItemEntity.itemTitle,
                     itemDpci = existingListItemEntity.itemDpci,
                     itemBarcode = existingListItemEntity.itemBarcode,
                     itemDesc = existingListItemEntity.itemDesc,

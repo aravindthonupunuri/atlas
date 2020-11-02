@@ -1,7 +1,9 @@
 package com.tgt.lists.atlas.api.service
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.DefaultListManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
+import com.tgt.lists.atlas.api.domain.UpdateListManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.list.UserMetaDataTransformationStep
@@ -18,9 +20,10 @@ import spock.lang.Specification
 class UpdateListServiceTest extends Specification {
 
     ListRepository listRepository
+    EventPublisher eventPublisher
+    UpdateListManager updateListManager
     UpdateListService updateListService
     DefaultListManager defaultListManager
-    EventPublisher eventPublisher
     String guestId = "1234"
     String listType = "SHOPPING"
 
@@ -28,7 +31,8 @@ class UpdateListServiceTest extends Specification {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
         defaultListManager = Mock(DefaultListManager)
-        updateListService = new UpdateListService(listRepository, defaultListManager, eventPublisher)
+        updateListManager = new UpdateListManager(listRepository, eventPublisher)
+        updateListService = new UpdateListService(listRepository, defaultListManager, updateListManager)
     }
 
     def "Test updateList() integrity"() {
@@ -40,7 +44,7 @@ class UpdateListServiceTest extends Specification {
         def updateDesc = "description updated"
         def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null)
 
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, null, null, null, null, null, null, null )
         ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, null, null, null, null, null, null, null )
@@ -58,7 +62,7 @@ class UpdateListServiceTest extends Specification {
         actual.channel == channel
         actual.listTitle == listUpdateRequestTO.listTitle
         actual.shortDescription == listUpdateRequestTO.shortDescription
-        actual.defaultList == true
+        actual.defaultList
     }
 
     def "Test updateList() integrity with transformation pipeline"() {
@@ -78,7 +82,7 @@ class UpdateListServiceTest extends Specification {
 
         def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, transformationStep)
 
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, null, null, null, null, null, null, null )
         ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, null, null, null, null, null, null, null )
@@ -96,13 +100,13 @@ class UpdateListServiceTest extends Specification {
         actual.channel == channel
         actual.listTitle == listUpdateRequestTO.listTitle
         actual.shortDescription == listUpdateRequestTO.shortDescription
-        actual.defaultList == true
+        actual.defaultList
     }
 
     def "Test updateList() with false default List value"() {
         given:
         def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", null, false, null, null)
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         when:
         updateListService.updateList(guestId, listId, ListUpdateRequestTO).block()

@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.cart.transport.CartType
 import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.atlas.api.domain.CartManager
@@ -31,7 +32,7 @@ class EditListSortOrderServiceTest extends Specification {
 
     def "Test editListPosition() when primary and secondary list id are same"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
         def editSortOrderRequest = new EditListSortOrderRequestTO(listId, listId, Direction.BELOW)
 
         def cartResponse1 = cartDataProvider.getCartResponse(listId, "1234",
@@ -54,8 +55,8 @@ class EditListSortOrderServiceTest extends Specification {
 
     def "Test editListPosition() when primary and secondary list id are different"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listId1 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listId1 = Uuids.timeBased()
         def editSortOrderRequest = new EditListSortOrderRequestTO(listId, listId1, Direction.BELOW)
 
         def cartResponse1 = cartDataProvider.getCartResponse(listId, "1234",
@@ -80,15 +81,15 @@ class EditListSortOrderServiceTest extends Specification {
     def "test editListPosition() when unauthorized list ids are passed"() {
 
         given:
-        UUID primaryListId = UUID.randomUUID()
-        UUID secondaryListId = UUID.randomUUID()
+        UUID primaryListId = Uuids.timeBased()
+        UUID secondaryListId = Uuids.timeBased()
         Direction direction = Direction.ABOVE
 
         EditListSortOrderRequestTO editListSortOrderRequestTO = new EditListSortOrderRequestTO(primaryListId, secondaryListId, direction)
-        def cartResponse1 = cartDataProvider.getCartResponse(UUID.randomUUID(), "1234",
+        def cartResponse1 = cartDataProvider.getCartResponse(Uuids.timeBased(), "1234",
                 TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
 
-        def cartResponse2 = cartDataProvider.getCartResponse(UUID.randomUUID(), "1234",
+        def cartResponse2 = cartDataProvider.getCartResponse(Uuids.timeBased(), "1234",
                 TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
 
         def cartContentResponse1 = cartDataProvider.getCartContentsResponse(cartResponse1, [])

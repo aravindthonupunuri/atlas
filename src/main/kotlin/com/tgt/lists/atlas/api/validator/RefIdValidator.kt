@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.validator
 
 import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
+import com.tgt.lists.atlas.api.util.ItemType
 
 /**
  * RefIdValidator is used to figure out if the update request also requires itemRefId as part of the request.
@@ -12,5 +13,5 @@ import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
  * itemRefId is supposed to be part of ListItemUpdateRequestTO or not.
  */
 interface RefIdValidator {
-    fun requireRefId(listItemUpdateRequestTO: ListItemUpdateRequestTO): Boolean
+    fun requireRefId(itemType: ItemType, listItemUpdateRequestTO: ListItemUpdateRequestTO): Boolean
 }

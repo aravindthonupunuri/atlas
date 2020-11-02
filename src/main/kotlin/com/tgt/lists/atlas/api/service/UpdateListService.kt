@@ -1,7 +1,7 @@
 package com.tgt.lists.atlas.api.service
 
 import com.tgt.lists.atlas.api.domain.DefaultListManager
-import com.tgt.lists.atlas.api.domain.EventPublisher
+import com.tgt.lists.atlas.api.domain.UpdateListManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListResponseTO
@@ -9,7 +9,6 @@ import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.getUserMetaDataFromMetadataMap
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toListResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toUpdateListEntity
-import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -20,7 +19,7 @@ import javax.inject.Singleton
 class UpdateListService(
     @Inject private val listRepository: ListRepository,
     @Inject private val defaultListManager: DefaultListManager,
-    @Inject private val eventPublisher: EventPublisher
+    @Inject private val updateListManager: UpdateListManager
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -33,10 +32,10 @@ class UpdateListService(
         logger.debug("[updateList] guestId: $guestId, listId: $listId")
 
         return defaultListManager.processDefaultListInd(guestId, listUpdateRequestTO.validate().defaultList ?: false, listId)
-            .flatMap { processListUpdate(listId, listUpdateRequestTO) }
+            .flatMap { processListUpdate(guestId, listId, listUpdateRequestTO) }
     }
 
-    private fun processListUpdate(listId: UUID, listUpdateRequestTO: ListUpdateRequestTO): Mono<ListResponseTO> {
+    private fun processListUpdate(guestId: String, listId: UUID, listUpdateRequestTO: ListUpdateRequestTO): Mono<ListResponseTO> {
         return listRepository.findListById(listId)
                 .flatMap {
                     val existingListEntity = it
@@ -45,7 +44,7 @@ class UpdateListService(
                 .flatMap {
                     val existingListEntity = it.first
                     val updatedListEntity = it.second
-                    persistUpdatedListEntity(existingListEntity, updatedListEntity)
+                    updateListManager.updateList(guestId, listId, existingListEntity, updatedListEntity)
                 }
                 .map { toListResponseTO(it) }
     }
@@ -63,15 +62,5 @@ class UpdateListService(
             }
         }
         return Mono.just(toUpdateListEntity(existingListEntity, existingUserMetadata, listUpdateRequestTO))
-    }
-
-    private fun persistUpdatedListEntity(existingListEntity: ListEntity, updatedListEntity: ListEntity): Mono<ListEntity> {
-        return listRepository.updateList(existingListEntity, updatedListEntity)
-                .zipWhen {
-                    val userMetaDataTO = getUserMetaDataFromMetadataMap(it.metadata)
-                    eventPublisher.publishEvent(UpdateListNotifyEvent.getEventType(),
-                            UpdateListNotifyEvent(it.guestId!!, it.id!!, it.type!!, it.title, userMetaDataTO?.userMetaData), it.guestId!!)
-                }
-                .map { it.t1 }
     }
 }

@@ -1,10 +1,10 @@
 package com.tgt.lists.atlas.api.service.transform.list
 
-
-import com.tgt.lists.atlas.api.domain.CartManager
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.ContextContainerManager
 import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.GuestPreferenceEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.util.ListSortFieldGroup
 import com.tgt.lists.atlas.api.util.ListSortOrderGroup
@@ -14,18 +14,18 @@ import spock.lang.Specification
 
 class SortListsTransformationStepTest extends Specification {
 
-    ListsTransformationPipeline listsTransformationPipeline
-    ListsTransformationPipelineConfiguration transformationPipelineConfiguration
+    ListRepository listRepository
     ListDataProvider listDataProvider
-    CartManager cartManager
     TransformationContext transformationContext
     ContextContainerManager contextContainerManager
+    ListsTransformationPipeline listsTransformationPipeline
     GuestPreferenceSortOrderManager guestPreferenceSortOrderManager
+    ListsTransformationPipelineConfiguration transformationPipelineConfiguration
 
     def setup() {
         listsTransformationPipeline = new ListsTransformationPipeline()
         listDataProvider = new ListDataProvider()
-        cartManager = Mock(CartManager)
+        listRepository = Mock(ListRepository)
         contextContainerManager = new ContextContainerManager()
         guestPreferenceSortOrderManager = Mock(GuestPreferenceSortOrderManager)
     }
@@ -35,15 +35,15 @@ class SortListsTransformationStepTest extends Specification {
         String guestId = "1234"
 
         // create 5 lists
-        def list1 = listDataProvider.getList(UUID.randomUUID(), UUID.randomUUID(), "first-list")
-        def list2 = listDataProvider.getList(UUID.randomUUID(), null,"second-list")
-        def list3 = listDataProvider.getList(UUID.randomUUID(), UUID.randomUUID(),"third-list")
-        def list4 = listDataProvider.getList(UUID.randomUUID(), null, "fourth-list")
-        def list5 = listDataProvider.getList(UUID.randomUUID(), UUID.randomUUID(),"fifth-list")
+        def list1 = listDataProvider.getList(Uuids.timeBased(), "first-list")
+        def list2 = listDataProvider.getList(Uuids.timeBased(), "second-list")
+        def list3 = listDataProvider.getList(Uuids.timeBased(), "third-list")
+        def list4 = listDataProvider.getList(Uuids.timeBased(), "fourth-list")
+        def list5 = listDataProvider.getList(Uuids.timeBased(), "fifth-list")
 
         def lists = [list1,list2,list3,list4,list5]
 
-        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(cartManager, contextContainerManager, guestPreferenceSortOrderManager, false)
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager, false)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
         listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_TITLE, ListSortOrderGroup.ASCENDING))
 
@@ -78,16 +78,16 @@ class SortListsTransformationStepTest extends Specification {
         String guestId = "1234"
 
         // create 5 lists
-        def list1 = listDataProvider.getList(UUID.randomUUID(), UUID.randomUUID(), "first-list")
-        def list2 = listDataProvider.getList(UUID.randomUUID(), null,"second-list")
-        def list3 = listDataProvider.getList(UUID.randomUUID(), UUID.randomUUID(),"third-list")
-        def list4 = listDataProvider.getList(UUID.randomUUID(), null, "fourth-list")
-        def list5 = listDataProvider.getList(UUID.randomUUID(), UUID.randomUUID(),"fifth-list")
+        def list1 = listDataProvider.getList(Uuids.timeBased(), "first-list")
+        def list2 = listDataProvider.getList(Uuids.timeBased(), "second-list")
+        def list3 = listDataProvider.getList(Uuids.timeBased(), "third-list")
+        def list4 = listDataProvider.getList(Uuids.timeBased(), "fourth-list")
+        def list5 = listDataProvider.getList(Uuids.timeBased(), "fifth-list")
 
         def lists = [list1,list2,list3,list4,list5]
 
         def guestPreference = new GuestPreferenceEntity(guestId, "${list2.listId},${list1.listId},${list4.listId},${list5.listId},${list3.listId}")
-        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(cartManager, contextContainerManager, guestPreferenceSortOrderManager, true)
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager, true)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
         listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))
 

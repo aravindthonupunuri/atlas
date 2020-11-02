@@ -42,7 +42,7 @@ class DeduplicationManagerTest extends Specification {
         def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(),"1234", null,
             "itemNote", 1, UnitOfMeasure.EACHES, null)
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest ] as LinkedHashMap
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
@@ -80,7 +80,7 @@ class DeduplicationManagerTest extends Specification {
         def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
                 "itemNote", 1, UnitOfMeasure.EACHES, null)
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest ] as LinkedHashMap
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "tcn1234", null, "title",
@@ -112,7 +112,7 @@ class DeduplicationManagerTest extends Specification {
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
                                                        "tcn2222" : listItemRequest5] as LinkedHashMap
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", null,
@@ -143,7 +143,7 @@ class DeduplicationManagerTest extends Specification {
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
                                                        "tcn2222" : listItemRequest5] as LinkedHashMap
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
@@ -181,7 +181,7 @@ class DeduplicationManagerTest extends Specification {
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
                                                        "tcn2222" : listItemRequest5] as LinkedHashMap
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
@@ -220,7 +220,7 @@ class DeduplicationManagerTest extends Specification {
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
                                                        "tcn2222" : listItemRequest5] as LinkedHashMap
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
@@ -254,7 +254,7 @@ class DeduplicationManagerTest extends Specification {
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
                                                        "tcn1111" : listItemRequest5] as LinkedHashMap
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
         def recordMetadata = GroovyMock(RecordMetadata)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
@@ -300,7 +300,7 @@ class DeduplicationManagerTest extends Specification {
 
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "itm3456" : listItemRequest3, "itm4567" : listItemRequest4] as LinkedHashMap
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",

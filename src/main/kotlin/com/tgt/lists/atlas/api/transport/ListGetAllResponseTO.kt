@@ -4,7 +4,6 @@ import java.util.*
 
 data class ListGetAllResponseTO(
     val listId: UUID?,
-    val completedListId: UUID? = null,
     val channel: String? = null,
     val listType: String?,
     val listTitle: String?,

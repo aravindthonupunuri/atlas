@@ -32,7 +32,7 @@ class GetListItemServiceTest extends Specification {
         def listId = Uuids.timeBased()
         def listItemId = Uuids.timeBased()
         def tcin = "1234"
-        def tenantRefId = cartDataProvider.getItemRefId(ItemType.TCIN, tcin)
+        def tenantRefId = listDataProvider.getItemRefId(ItemType.TCIN, tcin)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId, tcin, null, 1, "notes1")
 
@@ -54,7 +54,7 @@ class GetListItemServiceTest extends Specification {
         def listId = Uuids.timeBased()
         def listItemId = Uuids.timeBased()
         def tcin = "1234"
-        def tenantRefId = cartDataProvider.getItemRefId(ItemType.TCIN, tcin)
+        def tenantRefId = listDataProvider.getItemRefId(ItemType.TCIN, tcin)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId, tcin, null, 1, "notes1")
 

@@ -34,6 +34,10 @@ interface ListDAO : ICassandraDao {
     @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
     fun findListItemsByListId(id: UUID): MappedReactiveResultSet<ListItemEntity>
 
+    @Select(customWhereClause = "id IN :ids")
+    @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
+    fun findMultipleListsById(ids: List<UUID>): MappedReactiveResultSet<ListEntity>
+
     @Select
     @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
     fun findListAndItemsByListIdAndItemState(id: UUID, itemState: String?): MappedReactiveResultSet<ListItemExtEntity>

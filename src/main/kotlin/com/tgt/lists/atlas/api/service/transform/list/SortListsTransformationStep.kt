@@ -4,17 +4,25 @@ import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.util.ListSortFieldGroup
 import com.tgt.lists.atlas.api.util.ListSortOrderGroup
+import mu.KotlinLogging
 import reactor.core.publisher.Mono
 
 /**
  * Sort step for list-of-lists
  */
 class SortListsTransformationStep(
-    val sortFieldBy: ListSortFieldGroup? = null,
-    val sortOrderBy: ListSortOrderGroup? = null
+    private val sortFieldBy: ListSortFieldGroup? = null,
+    private val sortOrderBy: ListSortOrderGroup? = null
 ) : ListsTransformationStep {
-    override fun execute(guestId: String, lists: List<ListGetAllResponseTO>, transformationContext: TransformationContext): Mono<List<ListGetAllResponseTO>> {
-        if (!lists.isEmpty()) {
+
+    private val logger = KotlinLogging.logger {}
+
+    override fun execute(
+        guestId: String,
+        lists: List<ListGetAllResponseTO>,
+        transformationContext: TransformationContext
+    ): Mono<List<ListGetAllResponseTO>> {
+        if (lists.isNotEmpty()) {
             if (sortFieldBy == ListSortFieldGroup.LIST_POSITION) {
                 return getListSortOrder(guestId, transformationContext).map {
                     val listSortOrderMap = it
@@ -91,7 +99,7 @@ class SortListsTransformationStep(
     }
 
     /**
-     * Used for add listPosition field to assist in sortinh via standard comparator
+     * Used for add listPosition field to assist in sorting via standard comparator
      */
     data class ListGetAllResponseTOWrapper(
         val listPosition: Int,

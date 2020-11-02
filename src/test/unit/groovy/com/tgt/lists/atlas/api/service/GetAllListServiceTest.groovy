@@ -1,600 +1,499 @@
-//package com.tgt.lists.atlas.api.service
-//
-//
-//import com.tgt.lists.cart.transport.CartContentsResponse
-//import com.tgt.lists.cart.transport.CartResponse
-//import com.tgt.lists.cart.transport.CartType
-//import com.tgt.lists.atlas.api.domain.CartManager
-//import com.tgt.lists.atlas.api.domain.ContextContainerManager
-//import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
-//import com.tgt.lists.atlas.api.domain.model.GuestPreference
-//import com.tgt.lists.atlas.api.persistence.GuestPreferenceRepository
-//import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipeline
-//import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipelineConfiguration
-//import com.tgt.lists.atlas.api.service.transform.list.PopulateListItemsTransformationStep
-//import com.tgt.lists.atlas.api.service.transform.list.SortListsTransformationStep
-//import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
-//import com.tgt.lists.atlas.api.transport.ListMetaDataTO
-//import com.tgt.lists.atlas.api.transport.UserMetaDataTO
-//import com.tgt.lists.atlas.api.util.LIST_STATUS
-//import com.tgt.lists.atlas.api.util.ListSortFieldGroup
-//import com.tgt.lists.atlas.api.util.ListSortOrderGroup
-//import com.tgt.lists.atlas.util.CartDataProvider
-//import com.tgt.lists.atlas.util.TestListChannel
-//import reactor.core.publisher.Mono
-//import spock.lang.Specification
-//
-//class GetAllListServiceTest extends Specification {
-//
-//    GetAllListService getListsService
-//    GuestPreferenceSortOrderManager guestPreferenceSortOrderManager
-//    GuestPreferenceRepository guestPreferenceRepository
-//    CartManager cartManager
-//    ContextContainerManager contextContainerManager
-//    CartDataProvider cartDataProvider
-//    ListsTransformationPipelineConfiguration transformationPipelineConfiguration
-//    String guestId = "1234"
-//
-//    def setup() {
-//        cartManager = Mock(CartManager)
-//        guestPreferenceRepository = Mock(GuestPreferenceRepository)
-//        guestPreferenceSortOrderManager = new GuestPreferenceSortOrderManager(guestPreferenceRepository)
-//        contextContainerManager = new ContextContainerManager()
-//        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(cartManager, contextContainerManager, guestPreferenceSortOrderManager, true)
-//        getListsService = new GetAllListService(cartManager, transformationPipelineConfiguration, "SHOPPING", 10, true)
-//        cartDataProvider = new CartDataProvider()
-//    }
-//
-//    def "test getAllListsForUser when the cart is empty"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1]
-//
-//        CartContentsResponse Cart1ContentsResponse = cartDataProvider.getCartContentsResponse(cartId1, 0)
-//
-//        CartContentsResponse completedCart1ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId1, 0)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//                guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.just(Cart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.just(completedCart1ContentsResponse)
-//        0 * guestPreferenceRepository.find(guestId)
-//
-//        listWithMetadata.size() == 1
-//        listWithMetadata[0].totalItemsCount == 0
-//        listWithMetadata[0].pendingItemsCount == 0
-//        listWithMetadata[0].completedItemsCount == 0
-//    }
-//
-//    def "test getAllListsForUser fails while getting completed contents"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1]
-//
-//        CartContentsResponse Cart1ContentsResponse = cartDataProvider.getCartContentsResponse(cartId1, 0)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//                guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.just(Cart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.error(new RuntimeException("some exception"))
-//        0 * guestPreferenceRepository.find(guestId)
-//
-//        listWithMetadata.size() == 1
-//        listWithMetadata[0].totalItemsCount == 0
-//        listWithMetadata[0].pendingItemsCount == 0
-//        listWithMetadata[0].completedItemsCount == 0
-//    }
-//
-//    def "test getAllListsForUser fails while getting pending contents"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1]
-//        CartContentsResponse completedCart1ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId1, 0)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//            guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1},true) >> Mono.error(new RuntimeException("some exception"))
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.just(completedCart1ContentsResponse)
-//        0 * guestPreferenceRepository.find(guestId)
-//
-//        listWithMetadata.size() == 1
-//        listWithMetadata[0].totalItemsCount == 0
-//        listWithMetadata[0].pendingItemsCount == 0
-//        listWithMetadata[0].completedItemsCount == 0
-//    }
-//
-//    def "test getAllListsForUser fails while getting cart contents"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1]
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//            guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.error(new RuntimeException("some exception"))
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.error(new RuntimeException("some exception"))
-//        0 * guestPreferenceRepository.find(guestId)
-//
-//        listWithMetadata.size() == 1
-//        listWithMetadata[0].totalItemsCount == 0
-//        listWithMetadata[0].pendingItemsCount == 0
-//        listWithMetadata[0].completedItemsCount == 0
-//    }
-//
-//    def "test getAllListsForUserSortingByAddedDate"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID cartId2 = UUID.randomUUID()
-//        UUID cartId3 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//        UUID completedCartId2 = UUID.randomUUID()
-//        UUID completedCartId3 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata2 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse2 = cartDataProvider.getCartResponse(cartId2, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list2", "2nd list", null, cartDataProvider.getMetaData(metadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata2 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse2 = cartDataProvider.getCartResponse(completedCartId2, guestId,
-//            cartId2.toString(), cartDataProvider.getMetaData(completedMetadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata3 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse3 = cartDataProvider.getCartResponse(cartId3, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list3", "3rd list", null, cartDataProvider.getMetaData(metadata3, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata3 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse3 = cartDataProvider.getCartResponse(completedCartId3, guestId,
-//            cartId3.toString(), cartDataProvider.getMetaData(completedMetadata3, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1, cartResponse2, completedCartResponse2, cartResponse3, completedCartResponse3]
-//
-//        CartContentsResponse Cart1ContentsResponse = cartDataProvider.getCartContentsResponse(cartId1, 1)
-//
-//        CartContentsResponse Cart2ContentsResponse = cartDataProvider.getCartContentsResponse(cartId2, 2)
-//
-//        CartContentsResponse Cart3ContentsResponse = cartDataProvider.getCartContentsResponse(cartId3, 3)
-//
-//        CartContentsResponse completedCart1ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId1, 1)
-//
-//        CartContentsResponse completedCart2ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId2, 2)
-//
-//        CartContentsResponse completedCart3ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId3, 3)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//            guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.just(Cart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId2}, true) >> Mono.just(Cart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId3}, true) >> Mono.just(Cart3ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.just(completedCart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId2}, true) >> Mono.just(completedCart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId3}, true) >> Mono.just(completedCart3ContentsResponse)
-//        0 * guestPreferenceRepository.find(guestId)
-//
-//        listWithMetadata.size() == 3
-//        listWithMetadata[0].totalItemsCount == 2
-//        listWithMetadata[1].totalItemsCount == 4
-//        listWithMetadata[2].totalItemsCount == 6
-//    }
-//
-//    def "test getAllListsForUserSortingByListTitle"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID cartId2 = UUID.randomUUID()
-//        UUID cartId3 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//        UUID completedCartId2 = UUID.randomUUID()
-//        UUID completedCartId3 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "Aa", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata2 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse2 = cartDataProvider.getCartResponse(cartId2, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "ab", "2nd list", null, cartDataProvider.getMetaData(metadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata2 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse2 = cartDataProvider.getCartResponse(completedCartId2, guestId,
-//            cartId2.toString(), cartDataProvider.getMetaData(completedMetadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata3 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse3 = cartDataProvider.getCartResponse(cartId3, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "Ba", "3rd list", null, cartDataProvider.getMetaData(metadata3, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata3 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse3 = cartDataProvider.getCartResponse(completedCartId3, guestId,
-//            cartId3.toString(), cartDataProvider.getMetaData(completedMetadata3, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1, cartResponse2, completedCartResponse2, cartResponse3, completedCartResponse3]
-//
-//        CartContentsResponse Cart1ContentsResponse = cartDataProvider.getCartContentsResponse(cartId1, 1)
-//
-//        CartContentsResponse Cart2ContentsResponse = cartDataProvider.getCartContentsResponse(cartId2, 2)
-//
-//        CartContentsResponse Cart3ContentsResponse = cartDataProvider.getCartContentsResponse(cartId3, 3)
-//
-//        CartContentsResponse completedCart1ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId1, 1)
-//
-//        CartContentsResponse completedCart2ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId2, 2)
-//
-//        CartContentsResponse completedCart3ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId3, 3)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_TITLE, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//            guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.just(Cart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId2}, true) >> Mono.just(Cart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId3}, true) >> Mono.just(Cart3ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.just(completedCart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId2}, true) >> Mono.just(completedCart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId3}, true) >> Mono.just(completedCart3ContentsResponse)
-//        0 * guestPreferenceRepository.find(guestId)
-//
-//        listWithMetadata.size() == 3
-//        listWithMetadata[0].totalItemsCount == 2
-//        listWithMetadata[1].totalItemsCount == 4
-//        listWithMetadata[2].totalItemsCount == 6
-//    }
-//
-//    def "test getAllListsForUser() when sorting ascending by list position"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID cartId2 = UUID.randomUUID()
-//        UUID cartId3 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//        UUID completedCartId2 = UUID.randomUUID()
-//        UUID completedCartId3 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata2 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse2 = cartDataProvider.getCartResponse(cartId2, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list2", "2nd list", null, cartDataProvider.getMetaData(metadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata2 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse2 = cartDataProvider.getCartResponse(completedCartId2, guestId,
-//            cartId2.toString(), cartDataProvider.getMetaData(completedMetadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata3 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse3 = cartDataProvider.getCartResponse(cartId3, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list3", "3rd list", null, cartDataProvider.getMetaData(metadata3, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata3 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse3 = cartDataProvider.getCartResponse(completedCartId3, guestId,
-//            cartId3.toString(), cartDataProvider.getMetaData(completedMetadata3, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1, cartResponse2, completedCartResponse2, cartResponse3, completedCartResponse3]
-//
-//        CartContentsResponse Cart1ContentsResponse = cartDataProvider.getCartContentsResponse(cartId1, 1)
-//
-//        CartContentsResponse Cart2ContentsResponse = cartDataProvider.getCartContentsResponse(cartId2, 2)
-//
-//        CartContentsResponse Cart3ContentsResponse = cartDataProvider.getCartContentsResponse(cartId3, 3)
-//
-//        CartContentsResponse completedCart1ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId1, 1)
-//
-//        CartContentsResponse completedCart2ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId2, 2)
-//
-//        CartContentsResponse completedCart3ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId3, 3)
-//
-//        GuestPreference guestPreference = new GuestPreference(guestId, cartId3.toString()
-//            + "," + cartId2.toString() + "," + cartId1.toString(), null, null)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//            guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.just(Cart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId2}, true) >> Mono.just(Cart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId3}, true) >> Mono.just(Cart3ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.just(completedCart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId2}, true) >> Mono.just(completedCart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId3}, true) >> Mono.just(completedCart3ContentsResponse)
-//        1 * guestPreferenceRepository.find(guestId) >> Mono.just(guestPreference)
-//
-//        listWithMetadata.size() == 3
-//        listWithMetadata[0].listId == cartId3
-//        listWithMetadata[1].listId == cartId2
-//        listWithMetadata[2].listId == cartId1
-//        listWithMetadata[0].totalItemsCount == 6
-//        listWithMetadata[1].totalItemsCount == 4
-//        listWithMetadata[2].totalItemsCount == 2
-//    }
-//
-//    def "test getAllListsForUser() when sorting descending by list position"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID cartId2 = UUID.randomUUID()
-//        UUID cartId3 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//        UUID completedCartId2 = UUID.randomUUID()
-//        UUID completedCartId3 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata2 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse2 = cartDataProvider.getCartResponse(cartId2, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list2", "2nd list", null, cartDataProvider.getMetaData(metadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata2 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse2 = cartDataProvider.getCartResponse(completedCartId2, guestId,
-//            cartId2.toString(), cartDataProvider.getMetaData(completedMetadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata3 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse3 = cartDataProvider.getCartResponse(cartId3, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list3", "3rd list", null, cartDataProvider.getMetaData(metadata3, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata3 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse3 = cartDataProvider.getCartResponse(completedCartId3, guestId,
-//            cartId3.toString(), cartDataProvider.getMetaData(completedMetadata3, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1, cartResponse2, completedCartResponse2, cartResponse3, completedCartResponse3]
-//
-//        CartContentsResponse Cart1ContentsResponse = cartDataProvider.getCartContentsResponse(cartId1, 1)
-//
-//        CartContentsResponse Cart2ContentsResponse = cartDataProvider.getCartContentsResponse(cartId2, 2)
-//
-//        CartContentsResponse Cart3ContentsResponse = cartDataProvider.getCartContentsResponse(cartId3, 3)
-//
-//        CartContentsResponse completedCart1ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId1, 1)
-//
-//        CartContentsResponse completedCart2ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId2, 2)
-//
-//        CartContentsResponse completedCart3ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId3, 3)
-//
-//        GuestPreference guestPreference = new GuestPreference(guestId, cartId3.toString()
-//            + "," + cartId2.toString() + "," + cartId1.toString(), null, null)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.DESCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//            guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.just(Cart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId2}, true) >> Mono.just(Cart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId3}, true) >> Mono.just(Cart3ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.just(completedCart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId2}, true) >> Mono.just(completedCart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId3}, true) >> Mono.just(completedCart3ContentsResponse)
-//        1 * guestPreferenceRepository.find(guestId) >> Mono.just(guestPreference)
-//
-//        listWithMetadata.size() == 3
-//        listWithMetadata[0].listId == cartId1
-//        listWithMetadata[1].listId == cartId2
-//        listWithMetadata[2].listId == cartId3
-//        listWithMetadata[0].totalItemsCount == 2
-//        listWithMetadata[1].totalItemsCount == 4
-//        listWithMetadata[2].totalItemsCount == 6
-//    }
-//
-//    def "test getAllListsForUser() when sorting list position by desc not available for certain lists"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID cartId2 = UUID.randomUUID()
-//        UUID cartId3 = UUID.randomUUID()
-//        UUID completedCartId1 = UUID.randomUUID()
-//        UUID completedCartId2 = UUID.randomUUID()
-//        UUID completedCartId3 = UUID.randomUUID()
-//
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata1 = new ListMetaDataTO(true, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse1 = cartDataProvider.getCartResponse(completedCartId1,
-//            guestId, cartId1.toString(), cartDataProvider.getMetaData(completedMetadata1, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata2 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse2 = cartDataProvider.getCartResponse(cartId2, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list2", "2nd list", null, cartDataProvider.getMetaData(metadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata2 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse2 = cartDataProvider.getCartResponse(completedCartId2, guestId,
-//            cartId2.toString(), cartDataProvider.getMetaData(completedMetadata2, new UserMetaDataTO()))
-//
-//        ListMetaDataTO metadata3 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse3 = cartDataProvider.getCartResponse(cartId3, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list3", "3rd list", null, cartDataProvider.getMetaData(metadata3, new UserMetaDataTO()))
-//
-//        ListMetaDataTO completedMetadata3 = new ListMetaDataTO(false, LIST_STATUS.COMPLETED)
-//        CartResponse completedCartResponse3 = cartDataProvider.getCartResponse(completedCartId3, guestId,
-//            cartId3.toString(), cartDataProvider.getMetaData(completedMetadata3, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, completedCartResponse1, cartResponse2, completedCartResponse2, cartResponse3, completedCartResponse3]
-//
-//        CartContentsResponse Cart1ContentsResponse = cartDataProvider.getCartContentsResponse(cartId1, 1)
-//
-//        CartContentsResponse Cart2ContentsResponse = cartDataProvider.getCartContentsResponse(cartId2, 2)
-//
-//        CartContentsResponse Cart3ContentsResponse = cartDataProvider.getCartContentsResponse(cartId3, 3)
-//
-//        CartContentsResponse completedCart1ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId1, 1)
-//
-//        CartContentsResponse completedCart2ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId2, 2)
-//
-//        CartContentsResponse completedCart3ContentsResponse = cartDataProvider.getCartContentsResponse(completedCartId3, 3)
-//
-//        GuestPreference guestPreference = new GuestPreference(guestId, cartId3.toString(), null, null)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//            guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.just(Cart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId2}, true) >> Mono.just(Cart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId3}, true) >> Mono.just(Cart3ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId1}, true) >> Mono.just(completedCart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId2}, true) >> Mono.just(completedCart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == completedCartId3}, true) >> Mono.just(completedCart3ContentsResponse)
-//        1 * guestPreferenceRepository.find(guestId) >> Mono.just(guestPreference)
-//
-//        listWithMetadata.size() == 3
-//        listWithMetadata[0].listId == cartId3
-//        listWithMetadata[1].listId == cartId1
-//        listWithMetadata[2].listId == cartId2
-//        listWithMetadata[0].totalItemsCount == 6
-//        listWithMetadata[1].totalItemsCount == 2
-//        listWithMetadata[2].totalItemsCount == 4
-//    }
-//
-//    def "test getAllListsForUser() when no sorting list position available"() {
-//        given:
-//        UUID cartId1 = UUID.randomUUID()
-//        UUID cartId2 = UUID.randomUUID()
-//        UUID cartId3 = UUID.randomUUID()
-//        ListMetaDataTO metadata1 = new ListMetaDataTO(true, LIST_STATUS.PENDING)
-//        CartResponse cartResponse1 = cartDataProvider.getCartResponse(cartId1, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list1", "1st list", null, cartDataProvider.getMetaData(metadata1, new UserMetaDataTO()))
-//        ListMetaDataTO metadata2 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse2 = cartDataProvider.getCartResponse(cartId2, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list2", "2nd list", null, cartDataProvider.getMetaData(metadata2, new UserMetaDataTO()))
-//        ListMetaDataTO metadata3 = new ListMetaDataTO(false, LIST_STATUS.PENDING)
-//        CartResponse cartResponse3 = cartDataProvider.getCartResponse(cartId3, guestId,
-//            TestListChannel.WEB.toString(), CartType.LIST, "My list3", "3rd list", null, cartDataProvider.getMetaData(metadata3, new UserMetaDataTO()))
-//
-//        List<CartResponse> cartResponseList = [cartResponse1, cartResponse2, cartResponse3]
-//
-//        CartContentsResponse Cart1ContentsResponse = cartDataProvider.getCartContentsResponse(cartId1, 1)
-//
-//        CartContentsResponse Cart2ContentsResponse = cartDataProvider.getCartContentsResponse(cartId2, 2)
-//
-//        CartContentsResponse Cart3ContentsResponse = cartDataProvider.getCartContentsResponse(cartId3, 3)
-//
-//        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-//        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))
-//
-//        when:
-//        List<ListGetAllResponseTO> listWithMetadata = getListsService.getAllListsForUser(
-//            guestId, listsTransformationPipeline).block()
-//
-//        then:
-//        1 * cartManager.getAllCarts(guestId, _) >> Mono.just(cartResponseList)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId1}, true) >> Mono.just(Cart1ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId2}, true) >> Mono.just(Cart2ContentsResponse)
-//        1 * cartManager.getListCartContents({ cid -> cid == cartId3}, true) >> Mono.just(Cart3ContentsResponse)
-//        1 * guestPreferenceRepository.find(guestId) >> Mono.error(new RuntimeException("some exception"))
-//
-//        listWithMetadata.size() == 3
-//        listWithMetadata[0].listId == cartId1
-//        listWithMetadata[1].listId == cartId2
-//        listWithMetadata[2].listId == cartId3
-//    }
-//}
+package com.tgt.lists.atlas.api.service
+
+import com.datastax.oss.driver.api.core.uuid.Uuids
+import com.tgt.lists.atlas.api.domain.ContextContainerManager
+import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipeline
+import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipelineConfiguration
+import com.tgt.lists.atlas.api.service.transform.list.PopulateListItemsTransformationStep
+import com.tgt.lists.atlas.api.service.transform.list.SortListsTransformationStep
+import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
+import com.tgt.lists.atlas.api.util.*
+import com.tgt.lists.atlas.util.ListDataProvider
+import io.micronaut.http.server.exceptions.InternalServerException
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import spock.lang.Specification
+
+import java.time.Instant
+
+class GetAllListServiceTest extends Specification {
+
+    GetAllListService getListsService
+    GuestPreferenceSortOrderManager guestPreferenceSortOrderManager
+    GuestPreferenceRepository guestPreferenceRepository
+    ListRepository listRepository
+    ContextContainerManager contextContainerManager
+    ListDataProvider listDataProvider
+    ListsTransformationPipelineConfiguration transformationPipelineConfiguration
+    String guestId = "1234"
+
+    def setup() {
+        listRepository = Mock(ListRepository)
+        guestPreferenceRepository = Mock(GuestPreferenceRepository)
+        guestPreferenceSortOrderManager = new GuestPreferenceSortOrderManager(guestPreferenceRepository)
+        contextContainerManager = new ContextContainerManager()
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager, true)
+        getListsService = new GetAllListService(listRepository, transformationPipelineConfiguration, "SHOPPING", 10)
+        listDataProvider = new ListDataProvider()
+    }
+
+    def "test getAllListsForUser with one guest list and no list items"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
+        def listEntity = listDataProvider.createListEntity(listId, "title", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
+
+        when:
+        List<ListGetAllResponseTO> lists = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity)
+        1 * listRepository.findMultipleListsById([listId]) >> Flux.just(listEntity)
+        1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
+
+        lists.size() == 1
+        lists[0].totalItemsCount == 0
+        lists[0].pendingItemsCount == 0
+        lists[0].completedItemsCount == 0
+    }
+
+    def "test getAllListsForUser with no lists for the guest"() {
+        given:
+        def listType = "SHOPPING"
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
+
+        when:
+        List<ListGetAllResponseTO> lists = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.empty()
+
+        lists == null
+    }
+
+    def "test getAllListsForUser with no lists with listId's received from findGuestListsByGuestId"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
+
+        when:
+        List<ListGetAllResponseTO> lists = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, "SHOPPING") >> Flux.just(guestListEntity)
+        1 * listRepository.findMultipleListsById([listId]) >> Flux.empty()
+
+        lists == null
+    }
+
+    def "test getAllListsForUser with exception from findGuestListsByGuestId"() {
+        given:
+        def listType = "SHOPPING"
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
+
+        when:
+        getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.error(new InternalServerException("some error"))
+
+        thrown(InternalServerException)
+    }
+
+    def "test getAllListsForUser with exception from findMultipleListsById"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
+
+        when:
+        getListsService.getAllListsForUser(guestId, listsTransformationPipeline).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, "SHOPPING") >> Flux.just(guestListEntity)
+        1 * listRepository.findMultipleListsById([listId]) >> Flux.error(new InternalServerException("some error"))
+
+        thrown(InternalServerException)
+
+    }
+
+    def "test getAllListsForUser with one guest list and no PopulateListItemsTransformationStep"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
+        def listEntity = listDataProvider.createListEntity(listId, "title", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity)
+        1 * listRepository.findMultipleListsById([listId]) >> Flux.just(listEntity)
+        0 * listRepository.findListItemsByListId(listId)
+
+        lists.size() == 1
+        lists[0].totalItemsCount == -1
+        lists[0].pendingItemsCount == -1
+        lists[0].completedItemsCount == -1
+    }
+
+    def "test getAllListsForUser with one guest list and PopulateListItemsTransformationStep with list items"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+        def tcin1 = "1234"
+        def tenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tcin2 = "4567"
+        def tenantRefId2 = listDataProvider.getItemRefId(ItemType.TCIN, tcin2)
+
+
+        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
+        def listEntity = listDataProvider.createListEntity(listId, "title", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, null, 1, "notes1")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId2, tcin2, null, 1, "notes1")
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep())
+
+        when:
+        List<ListGetAllResponseTO> lists = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity)
+        1 * listRepository.findMultipleListsById([listId]) >> Flux.just(listEntity)
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2)
+
+        lists.size() == 1
+        lists[0].totalItemsCount == 2
+        lists[0].pendingItemsCount == 1
+        lists[0].completedItemsCount == 1
+    }
+
+    def "test with (ListSortFieldGroup.ADDED_DATE and ListSortOrderGroup.ASCENDING) and (ListSortFieldGroup.ADDED_DATE and ListSortOrderGroup.DESCENDING)"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        UUID listId3 = Uuids.timeBased()
+        UUID listId4 = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
+        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
+        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
+        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
+
+        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists1 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+
+        lists1.size() == 4
+        lists1[0].listId == listId1
+        lists1[1].listId == listId2
+        lists1[2].listId == listId3
+        lists1[3].listId == listId4
+
+        when:
+        List<ListGetAllResponseTO> lists2 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.DESCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+
+        lists2.size() == 4
+        lists2[0].listId == listId4
+        lists2[1].listId == listId3
+        lists2[2].listId == listId2
+        lists2[3].listId == listId1
+    }
+
+    def "test with (ListSortFieldGroup.LIST_TITLE and ListSortOrderGroup.ASCENDING) and (ListSortFieldGroup.LIST_TITLE and ListSortOrderGroup.DESCENDING)"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        UUID listId3 = Uuids.timeBased()
+        UUID listId4 = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
+        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
+        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
+        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
+
+        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists1 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_TITLE, ListSortOrderGroup.ASCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+
+        lists1.size() == 4
+        lists1[0].listId == listId1
+        lists1[1].listId == listId2
+        lists1[2].listId == listId3
+        lists1[3].listId == listId4
+
+        when:
+        List<ListGetAllResponseTO> lists2 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_TITLE, ListSortOrderGroup.DESCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+
+        lists2.size() == 4
+        lists2[0].listId == listId4
+        lists2[1].listId == listId3
+        lists2[2].listId == listId2
+        lists2[3].listId == listId1
+    }
+
+    def "test with ListSortFieldGroup.LIST_POSITION and ListSortOrderGroup.ASCENDING"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        UUID listId3 = Uuids.timeBased()
+        UUID listId4 = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
+        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
+        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
+        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
+
+        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+
+        def  guestPreferenceEntity = listDataProvider.createGuestPreferenceEntity(guestId,  listId3.toString() + "," + listId2.toString() + "," + listId4.toString() + "," + listId1.toString())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists1 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(guestPreferenceEntity)
+
+        lists1.size() == 4
+        lists1[0].listId == listId3
+        lists1[1].listId == listId2
+        lists1[2].listId == listId4
+        lists1[3].listId == listId1
+    }
+
+    def "test with ListSortFieldGroup.LIST_POSITION and ListSortOrderGroup.DESCENDING"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        UUID listId3 = Uuids.timeBased()
+        UUID listId4 = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
+        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
+        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
+        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
+
+        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+
+        def  guestPreferenceEntity = listDataProvider.createGuestPreferenceEntity(guestId,  listId3.toString() + "," + listId2.toString() + "," + listId4.toString() + "," + listId1.toString())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists2 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.DESCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(guestPreferenceEntity)
+
+        lists2.size() == 4
+        lists2[0].listId == listId1
+        lists2[1].listId == listId4
+        lists2[2].listId == listId2
+        lists2[3].listId == listId3
+    }
+
+    def "test with ListSortFieldGroup.LIST_POSITION with exception"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        UUID listId3 = Uuids.timeBased()
+        UUID listId4 = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
+        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
+        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
+        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
+
+        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists1 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.error(new InternalServerException("some error"))
+
+        lists1.size() == 4
+        lists1[0].listId == listId1
+        lists1[1].listId == listId2
+        lists1[2].listId == listId3
+        lists1[3].listId == listId4
+    }
+
+    def "test with ListSortFieldGroup.LIST_POSITION with empty sort order response"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        UUID listId3 = Uuids.timeBased()
+        UUID listId4 = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
+        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
+        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
+        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
+
+        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists1 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.empty()
+
+        lists1.size() == 4
+        lists1[0].listId == listId1
+        lists1[1].listId == listId2
+        lists1[2].listId == listId3
+        lists1[3].listId == listId4
+    }
+
+    def "test with ListSortFieldGroup.LIST_POSITION and ListSortOrderGroup.ASCENDING with partial response"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        UUID listId3 = Uuids.timeBased()
+        UUID listId4 = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
+        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
+        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
+        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
+
+        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+
+        def  guestPreferenceEntity = listDataProvider.createGuestPreferenceEntity(guestId,  listId3.toString() + "," + listId1.toString())
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists2 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
+        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(guestPreferenceEntity)
+
+        lists2.size() == 4
+        lists2[0].listId == listId3
+        lists2[1].listId == listId1
+        lists2[2].listId == listId2
+        lists2[3].listId == listId4
+    }
+}

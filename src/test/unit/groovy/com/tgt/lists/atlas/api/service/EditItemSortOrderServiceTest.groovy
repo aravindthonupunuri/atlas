@@ -1,6 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
-
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.cart.transport.CartType
 import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.atlas.api.domain.CartManager
@@ -37,8 +37,8 @@ class EditItemSortOrderServiceTest extends Specification {
 
     def "Test editItemPosition() when primary and secondary item id are same"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID primaryItemId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID primaryItemId = Uuids.timeBased()
         UUID secondaryItemId = primaryItemId
         Direction direction = Direction.ABOVE
         EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
@@ -71,9 +71,9 @@ class EditItemSortOrderServiceTest extends Specification {
 
     def "Test editItemPosition() when primary and secondary item id are different"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID primaryItemId = UUID.randomUUID()
-        UUID secondaryItemId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID primaryItemId = Uuids.timeBased()
+        UUID secondaryItemId = Uuids.timeBased()
         Direction direction = Direction.ABOVE
         EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
 
@@ -106,9 +106,9 @@ class EditItemSortOrderServiceTest extends Specification {
 
     def "test editListPosition() when unauthorized items ids are passed"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID primaryItemId = UUID.randomUUID()
-        UUID secondaryItemId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID primaryItemId = Uuids.timeBased()
+        UUID secondaryItemId = Uuids.timeBased()
         Direction direction = Direction.ABOVE
 
         EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
@@ -117,13 +117,13 @@ class EditItemSortOrderServiceTest extends Specification {
                 TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
 
         ListItemMetaDataTO itemMetaData1 = new ListItemMetaDataTO(ItemType.TCIN, LIST_ITEM_STATE.PENDING)
-        def pendingCartItemResponse1 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), "1234", TestListChannel.WEB.toString(), "1234",
+        def pendingCartItemResponse1 = cartDataProvider.getCartItemResponse(listId, Uuids.timeBased(), "1234", TestListChannel.WEB.toString(), "1234",
                 "title1", 3, "note\nnote",10, 10, "Stand Alone",
                 "READY", "some-url", "some-image",
                 cartDataProvider.getItemMetaData(itemMetaData1, new UserItemMetaDataTO()), null, null, null)
 
         ListItemMetaDataTO itemMetaData2 = new ListItemMetaDataTO(ItemType.GENERIC_ITEM, LIST_ITEM_STATE.PENDING)
-        def pendingCartItemResponse2 = cartDataProvider.getCartItemResponse(listId, UUID.randomUUID(), "1234", TestListChannel.WEB.toString(), "1234",
+        def pendingCartItemResponse2 = cartDataProvider.getCartItemResponse(listId, Uuids.timeBased(), "1234", TestListChannel.WEB.toString(), "1234",
                 "itemTitle", 1, "itemNote",10, 10, "Stand Alone",
                 "READY", "some-url", "some-image",
                 cartDataProvider.getItemMetaData(itemMetaData2, new UserItemMetaDataTO()), null, null, null)

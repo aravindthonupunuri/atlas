@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service.transform.list_items
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.util.ListDataProvider
@@ -22,14 +23,14 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
     def "test execute with page 1"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         // list with 5 items
-        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
-        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
-        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
-        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
-        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        ListItemResponseTO item1 = listDataProvider.getListItem(Uuids.timeBased(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(Uuids.timeBased(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(Uuids.timeBased(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(Uuids.timeBased(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(Uuids.timeBased(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
         paginateListItemsTransformationStep = new PaginateListItemsTransformationStep(1)
@@ -46,14 +47,14 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
     def "test execute with page 2"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         // list with 5 items
-        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
-        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
-        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
-        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
-        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        ListItemResponseTO item1 = listDataProvider.getListItem(Uuids.timeBased(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(Uuids.timeBased(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(Uuids.timeBased(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(Uuids.timeBased(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(Uuids.timeBased(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
         paginateListItemsTransformationStep = new PaginateListItemsTransformationStep(2)
@@ -70,14 +71,14 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
     def "test execute with page 3"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         // list with 5 items
-        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
-        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
-        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
-        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
-        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        ListItemResponseTO item1 = listDataProvider.getListItem(Uuids.timeBased(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(Uuids.timeBased(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(Uuids.timeBased(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(Uuids.timeBased(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(Uuids.timeBased(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
         paginateListItemsTransformationStep = new PaginateListItemsTransformationStep(3)
@@ -93,14 +94,14 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
     def "test execute with invalid page 4"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         // list with 5 items
-        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
-        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
-        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
-        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
-        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        ListItemResponseTO item1 = listDataProvider.getListItem(Uuids.timeBased(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(Uuids.timeBased(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(Uuids.timeBased(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(Uuids.timeBased(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(Uuids.timeBased(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
         paginateListItemsTransformationStep = new PaginateListItemsTransformationStep(4)

@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.transport
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.util.*
 import com.tgt.lists.atlas.api.util.AppErrorCodes.RESPONSE_BODY_VIOLATION_ERROR_CODE
 import com.tgt.lists.cart.transport.*
@@ -23,7 +24,7 @@ fun toCartPostRequest(
 
     return CartPostRequest(
         cartType = CartType.LIST.value,
-        cartNumber = UUID.randomUUID().toString(), // cart needs this to be random. For now setting uuid.
+        cartNumber = Uuids.timeBased().toString(), // cart needs this to be random. For now setting uuid.
         guestId = guestId,
         cartSubchannel = listType,
         tenantCartName = listRequest.listTitle,
@@ -98,99 +99,11 @@ fun toCartItemsPostRequest(listId: UUID, locationId: Long, listItemRequest: List
     )
 }
 
-fun toCartItemUpdateRequest(
-    cartItemResponse: CartItemResponse,
-    listId: UUID,
-    listItemId: UUID,
-    listItemUpdateRequest: ListItemUpdateRequestTO
-): CartItemUpdateRequest {
-
-    val cartItemMetadata = cartItemResponse.metadata
-    val listItemMetadata = getListItemMetaDataFromCart(cartItemMetadata)
-    val userItemMetadata = getUserItemMetaDataFromCart(cartItemMetadata)
-
-    val updatedListItemMetadata = setCartItemMetaDataForListItem(
-        itemType = listItemMetadata?.itemType,
-        itemState = listItemMetadata?.itemState, // item state can only be update by creating and deleting items
-        tenantItemMetaData = listItemUpdateRequest.metadata ?: userItemMetadata?.userMetaData
-    )
-
-    return CartItemUpdateRequest(
-        cartId = listId,
-        cartItemId = listItemId,
-        tenantItemName = listItemUpdateRequest.itemTitle ?: cartItemResponse.tenantItemName,
-        notes = listItemUpdateRequest.itemNote ?: cartItemResponse.notes,
-        metadata = updatedListItemMetadata,
-        requestedQuantity = listItemUpdateRequest.requestedQuantity ?: cartItemResponse.requestedQuantity,
-        requestedQuantityUnitOfMeasure = cartItemResponse.requestedQuantityUnitOfMeasure,
-        tenantReferenceId = cartItemResponse.tenantReferenceId
-    )
-}
-
-fun toListItemRequestTO(cartItemResponse: CartItemResponse): ListItemRequestTO {
-    val cartItemMetadata = cartItemResponse.metadata
-
-    val listItemMetadata = getListItemMetaDataFromCart(cartItemMetadata)
-    val userItemMetadata = getUserItemMetaDataFromCart(cartItemMetadata)
-
-    return ListItemRequestTO(
-        itemType = listItemMetadata?.itemType ?: ItemType.TCIN,
-        itemRefId = cartItemResponse.tenantReferenceId!!,
-        channel = cartItemResponse.itemAddChannel,
-        tcin = cartItemResponse.tcin,
-        itemTitle = cartItemResponse.tenantItemName,
-        itemNote = cartItemResponse.notes,
-        requestedQuantity = cartItemResponse.requestedQuantity,
-        unitOfMeasure = cartItemResponse.requestedQuantityUnitOfMeasure?.let { UnitOfMeasure.valueOf(it) } ?: UnitOfMeasure.EACHES,
-        metadata = userItemMetadata?.userMetaData
-    )
-}
-
-fun toListItemResponseTO(cartItemResponse: CartItemResponse, listItemState: LIST_ITEM_STATE? = null, offerCount: Int = 0): ListItemResponseTO {
-    val cartItemMetadata = cartItemResponse.metadata
-
-    val listItemMetadata = getListItemMetaDataFromCart(cartItemMetadata)
-    val userItemMetadata = getUserItemMetaDataFromCart(cartItemMetadata)
-
-    return ListItemResponseTO(
-        listItemId = cartItemResponse.cartItemId,
-        itemRefId = cartItemResponse.tenantReferenceId!!,
-        channel = cartItemResponse.itemAddChannel,
-        tcin = cartItemResponse.tcin,
-        itemTitle = cartItemResponse.tenantItemName ?: cartItemResponse.shortDescription,
-        requestedQuantity = cartItemResponse.requestedQuantity,
-        unitOfMeasure = cartItemResponse.requestedQuantityUnitOfMeasure?.let { UnitOfMeasure.valueOf(it) },
-        itemNote = cartItemResponse.notes,
-        price = cartItemResponse.price,
-        listPrice = cartItemResponse.listPrice,
-        offerCount = offerCount,
-        images = cartItemResponse.images,
-        metadata = userItemMetadata?.userMetaData,
-        itemType = listItemMetadata?.itemType,
-        relationshipType = cartItemResponse.relationshipType,
-        itemState = listItemState ?: listItemMetadata?.itemState,
-        addedTs = cartItemResponse.createdAt.let { addZ(it) },
-        lastModifiedTs = cartItemResponse.updatedAt.let { addZ(it) }
-    )
-}
-
 fun addZ(str: LocalDateTime?): String? {
     if (str == null) {
         return null
     }
     return str.toString() + "Z"
-}
-
-fun getCompletedCartRequest(guestId: String, listType: String, locationId: String, abandonAfterDuration: AbandonAfterDuration, cartNumber: UUID?): CartPostRequest {
-    val metadata = setCartMetaDataFromList(
-        listStatus = LIST_STATUS.COMPLETED)
-
-    return CartPostRequest(cartNumber = cartNumber.toString(),
-        cartLocationId = locationId, abandonAfterDuration = abandonAfterDuration, cartType = CartType.LIST.value,
-        tenantCartName = Constants.COMPLETED_CART_NAME, guestId = guestId, cartSubchannel = listType,
-        metadata = metadata,
-        getContentsOptions = arrayOf(GetContentsOptions(option = CartOption.ITEMS.name, enabled = true, stopOnFailure = false),
-            GetContentsOptions(option = CartOption.PRICES.name, enabled = true, stopOnFailure = false)))
 }
 
 private val validator = Validation.buildDefaultValidatorFactory().validator

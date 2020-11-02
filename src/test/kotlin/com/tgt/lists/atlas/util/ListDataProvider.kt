@@ -11,16 +11,16 @@ import java.time.ZoneOffset
 import java.util.*
 
 class ListDataProvider {
-    fun getList(listId: UUID, completedListId: UUID? = null, listTitle: String): ListGetAllResponseTO {
-        return ListGetAllResponseTO(listId = listId, completedListId = completedListId, listTitle = listTitle, listType = "SHOPPING", shortDescription = "test", metadata = null)
+    fun getList(listId: UUID, listTitle: String): ListGetAllResponseTO {
+        return ListGetAllResponseTO(listId = listId, listTitle = listTitle, listType = "SHOPPING", shortDescription = "test", metadata = null)
     }
 
     fun getListItem(listItemId: UUID, itemTitle: String): ListItemResponseTO {
         return ListItemResponseTO(listItemId = listItemId, itemTitle = itemTitle, itemRefId = "" + itemTitle.hashCode())
     }
 
-    fun createListEntity(listId: UUID, listTitle: String, listType: String, listSubtype: String, guestId: String, listMarker: String): ListEntity {
-        return ListEntity(id = listId, title = listTitle, type = listType, subtype = listSubtype, guestId = guestId, marker = listMarker)
+    fun createListEntity(listId: UUID, listTitle: String, listType: String, listSubtype: String, guestId: String, listMarker: String, createdAt: Instant, updatedAt: Instant): ListEntity {
+        return ListEntity(id = listId, title = listTitle, type = listType, subtype = listSubtype, guestId = guestId, marker = listMarker, createdAt = createdAt, updatedAt = updatedAt)
     }
 
     fun createListItemEntity(listId: UUID, itemId: UUID, itemState: String, itemType: String, itemRefId: String, tcin: String?, itemTitle: String?, itemReqQty: Int?, itemNotes: String?): ListItemEntity {
@@ -35,6 +35,10 @@ class ListDataProvider {
         return GuestPreferenceEntity(guestId = guestId, listSortOrder = listSortOrder)
     }
 
+    fun createGuestListEntity(guestId: String, type: String?, subtype: String?, marker: String?, id: UUID?, state: String?): GuestListEntity {
+        return GuestListEntity(guestId = guestId, type = type, subtype = subtype, marker = marker, id = id, state = state)
+    }
+
     fun createListPreferenceEntity(listId: UUID, guestId: String, itemSortOrder: String?): ListPreferenceEntity {
         return ListPreferenceEntity(listId = listId, guestId = guestId, itemSortOrder = itemSortOrder)
     }
@@ -43,7 +47,7 @@ class ListDataProvider {
         return ListPreferenceEntity(listId = listId, guestId = guestId)
     }
 
-    fun getTenantRefId(itemType: ItemType, id: String): String {
+    fun getItemRefId(itemType: ItemType, id: String): String {
         return ItemRefIdBuilder.buildItemRefId(itemType, id)
     }
 

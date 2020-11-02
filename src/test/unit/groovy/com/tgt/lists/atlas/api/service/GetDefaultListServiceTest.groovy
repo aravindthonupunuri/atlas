@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
@@ -13,6 +14,8 @@ import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
+
+import java.time.Instant
 
 class GetDefaultListServiceTest extends Specification {
 
@@ -39,9 +42,9 @@ class GetDefaultListServiceTest extends Specification {
 
     def "Test getDefaultListService() integrity with sub-type being null"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
@@ -50,11 +53,11 @@ class GetDefaultListServiceTest extends Specification {
                 listId, LIST_STATUS.PENDING.value)
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
@@ -107,11 +110,11 @@ class GetDefaultListServiceTest extends Specification {
                 listId, LIST_STATUS.PENDING.value)
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)

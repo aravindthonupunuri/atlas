@@ -14,6 +14,7 @@ import spock.lang.Shared
 import spock.lang.Stepwise
 
 import javax.inject.Inject
+import java.time.Instant
 
 @MicronautTest
 @Stepwise
@@ -43,7 +44,7 @@ class DataBaseTimeOutFunctionalTest extends BaseFunctionalTest {
     def "test timeout handling, updateList batch statement method alone times out"() {
         given:
         def listId = Uuids.timeBased()
-        ListEntity createdListEntity = dataProvider.createListEntity(listId, "time- Out", "shopping", "s", "126890567", "d")
+        ListEntity createdListEntity = dataProvider.createListEntity(listId, "time- Out", "shopping", "s", "126890567", "d", Instant.now(), Instant.now())
 
         def updateDescription = "modified description"
         def updateNotes = "modified Notes"

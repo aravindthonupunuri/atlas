@@ -72,33 +72,6 @@ class CartDataProvider {
             metadata = metadata, serialNumber = serialNumber, createdAt = createdAt, updatedAt = updatedAt, locationId = "1375")
     }
 
-    fun getCartItemResponseForGenericItems(
-        cartId: UUID,
-        cartItemId: UUID,
-        tenantRefId: String?,
-        channel: String?,
-        tcin: String?,
-        itemTitle: String?,
-        requestedQuantity: Int = 0,
-        itemNote: String?,
-        price: Float?,
-        listPrice: Float?,
-        relationshipType: String,
-        itemState: String,
-        imageBaseUrl: String,
-        primaryImage: String,
-        metadata: Map<String, Any>,
-        serialNumber: String?,
-        createdAt: LocalDateTime?,
-        updatedAt: LocalDateTime?
-    ): CartItemResponse {
-        return CartItemResponse(cartId = cartId, cartItemId = cartItemId, itemAddChannel = channel.toString(),
-            tcin = tcin, tenantItemName = itemTitle, notes = itemNote, requestedQuantity = requestedQuantity, price = price,
-            listPrice = listPrice, eligibleDiscounts = getEligibleDiscounts(2), relationshipType = relationshipType, itemState = itemState,
-            tenantReferenceId = tenantRefId, images = Image(baseUrl = imageBaseUrl, primaryImage = primaryImage),
-            metadata = metadata, serialNumber = serialNumber, createdAt = createdAt, updatedAt = updatedAt, locationId = "1375")
-    }
-
     fun getCartResponse(cartId: UUID, guestId: String?, metadata: Map<String, Any>?): CartResponse {
         return CartResponse(cartId = cartId, guestId = guestId, cartChannel = TestListChannel.WEB.name, tenantCartName = cartId.toString(), metadata = metadata, createdAt = LocalDateTime.now().minusDays(1))
     }
@@ -113,24 +86,6 @@ class CartDataProvider {
 
     fun getCartResponse(cartId: UUID, guestId: String?, cartSubChannel: String, cartNumber: String, metadata: Map<String, Any>?): CartResponse {
         return CartResponse(cartId = cartId, guestId = guestId, cartNumber = cartNumber, cartChannel = TestListChannel.WEB.name, cartSubchannel = cartSubChannel, tenantCartName = cartId.toString(), metadata = metadata)
-    }
-
-    fun getCartContentsResponse(cartId: UUID, itemCount: Int): CartContentsResponse {
-        if (itemCount == 0) {
-            return CartContentsResponse()
-        }
-
-        val itemList = ArrayList<CartItemResponse>()
-
-        for (i in 1..itemCount) {
-            if (i % 2 == 0) {
-                itemList.add(CartItemResponse(cartId = cartId, cartItemId = UUID.randomUUID(), itemAddChannel = TestListChannel.WEB.toString(), tenantReferenceId = UUID.randomUUID().toString(), metadata = mutableMapOf<String, Any>("SOME_STATUS" to "PENDING")))
-            } else {
-                itemList.add(CartItemResponse(cartId = cartId, cartItemId = UUID.randomUUID(), itemAddChannel = TestListChannel.WEB.toString(), tenantReferenceId = UUID.randomUUID().toString(), metadata = mutableMapOf<String, Any>("SOME_STATUS" to "COMPLETED")))
-            }
-        }
-
-        return CartContentsResponse(cartItems = itemList.toTypedArray())
     }
 
     fun getCartContentsResponse(cartResponse: CartResponse, cartItemResponses: List<CartItemResponse>? = null): CartContentsResponse {
@@ -185,17 +140,5 @@ class CartDataProvider {
         metadata[Constants.LIST_ITEM_METADATA] = mapper.writeValueAsString(listItemMetaData)
         metadata[Constants.USER_ITEM_METADATA] = mapper.writeValueAsString(userData)
         return metadata
-    }
-
-    fun getListItemMetaDataFromCart(cartMetadata: Map<String, Any>?): ListItemMetaDataTO? {
-        return mapper.readValue<ListItemMetaDataTO>((cartMetadata?.get(Constants.LIST_ITEM_METADATA) as? String).toString())
-    }
-
-    fun getListItemRequestTO(itemType: ItemType, tcin: String, channel: String): ListItemRequestTO {
-        return ListItemRequestTO(itemType = itemType, itemRefId = getItemRefId(itemType, tcin), channel = channel, tcin = tcin, itemTitle = null)
-    }
-
-    fun getItemRefId(itemType: ItemType, id: String): String {
-        return ItemRefIdBuilder.buildItemRefId(itemType, id)
     }
 }

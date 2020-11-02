@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.GuestPreferenceEntity
@@ -33,7 +34,7 @@ class ListSortOrderServiceTest extends Specification {
         String guestId = "1234"
 
         when:
-        def actual = listSortOrderService.saveListSortOrder(guestId, UUID.randomUUID(), LIST_STATUS.COMPLETED).block()
+        def actual = listSortOrderService.saveListSortOrder(guestId, Uuids.timeBased(), LIST_STATUS.COMPLETED).block()
 
         then:
         actual
@@ -42,7 +43,7 @@ class ListSortOrderServiceTest extends Specification {
     def "Test saveListSortOrder() when list status is pending"() {
         given:
         String guestId = "1234"
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
         GuestPreferenceEntity guestPreference = new GuestPreferenceEntity(guestId, listId.toString())
 
         when:
@@ -60,7 +61,7 @@ class ListSortOrderServiceTest extends Specification {
         String guestId = "1234"
 
         when:
-        def actual = listSortOrderService.saveListSortOrder(guestId, UUID.randomUUID(), LIST_STATUS.PENDING).block()
+        def actual = listSortOrderService.saveListSortOrder(guestId, Uuids.timeBased(), LIST_STATUS.PENDING).block()
 
         then:
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.error(new RuntimeException("some exception"))
@@ -73,7 +74,7 @@ class ListSortOrderServiceTest extends Specification {
         String guestId = "1234"
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, UUID.randomUUID(), LIST_STATUS.COMPLETED).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, Uuids.timeBased(), LIST_STATUS.COMPLETED).block()
 
         then:
         actual
@@ -82,8 +83,8 @@ class ListSortOrderServiceTest extends Specification {
     def "Test deleteListSortOrder() when list status is pending"() {
         given:
         String guestId = "1234"
-        def listId1 = UUID.randomUUID()
-        def listId2 = UUID.randomUUID()
+        def listId1 = Uuids.timeBased()
+        def listId2 = Uuids.timeBased()
         GuestPreferenceEntity preGuestPreference = new GuestPreferenceEntity(guestId, listId1.toString() + "," + listId2.toString())
         GuestPreferenceEntity postGuestPreference = new GuestPreferenceEntity(guestId, listId2.toString())
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
@@ -102,8 +103,8 @@ class ListSortOrderServiceTest extends Specification {
     def "Test deleteListSortOrder() when list status is pending and no items to delete - list preference doesnt exist"() {
         given:
         String guestId = "1234"
-        def listId1 = UUID.randomUUID()
-        def listId2 = UUID.randomUUID()
+        def listId1 = Uuids.timeBased()
+        def listId2 = Uuids.timeBased()
         GuestPreferenceEntity preGuestPreference = new GuestPreferenceEntity(guestId, listId1.toString() + "," + listId2.toString())
         GuestPreferenceEntity postGuestPreference = new GuestPreferenceEntity(guestId, listId2.toString())
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
@@ -121,8 +122,8 @@ class ListSortOrderServiceTest extends Specification {
     def "Test deleteListSortOrder() when list status is pending and the list id not there in the sort order"() {
         given:
         String guestId = "1234"
-        def listId1 = UUID.randomUUID()
-        def listId2 = UUID.randomUUID()
+        def listId1 = Uuids.timeBased()
+        def listId2 = Uuids.timeBased()
         GuestPreferenceEntity preGuestPreference = new GuestPreferenceEntity(guestId, listId2.toString())
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
@@ -139,7 +140,7 @@ class ListSortOrderServiceTest extends Specification {
     def "Test deleteListSortOrder() when list status is pending and delete list id fails"() {
         given:
         String guestId = "1234"
-        def listId1 = UUID.randomUUID()
+        def listId1 = Uuids.timeBased()
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
@@ -154,8 +155,8 @@ class ListSortOrderServiceTest extends Specification {
     def "Test deleteListSortOrder() when list status is pending and update list id fails"() {
         given:
         String guestId = "1234"
-        def listId1 = UUID.randomUUID()
-        def listId2 = UUID.randomUUID()
+        def listId1 = Uuids.timeBased()
+        def listId2 = Uuids.timeBased()
         GuestPreferenceEntity preGuestPreference = new GuestPreferenceEntity(guestId, listId1.toString() + "," + listId2.toString())
         GuestPreferenceEntity postGuestPreference = new GuestPreferenceEntity(guestId, listId2.toString())
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
@@ -174,8 +175,8 @@ class ListSortOrderServiceTest extends Specification {
     def "Test editListSortOrder() happy path"() {
         given:
         String guestId = "1234"
-        def primaryListId = UUID.randomUUID()
-        def secondaryListId = UUID.randomUUID()
+        def primaryListId = Uuids.timeBased()
+        def secondaryListId = Uuids.timeBased()
         GuestPreferenceEntity preGuestPreference = new GuestPreferenceEntity(guestId, primaryListId.toString() + "," + secondaryListId.toString())
 
         when:
@@ -190,8 +191,8 @@ class ListSortOrderServiceTest extends Specification {
     def "Test editListSortOrder() when secondary item is not found"() {
         given:
         String guestId = "1234"
-        def primaryListId = UUID.randomUUID()
-        def secondaryListId = UUID.randomUUID()
+        def primaryListId = Uuids.timeBased()
+        def secondaryListId = Uuids.timeBased()
         def preGuestPreference = new GuestPreferenceEntity(guestId, primaryListId.toString())
         def postGuestPreference = new GuestPreferenceEntity(guestId, primaryListId.toString() + "," + secondaryListId.toString())
 
@@ -208,8 +209,8 @@ class ListSortOrderServiceTest extends Specification {
     def "Test editListSortOrder() when primary item is not found"() {
         given:
         String guestId = "1234"
-        def primaryListId = UUID.randomUUID()
-        def secondaryListId = UUID.randomUUID()
+        def primaryListId = Uuids.timeBased()
+        def secondaryListId = Uuids.timeBased()
         def preGuestPreference = new GuestPreferenceEntity(guestId, secondaryListId.toString())
         def postGuestPreference = new GuestPreferenceEntity(guestId, primaryListId.toString() + "," + secondaryListId.toString())
 

@@ -138,6 +138,10 @@ class ListRepository(
         }
     }
 
+    fun findMultipleListsById(listId: List<UUID>): Flux<ListEntity> {
+        return Flux.from(listDAO.findMultipleListsById(listId))
+    }
+
     fun findListItemsByListId(listId: UUID): Flux<ListItemEntity> {
         return Flux.from(listDAO.findListItemsByListId(listId))
     }
@@ -164,6 +168,10 @@ class ListRepository(
 
     fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String): Mono<GuestListEntity> {
         return Mono.from(guestListDAO.findGuestListByMarker(guestId, listType, listSubtype, listMarker))
+    }
+
+    fun findGuestListsByGuestId(guestId: String, listType: String): Flux<GuestListEntity> {
+        return Flux.from(guestListDAO.findGuestListsByGuestId(guestId, listType))
     }
 
     fun deleteList(listEntity: ListEntity): Mono<ListEntity> {

@@ -18,6 +18,7 @@ import spock.lang.Stepwise
 import spock.lang.Unroll
 
 import javax.inject.Inject
+import java.time.Instant
 import java.util.stream.Collectors
 
 @MicronautTest
@@ -56,7 +57,7 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
     @Unroll
     def "test create new list #listTitle"() {
         given:
-        ListEntity listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubtype, guestId, listMarker)
+        ListEntity listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubtype, guestId, listMarker, Instant.now(), Instant.now())
 
         when:
         listsRepository.saveList(listEntity).block()
@@ -70,6 +71,14 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         listIds[1]   | "home"       | listTypes[1] | listSubtypes[1] | guestIds[1] | listMarkers[1]
         listIds[2]   | "bday"       | listTypes[2] | listSubtypes[2] | guestIds[2] | listMarkers[2]
         listIds[3]   | "essentials" | listTypes[3] | listSubtypes[3] | guestIds[3] | listMarkers[3]
+    }
+
+    def "test get lists by ids"() {
+        when:
+        List<ListEntity> listEntity  = listsRepository.findMultipleListsById([listIds[0], listIds[1], listIds[2], listIds[3]]).collectList().block()
+
+        then:
+        listEntity.size() == 4
     }
 
     def "test add weekly list item"() {

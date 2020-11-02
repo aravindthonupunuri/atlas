@@ -38,7 +38,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete cart items with ItemIncludeFields ALL"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
         def recordMetadata = GroovyMock(RecordMetadata)
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
@@ -64,7 +64,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete cart items with ItemIncludeFields PENDING"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
         def recordMetadata = GroovyMock(RecordMetadata)
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
@@ -90,7 +90,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete items with ItemIncludeFields COMPLETED"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
         def recordMetadata = GroovyMock(RecordMetadata)
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
@@ -118,7 +118,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete items with ItemIncludeFields PENDING with no pending items to delete"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
@@ -132,7 +132,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete items with ItemIncludeFields ALL with exception getting list items"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         when:
         deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.ALL).block()
@@ -145,7 +145,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete items with ItemIncludeFields PENDING with exception getting pending list items"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         when:
         deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
@@ -158,7 +158,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete items with ItemIncludeFields ALL with exception deleting list items"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
@@ -176,7 +176,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete items with ItemIncludeFields PENDING with exception deleting pending list items"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1234", "1234", null, 1, "notes1")
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
@@ -241,7 +241,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete items with ItemIncludeFields ALL but items to delete in the list"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.ALL).block()
@@ -255,7 +255,7 @@ class DeleteListItemsServiceTest extends Specification {
 
     def "Test delete items with ItemIncludeFields PENDING but no pending items to delete in the list"() {
         given:
-        def listId = UUID.randomUUID()
+        def listId = Uuids.timeBased()
 
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()

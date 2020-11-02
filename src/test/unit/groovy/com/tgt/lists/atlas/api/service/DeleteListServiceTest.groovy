@@ -10,6 +10,8 @@ import org.apache.kafka.clients.producer.RecordMetadata
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
+import java.time.Instant
+
 class DeleteListServiceTest extends Specification {
 
     ListRepository listRepository
@@ -28,7 +30,7 @@ class DeleteListServiceTest extends Specification {
     def "Test deleteListService when the completed cart is not present"() {
         given:
         UUID listId = Uuids.timeBased()
-        ListEntity listEntity = listDataProvider.createListEntity(listId, "list title", "shopping", "s", guestId, "d")
+        ListEntity listEntity = listDataProvider.createListEntity(listId, "list title", "shopping", "s", guestId, "d", Instant.now(), Instant.now())
 
         when:
         def actual = deleteListService.deleteList(guestId,listId).block()
@@ -43,7 +45,7 @@ class DeleteListServiceTest extends Specification {
 
     def "Test deleteListService when list not found"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         when:
         def actual = deleteListService.deleteList(guestId,listId).block()
@@ -55,7 +57,7 @@ class DeleteListServiceTest extends Specification {
 
     def "Test deleteListService with exception from findListById"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         when:
         deleteListService.deleteList(guestId,listId).block()
@@ -68,7 +70,7 @@ class DeleteListServiceTest extends Specification {
     def "Test deleteListService with exception from deleteList"() {
         given:
         UUID listId = Uuids.timeBased()
-        ListEntity listEntity = listDataProvider.createListEntity(listId, "list title", "shopping", "s", guestId, "d")
+        ListEntity listEntity = listDataProvider.createListEntity(listId, "list title", "shopping", "s", guestId, "d", Instant.now(), Instant.now())
 
         when:
         deleteListService.deleteList(guestId,listId).block()

@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
@@ -14,6 +15,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 class GetListServiceTest extends Specification {
@@ -39,19 +41,19 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() integrity ItemIncludeFields = ALL with 1 of each pending and completed"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
@@ -93,16 +95,16 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() ItemIncludeFields = ALL with no pending items"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
         def completedListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 
@@ -137,17 +139,17 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() ItemIncludeFields = ALL with no completed items"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
 
@@ -182,17 +184,17 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() ItemIncludeFields = PENDING with 1 pending TCIN item"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
 
@@ -227,16 +229,16 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() ItemIncludeFields = COMPLETED with 1 completed TCIN item"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
         def completedListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 
@@ -272,19 +274,19 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() item and sorting based on title and descending order with 1 TCIN item and 1 GENERIC item in pending list"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null )
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
@@ -324,23 +326,23 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() sorting based on itemCreatedDate with Ascending order"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
         def currentLocalInstant = dataProvider.getLocalDateTimeInstant()
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
         def listItemEntity1CreatedDate = currentLocalInstant.minus(1, ChronoUnit.DAYS)
         def listItemEntity2CreatedDate = currentLocalInstant
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, listItemEntity1CreatedDate, null )
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null, listItemEntity2CreatedDate, null )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
@@ -380,23 +382,23 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() sorting based on itemUpdated with Ascending order"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
         def currentLocalInstant = dataProvider.getLocalDateTimeInstant()
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
         def listItemEntity1UpdateDate = currentLocalInstant.minus(1, ChronoUnit.DAYS)
         def listItemEntity2UpdateDate = currentLocalInstant
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, null, listItemEntity2UpdateDate )
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null, null, listItemEntity1UpdateDate )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
@@ -436,19 +438,19 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() item sorting based on itemPosition with guest preferred Sort order"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null)
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null)
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
@@ -481,19 +483,19 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() item sorting based on itemPosition with guest preferred Sort order for empty list"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null)
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null)
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
@@ -524,19 +526,19 @@ class GetListServiceTest extends Specification {
 
     def "Test getListService() item sorting based on itemPosition when items are missing in SortOrder but present in Pending Items"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID listItemId1 = UUID.randomUUID()
-        UUID listItemId2 = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
+        UUID listItemId1 = Uuids.timeBased()
+        UUID listItemId2 = Uuids.timeBased()
         def listTitle = "Testing List Title"
         def listType = "REGISTRY"
         def listSubType = "WEDDING"
 
         def tcin1 = "1234"
-        def tenantrefId1 = dataProvider.getTenantRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "1235"
-        def tenantrefId2 = dataProvider.getTenantRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = dataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value)
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null)
         def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null)
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)

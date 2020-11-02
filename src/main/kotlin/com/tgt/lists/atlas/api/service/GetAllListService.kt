@@ -1,15 +1,14 @@
 package com.tgt.lists.atlas.api.service
 
-import com.tgt.lists.cart.transport.CartResponse
-import com.tgt.lists.atlas.api.domain.CartManager
+import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipeline
 import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipelineConfiguration
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
-import com.tgt.lists.atlas.api.util.CartManagerName
-import com.tgt.lists.atlas.api.util.LIST_STATUS
-import com.tgt.lists.atlas.api.util.getListMetaDataFromCart
-import com.tgt.lists.atlas.api.util.getUserMetaDataFromCart
+import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.getUserMetaDataFromMetadataMap
+import com.tgt.lists.atlas.api.util.LIST_MARKER
+import com.tgt.lists.atlas.api.util.getLocalDateTimeFromInstant
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -18,11 +17,10 @@ import javax.inject.Singleton
 
 @Singleton
 class GetAllListService(
-    @CartManagerName("GetAllListService") @Inject private val cartManager: CartManager,
+    @Inject private val listRepository: ListRepository,
     @Inject private val listsTransformationPipelineConfiguration: ListsTransformationPipelineConfiguration,
     @Value("\${list.list-type}") private val listType: String,
-    @Value("\${list.max-count}") private val maxListsCount: Int,
-    @Value("\${list.features.two-carts}") private val isTwoCartsEnabled: Boolean
+    @Value("\${list.max-count}") private val maxListsCount: Int
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -33,47 +31,54 @@ class GetAllListService(
 
         logger.debug("[getAllListsForUser] guestId: $guestId")
 
-        return cartManager.getAllCarts(guestId = guestId)
-                    .flatMap { process(guestId, it, listsTransformationPipeline) }
+        return findGuestLists(guestId, listType).flatMap {
+            if (it.isNullOrEmpty()) {
+                logger.debug("[getAllListsForUser] No lists found for guest with guestId: $guestId and listType: $listType")
+                Mono.empty()
+            } else {
+                process(guestId, it, listsTransformationPipeline)
+            }
+        }
+    }
+
+    private fun findGuestLists(
+        guestId: String,
+        listType: String
+    ): Mono<List<ListEntity>> {
+        return listRepository.findGuestListsByGuestId(guestId, listType).collectList().flatMap {
+            if (it.isNullOrEmpty()) {
+                Mono.just(emptyList())
+            } else {
+                listRepository.findMultipleListsById(it.map { it.id!! }.toList()).collectList()
+            }
+        }
     }
 
     private fun process(
         guestId: String,
-        carts: List<CartResponse>,
+        lists: List<ListEntity>,
         listsTransformationPipeline: ListsTransformationPipeline?
     ): Mono<List<ListGetAllResponseTO>> {
-        val listOfLists = carts
-                .map {
-                    val listMetadata = getListMetaDataFromCart(it.metadata)
-                    Pair(it, listMetadata)
-                }
-                .filter {
-                    val listMetadata = it.second
-                    listMetadata.listStatus == LIST_STATUS.PENDING
-                }.map {
-                    val pendingCartResponse = it.first
-                    val listMetadata = it.second
-                    val completedCartResponse = if (isTwoCartsEnabled) carts.find { it.cartNumber.equals(pendingCartResponse.cartId.toString()) } else null
+        val listOfLists = lists
+                    .map {
+                        ListGetAllResponseTO(
+                                listId = it.id,
+                                channel = it.channel,
+                                listType = it.type,
+                                listTitle = it.title,
+                                shortDescription = it.description,
+                                agentId = it.agentId,
+                                metadata = getUserMetaDataFromMetadataMap(it.metadata)?.userMetaData,
+                                defaultList = (it.marker == LIST_MARKER.DEFAULT.value),
+                                maxListsCount = maxListsCount,
+                                addedTs = getLocalDateTimeFromInstant(it.createdAt),
+                                lastModifiedTs = getLocalDateTimeFromInstant(it.updatedAt)
+                        )
+                    }
 
-                    ListGetAllResponseTO(
-                            listId = pendingCartResponse.cartId,
-                            completedListId = completedCartResponse?.cartId,
-                            channel = pendingCartResponse.cartChannel,
-                            listType = pendingCartResponse.cartSubchannel,
-                            listTitle = pendingCartResponse.tenantCartName,
-                            shortDescription = pendingCartResponse.tenantCartDescription,
-                            agentId = pendingCartResponse.agentId,
-                            metadata = getUserMetaDataFromCart(pendingCartResponse.metadata)?.userMetaData,
-                            defaultList = listMetadata.defaultList,
-                            maxListsCount = maxListsCount,
-                            addedTs = pendingCartResponse.createdAt.let { it.toString() + "Z" },
-                            lastModifiedTs = pendingCartResponse.updatedAt.let { it.toString() + "Z" }
-                    )
-                }
-
-        return listsTransformationPipeline?.let {
-            val transformationContext = TransformationContext(transformationPipelineConfiguration = listsTransformationPipelineConfiguration)
-            it.executePipeline(guestId = guestId, lists = listOfLists, transformationContext = transformationContext)
-        } ?: Mono.just(listOfLists)
+            return listsTransformationPipeline?.let {
+                val transformationContext = TransformationContext(transformationPipelineConfiguration = listsTransformationPipelineConfiguration)
+                it.executePipeline(guestId = guestId, lists = listOfLists, transformationContext = transformationContext)
+            } ?: Mono.just(listOfLists)
     }
 }

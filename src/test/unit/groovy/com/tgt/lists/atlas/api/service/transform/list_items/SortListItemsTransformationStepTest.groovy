@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service.transform.list_items
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
@@ -32,14 +33,14 @@ class SortListItemsTransformationStepTest extends Specification {
 
     def "test sort by title"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         // list with 5 items
-        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
-        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
-        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
-        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
-        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        ListItemResponseTO item1 = listDataProvider.getListItem(Uuids.timeBased(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(Uuids.timeBased(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(Uuids.timeBased(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(Uuids.timeBased(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(Uuids.timeBased(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
         sortListItemsTransformationStep = new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING)
@@ -59,14 +60,14 @@ class SortListItemsTransformationStepTest extends Specification {
 
     def "test sort by item position for pending item state"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         // list with 5 items
-        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
-        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
-        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
-        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
-        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        ListItemResponseTO item1 = listDataProvider.getListItem(Uuids.timeBased(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(Uuids.timeBased(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(Uuids.timeBased(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(Uuids.timeBased(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(Uuids.timeBased(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
         def dbList = new ListPreferenceEntity(listId, guestId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}")
@@ -91,14 +92,14 @@ class SortListItemsTransformationStepTest extends Specification {
 
     def "test sort by item position for completed item state"() {
         given:
-        UUID listId = UUID.randomUUID()
+        UUID listId = Uuids.timeBased()
 
         // list with 5 items
-        ListItemResponseTO item1 = listDataProvider.getListItem(UUID.randomUUID(), "first")
-        ListItemResponseTO item2 = listDataProvider.getListItem(UUID.randomUUID(), "second")
-        ListItemResponseTO item3 = listDataProvider.getListItem(UUID.randomUUID(), "third")
-        ListItemResponseTO item4 = listDataProvider.getListItem(UUID.randomUUID(), "fourth")
-        ListItemResponseTO item5 = listDataProvider.getListItem(UUID.randomUUID(), "fifth")
+        ListItemResponseTO item1 = listDataProvider.getListItem(Uuids.timeBased(), "first")
+        ListItemResponseTO item2 = listDataProvider.getListItem(Uuids.timeBased(), "second")
+        ListItemResponseTO item3 = listDataProvider.getListItem(Uuids.timeBased(), "third")
+        ListItemResponseTO item4 = listDataProvider.getListItem(Uuids.timeBased(), "fourth")
+        ListItemResponseTO item5 = listDataProvider.getListItem(Uuids.timeBased(), "fifth")
         List<ListItemResponseTO> itemList = [item1,item2,item3,item4,item5]
 
         def dbList = new ListPreferenceEntity(listId, guestId, "${item2.listItemId},${item1.listItemId},${item4.listItemId},${item5.listItemId},${item3.listItemId}")

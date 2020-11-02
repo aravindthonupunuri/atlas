@@ -48,15 +48,15 @@ class CreateListItemsServiceTest extends Specification {
         given:
         def listId = Uuids.timeBased()
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def tcin2 = "5678"
-        def tenantrefId2 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin2)
+        def tenantrefId2 = listDataProvider.getItemRefId(ItemType.TCIN, tcin2)
         def tcin3 = "1000"
-        def tenantrefId3 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin3)
+        def tenantrefId3 = listDataProvider.getItemRefId(ItemType.TCIN, tcin3)
         def tcin4 = "9999"
-        def tenantrefId4 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin4)
+        def tenantrefId4 = listDataProvider.getItemRefId(ItemType.TCIN, tcin4)
         def tcin5 = "1111"
-        def tenantrefId5 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin5)
+        def tenantrefId5 = listDataProvider.getItemRefId(ItemType.TCIN, tcin5)
 
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tenantrefId1, TestListChannel.WEB.toString(), tcin1, null,
                 "test item", null, UnitOfMeasure.EACHES, null)
@@ -117,9 +117,9 @@ class CreateListItemsServiceTest extends Specification {
         given:
         def listId = Uuids.timeBased()
         def tcin1 = "1234"
-        def tcinTenantRefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tcinTenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
         def gItem1 = "item2"
-        def gItemTenantrefId1 = cartDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
+        def gItemTenantrefId1 = listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
 
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tcinTenantRefId1, TestListChannel.WEB.toString(), tcin1, null,
                 "test item", null, UnitOfMeasure.EACHES, null)
@@ -151,7 +151,7 @@ class CreateListItemsServiceTest extends Specification {
     def "test ListItemRequestTO tcin item with exception"() {
         given:
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         when:
         new ListItemRequestTO(ItemType.TCIN, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
@@ -163,7 +163,7 @@ class CreateListItemsServiceTest extends Specification {
     def "test ListItemRequestTO generic item with exception"() {
         given:
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         when:
         new ListItemRequestTO(ItemType.GENERIC_ITEM, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
@@ -175,7 +175,7 @@ class CreateListItemsServiceTest extends Specification {
     def "test ListItemRequestTO offer item with exception"() {
         given:
         def tcin1 = "1234"
-        def tenantrefId1 = cartDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def tenantrefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
 
         when:
         new ListItemRequestTO(ItemType.OFFER, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
