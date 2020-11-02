@@ -2,7 +2,6 @@ package com.tgt.lists.atlas.api.service
 
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
 import com.tgt.lists.atlas.api.transport.EditItemSortOrderRequestTO
-import com.tgt.lists.atlas.api.transport.ListItemMetaDataTO
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.MultiDeleteListItem
 import mu.KotlinLogging
@@ -22,20 +21,19 @@ class ListItemSortOrderService(
         guestId: String,
         listId: UUID,
         itemId: UUID,
-        listItemMetaDataTO: ListItemMetaDataTO
+        listItemState: LIST_ITEM_STATE
     ): Mono<Boolean> {
 
         logger.debug("[saveListItemSortOrder] guestId: $guestId listId: $listId, itemId: $itemId")
 
-        return if (listItemMetaDataTO.itemState == LIST_ITEM_STATE.PENDING) {
-            listItemSortOrderManager.saveNewListItemOrder(guestId, listId, itemId).map { true }
+        return if (listItemState == LIST_ITEM_STATE.PENDING) {
+            listItemSortOrderManager.saveNewListItemOrder(guestId, listId, itemId)
+                    .map { true }
                     .onErrorResume {
                         logger.error("Exception while saving list item sort order", it)
                         Mono.just(false)
                     }
-        } else {
-            Mono.just(true)
-        }
+        } else { Mono.just(true) }
     }
 
     fun deleteListItemSortOrder(
@@ -46,7 +44,7 @@ class ListItemSortOrderService(
 
         logger.debug("[deleteListItemSortOrder] guestId: $guestId listId: $listId, deleteListItems: $deleteListItems")
 
-        return deleteListItems.filter { it.listItemMetaDataTO?.itemState == LIST_ITEM_STATE.PENDING }
+        return deleteListItems.filter { it.itemState == LIST_ITEM_STATE.PENDING }
                 .takeIf { !it.isNullOrEmpty() }
                 ?.let { listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, it.map { it.itemId }.toTypedArray())
                             .map { true }

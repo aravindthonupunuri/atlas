@@ -29,7 +29,7 @@ class UpdateListItemManager(
             val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(it.itemMetadata)
             eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(),
                     UpdateListItemNotifyEvent(guestId, it.id!!, it.itemId!!, it.itemTcin, it.itemTitle, it.itemReqQty,
-                            null, userMetaDataTO?.userMetaData), listId.toString())
+                            userMetaDataTO?.userMetaData), listId.toString())
         }.map { it.t1 }
     }
 }

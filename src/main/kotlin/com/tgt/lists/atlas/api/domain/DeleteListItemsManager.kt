@@ -3,6 +3,7 @@ package com.tgt.lists.atlas.api.domain
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.kafka.model.MultiDeleteListItem
 import mu.KotlinLogging
@@ -32,11 +33,13 @@ class DeleteListItemsManager(
             logger.debug("[deleteListItems] guestId: $guestId listId:$listId")
             listRepository.deleteListItems(listItems).zipWhen { items ->
                 Flux.fromIterable(items.asIterable()).flatMap {
-                    val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(it.itemMetadata)
+                    val itemEntity = it
+                    val itemState = LIST_ITEM_STATE.values().first { it.value == itemEntity.itemState }
+                    val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(itemEntity.itemMetadata)
                     eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(),
-                            DeleteListItemNotifyEvent(guestId, it.id!!,
-                                    listOf(MultiDeleteListItem(it.itemId!!, it.itemTcin, it.itemTitle, it.itemReqQty,
-                                            null, userMetaDataTO?.userMetaData))), listId.toString())
+                            DeleteListItemNotifyEvent(guestId, itemEntity.id!!,
+                                    listOf(MultiDeleteListItem(itemEntity.itemId!!, itemEntity.itemTcin, itemEntity.itemTitle,
+                                            itemEntity.itemReqQty, itemState, userMetaDataTO?.userMetaData))), listId.toString())
                 }.collectList()
             }.map { it.t1 }
         }

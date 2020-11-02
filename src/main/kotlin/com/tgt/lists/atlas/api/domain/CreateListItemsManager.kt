@@ -91,11 +91,11 @@ class CreateListItemsManager(
                     if (update) {
                         eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(),
                                 UpdateListItemNotifyEvent(guestId, it.id!!, it.itemId!!, it.itemTcin, it.itemTitle,
-                                        it.itemReqQty, null, userMetaDataTO?.userMetaData), listId.toString())
+                                        it.itemReqQty, userMetaDataTO?.userMetaData), listId.toString())
                     } else {
                         eventPublisher.publishEvent(CreateListItemNotifyEvent.getEventType(),
                                 CreateListItemNotifyEvent(guestId, it.id!!, it.itemId!!, it.itemTcin, it.itemTitle,
-                                        it.itemChannel, it.itemReqQty, null, userMetaDataTO?.userMetaData),
+                                        it.itemChannel, it.itemReqQty, userMetaDataTO?.userMetaData),
                                 listId.toString())
                     }
                 }.collectList()
