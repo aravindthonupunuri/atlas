@@ -1,3 +1,9 @@
+services:
+  cassandra:
+    image: rinscy/cassandra:3.11
+    ports:
+      - "9042:9042"
+
 pipeline:
   restore_cache:
     image: docker.target.com/drone/drone-s3-cache:2
@@ -31,9 +37,14 @@ pipeline:
 
   build:
     when:
-      event: [push, tag, pull_request]
+      event: [push, pull_request]
       branch: master
     image: openjdk:11
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx3000M
+      GRADLE_USER_HOME: .gradle
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=1 -Dorg.gradle.parallel=false
+      CASSANDRA_URL: cassandra:9042
     commands:
       - ./gradlew clean build
 
@@ -42,6 +53,11 @@ pipeline:
       event: tag
       ref: refs/tags/*
     image: openjdk:11
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx3000M
+      GRADLE_USER_HOME: .gradle
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=1 -Dorg.gradle.parallel=false
+      CASSANDRA_URL: cassandra:9042
     commands:
       - ./gradlew publish -DUSERNAME=$ARTIFACTORY_USERNAME -DPASSWORD=$ARTIFACTORY_PASSWORD -DVERSION="${DRONE_TAG}"
     secrets: [ ARTIFACTORY_USERNAME, ARTIFACTORY_PASSWORD ]
