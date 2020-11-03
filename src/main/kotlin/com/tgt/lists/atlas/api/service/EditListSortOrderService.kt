@@ -27,7 +27,7 @@ class EditListSortOrderService(
 
         return listRepository.findListById(editListSortOrderRequestTO.primaryListId)
                 .flatMap {
-                    listRepository.findGuestListByGuestId(it.guestId!!, listType)
+                    listRepository.findGuestListsByGuestId(it.guestId!!, listType)
                             .collectList()
                             .map {
                                 val isAuthorisedPrimaryList = it.find { it.id == editListSortOrderRequestTO.primaryListId }

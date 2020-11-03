@@ -24,7 +24,7 @@ class DefaultListManager(
     @Value("\${list.features.fixed-default-list}") private val isFixedDefaultListEnabled: Boolean
 ) {
     fun processDefaultListInd(guestId: String, defaultListIndicator: Boolean, listId: UUID? = null): Mono<Boolean> {
-        return findGuestLists(guestId, listType).flatMap {
+        return listRepository.findGuestLists(guestId, listType).flatMap {
             // this method can be called either during create new list (listId=null)or during update if an existing list (listId NOT null)
             // create list is always called with the guestId as ownerId for new list
             // whereas update may be called with guestId as operation executor who could be different than list owner
@@ -62,23 +62,10 @@ class DefaultListManager(
         return if (defaultListIndicator) {
             Flux.fromIterable(defaultLists.asIterable()).flatMap { guestList ->
                 updateListManager.updateList(guestId = guestId, listId = guestList.id!!,
-                        updatedListEntity = guestList.copy(marker = LIST_MARKER.DEFAULT.value), existingListEntity = guestList)
+                        updatedListEntity = guestList.copy(marker = ""), existingListEntity = guestList)
             }.then(Mono.just(defaultListIndicator))
         } else {
             Mono.just(defaultListIndicator)
-        }
-    }
-
-    private fun findGuestLists(
-        guestId: String,
-        listType: String
-    ): Mono<List<ListEntity>> {
-        return listRepository.findGuestListsByGuestId(guestId, listType).collectList().flatMap {
-            if (it.isNullOrEmpty()) {
-                Mono.just(emptyList())
-            } else {
-                listRepository.findMultipleListsById(it.map { it.id!! }.toList()).collectList()
-            }
         }
     }
 
@@ -86,11 +73,8 @@ class DefaultListManager(
         guestLists: List<ListEntity>,
         listId: UUID?
     ): List<ListEntity> {
+        // Skip the list that you are trying to process, since its already a default list..
         return guestLists
-            .filter {
-                (it.state == LIST_STATE.ACTIVE.value) &&
-                        (it.marker == LIST_MARKER.DEFAULT.value) &&
-                        (listId == null || it.id != listId) // Skip the list that you are trying to process, since its already a default list..
-            }
+            .filter { (it.state == LIST_STATE.ACTIVE.value) && (it.marker == LIST_MARKER.DEFAULT.value) && (listId == null || it.id != listId) }.toList()
     }
 }

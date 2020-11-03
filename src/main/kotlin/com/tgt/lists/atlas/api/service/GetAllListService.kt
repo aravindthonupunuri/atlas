@@ -31,25 +31,12 @@ class GetAllListService(
 
         logger.debug("[getAllListsForUser] guestId: $guestId")
 
-        return findGuestLists(guestId, listType).flatMap {
+        return listRepository.findGuestLists(guestId, listType).flatMap {
             if (it.isNullOrEmpty()) {
                 logger.debug("[getAllListsForUser] No lists found for guest with guestId: $guestId and listType: $listType")
                 Mono.empty()
             } else {
                 process(guestId, it, listsTransformationPipeline)
-            }
-        }
-    }
-
-    private fun findGuestLists(
-        guestId: String,
-        listType: String
-    ): Mono<List<ListEntity>> {
-        return listRepository.findGuestListsByGuestId(guestId, listType).collectList().flatMap {
-            if (it.isNullOrEmpty()) {
-                Mono.just(emptyList())
-            } else {
-                listRepository.findMultipleListsById(it.map { it.id!! }.toList()).collectList()
             }
         }
     }

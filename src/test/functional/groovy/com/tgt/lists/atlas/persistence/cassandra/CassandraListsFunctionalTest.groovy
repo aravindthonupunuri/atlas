@@ -197,7 +197,7 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         def listType = listTypes[0]
 
         when:
-        List<GuestListEntity> guestListEntities = listsRepository.findGuestListByGuestId(guestId, listType).collect(Collectors.toList()).block()
+        List<GuestListEntity> guestListEntities = listsRepository.findGuestListsByGuestId(guestId, listType).collect(Collectors.toList()).block()
 
         then:
         guestListEntities != null

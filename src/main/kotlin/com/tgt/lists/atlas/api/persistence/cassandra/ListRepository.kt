@@ -150,7 +150,8 @@ class ListRepository(
     }
 
     fun findMultipleListsById(listId: List<UUID>): Flux<ListEntity> {
-        return Flux.from(listDAO.findMultipleListsById(listId))
+        return retryableStatementExecutor.readFlux(className, "findMultipleListsById") { consistency ->
+            listDAO.findMultipleListsById(listId, consistency) }
     }
 
     fun findListItemsByListId(listId: UUID): Flux<ListItemEntity> {
@@ -189,7 +190,8 @@ class ListRepository(
     }
 
     fun findGuestListsByGuestId(guestId: String, listType: String): Flux<GuestListEntity> {
-        return Flux.from(guestListDAO.findGuestListsByGuestId(guestId, listType))
+        return retryableStatementExecutor.readFlux(className, "findGuestListsByGuestId") { consistency ->
+            guestListDAO.findGuestListsByGuestId(guestId, listType, consistency) }
     }
 
     fun deleteList(listEntity: ListEntity): Mono<ListEntity> {
@@ -212,8 +214,16 @@ class ListRepository(
         }.map { listItemsEntity }
     }
 
-    fun findGuestListByGuestId(guestId: String, listType: String?): Flux<GuestListEntity> {
-        return retryableStatementExecutor.readFlux(className, "findGuestListByGuestId") { consistency ->
-            guestListDAO.findGuestListByGuestId(guestId, listType, consistency) }
+    fun findGuestLists(
+        guestId: String,
+        listType: String
+    ): Mono<List<ListEntity>> {
+        return findGuestListsByGuestId(guestId, listType).collectList().flatMap {
+            if (it.isNullOrEmpty()) {
+                Mono.just(emptyList())
+            } else {
+                findMultipleListsById(it.map { it.id!! }.toList()).collectList()
+            }
+        }
     }
 }

@@ -47,7 +47,7 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
+
         def listEntity = listDataProvider.createListEntity(listId, "title", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
 
         ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
@@ -58,8 +58,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity)
-        1 * listRepository.findMultipleListsById([listId]) >> Flux.just(listEntity)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity])
         1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
 
         lists.size() == 1
@@ -68,7 +67,7 @@ class GetAllListServiceTest extends Specification {
         lists[0].completedItemsCount == 0
     }
 
-    def "test getAllListsForUser with no lists for the guest"() {
+    def "test getAllListsForUser with no lists with listId's received from findGuestLists"() {
         given:
         def listType = "SHOPPING"
 
@@ -80,57 +79,16 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.empty()
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([])
 
         lists == null
     }
 
-    def "test getAllListsForUser with no lists with listId's received from findGuestListsByGuestId"() {
+    def "test getAllListsForUser with exception from findGuestLists"() {
         given:
         UUID listId = Uuids.timeBased()
         def listType = "SHOPPING"
         def listSubType = "s"
-
-        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
-
-        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
-
-        when:
-        List<ListGetAllResponseTO> lists = getListsService.getAllListsForUser(
-                guestId, listsTransformationPipeline).block()
-
-        then:
-        1 * listRepository.findGuestListsByGuestId(guestId, "SHOPPING") >> Flux.just(guestListEntity)
-        1 * listRepository.findMultipleListsById([listId]) >> Flux.empty()
-
-        lists == null
-    }
-
-    def "test getAllListsForUser with exception from findGuestListsByGuestId"() {
-        given:
-        def listType = "SHOPPING"
-
-        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-        listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
-
-        when:
-        getListsService.getAllListsForUser(
-                guestId, listsTransformationPipeline).block()
-
-        then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.error(new InternalServerException("some error"))
-
-        thrown(InternalServerException)
-    }
-
-    def "test getAllListsForUser with exception from findMultipleListsById"() {
-        given:
-        UUID listId = Uuids.timeBased()
-        def listType = "SHOPPING"
-        def listSubType = "s"
-
-        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
 
         ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
         listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))
@@ -139,8 +97,7 @@ class GetAllListServiceTest extends Specification {
         getListsService.getAllListsForUser(guestId, listsTransformationPipeline).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, "SHOPPING") >> Flux.just(guestListEntity)
-        1 * listRepository.findMultipleListsById([listId]) >> Flux.error(new InternalServerException("some error"))
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.error(new InternalServerException("some error"))
 
         thrown(InternalServerException)
 
@@ -152,7 +109,6 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
         def listEntity = listDataProvider.createListEntity(listId, "title", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
 
         ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
@@ -162,8 +118,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity)
-        1 * listRepository.findMultipleListsById([listId]) >> Flux.just(listEntity)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity])
         0 * listRepository.findListItemsByListId(listId)
 
         lists.size() == 1
@@ -182,8 +137,6 @@ class GetAllListServiceTest extends Specification {
         def tcin2 = "4567"
         def tenantRefId2 = listDataProvider.getItemRefId(ItemType.TCIN, tcin2)
 
-
-        def guestListEntity = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId, LIST_STATE.ACTIVE.value)
         def listEntity = listDataProvider.createListEntity(listId, "title", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, null, 1, "notes1")
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId2, tcin2, null, 1, "notes1")
@@ -196,8 +149,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity)
-        1 * listRepository.findMultipleListsById([listId]) >> Flux.just(listEntity)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity])
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2)
 
         lists.size() == 1
@@ -215,11 +167,6 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
-        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
-        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
-        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
-
         def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
         def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
@@ -232,8 +179,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.ASCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
 
         lists1.size() == 4
         lists1[0].listId == listId1
@@ -246,8 +192,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.DESCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
 
         lists2.size() == 4
         lists2[0].listId == listId4
@@ -265,11 +210,6 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
-        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
-        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
-        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
-
         def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
         def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
@@ -282,8 +222,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_TITLE, ListSortOrderGroup.ASCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
 
         lists1.size() == 4
         lists1[0].listId == listId1
@@ -296,8 +235,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_TITLE, ListSortOrderGroup.DESCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
 
         lists2.size() == 4
         lists2[0].listId == listId4
@@ -315,11 +253,6 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
-        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
-        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
-        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
-
         def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
         def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
@@ -334,8 +267,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(guestPreferenceEntity)
 
         lists1.size() == 4
@@ -354,11 +286,6 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
-        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
-        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
-        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
-
         def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
         def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
@@ -373,8 +300,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.DESCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(guestPreferenceEntity)
 
         lists2.size() == 4
@@ -393,11 +319,6 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
-        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
-        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
-        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
-
         def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
         def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
@@ -410,8 +331,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.error(new InternalServerException("some error"))
 
         lists1.size() == 4
@@ -430,11 +350,6 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
-        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
-        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
-        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
-
         def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
         def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
@@ -447,8 +362,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.empty()
 
         lists1.size() == 4
@@ -467,11 +381,6 @@ class GetAllListServiceTest extends Specification {
         def listType = "SHOPPING"
         def listSubType = "s"
 
-        def guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value, listId1, LIST_STATE.ACTIVE.value)
-        def guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId2, LIST_STATE.ACTIVE.value)
-        def guestListEntity3 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId3, LIST_STATE.ACTIVE.value)
-        def guestListEntity4 = listDataProvider.createGuestListEntity(guestId, listType, listSubType, "", listId4, LIST_STATE.ACTIVE.value)
-
         def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
         def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
         def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
@@ -486,8 +395,7 @@ class GetAllListServiceTest extends Specification {
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))).block()
 
         then:
-        1 * listRepository.findGuestListsByGuestId(guestId, listType) >> Flux.just(guestListEntity1, guestListEntity2, guestListEntity3, guestListEntity4)
-        1 * listRepository.findMultipleListsById([listId1, listId2, listId3, listId4]) >> Flux.just(listEntity1, listEntity2, listEntity3, listEntity4)
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(guestPreferenceEntity)
 
         lists2.size() == 4

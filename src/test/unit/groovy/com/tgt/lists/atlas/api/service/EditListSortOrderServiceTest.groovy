@@ -43,7 +43,7 @@ class EditListSortOrderServiceTest extends Specification {
 
         then:
         1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
-        1 * listRepository.findGuestListByGuestId(_, _) >> Flux.just(guestListEntity1)
+        1 * listRepository.findGuestListsByGuestId(_, _) >> Flux.just(guestListEntity1)
 
         actual
     }
@@ -64,7 +64,7 @@ class EditListSortOrderServiceTest extends Specification {
 
         then:
         1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
-        1 * listRepository.findGuestListByGuestId(_, _) >> Flux.just(guestListEntity1, guestListEntity2)
+        1 * listRepository.findGuestListsByGuestId(_, _) >> Flux.just(guestListEntity1, guestListEntity2)
         1 * listSortOrderService.editListSortOrder(guestId, editSortOrderRequest) >> Mono.just(true)
 
         actual
@@ -85,7 +85,7 @@ class EditListSortOrderServiceTest extends Specification {
 
         then:
         1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
-        1 * listRepository.findGuestListByGuestId(_, _) >> Flux.just(guestListEntity1)
+        1 * listRepository.findGuestListsByGuestId(_, _) >> Flux.just(guestListEntity1)
 
         thrown BadRequestException
     }

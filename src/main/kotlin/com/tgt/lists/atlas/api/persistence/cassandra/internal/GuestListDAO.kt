@@ -29,8 +29,7 @@ interface GuestListDAO : ICassandraDao {
     fun findGuestListByGuestId(guestId: String, listType: String?, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<GuestListEntity>
 
     @Select
-    @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
-    fun findGuestListsByGuestId(guestId: String, listType: String): MappedReactiveResultSet<GuestListEntity>
+    fun findGuestListsByGuestId(guestId: String, listType: String, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<GuestListEntity>
 
     @Delete(entityClass = [GuestListEntity::class])
     fun deleteByIdForId(guestId: String?, type: String?, subtype: String?, marker: String?, id: UUID?): BoundStatement
