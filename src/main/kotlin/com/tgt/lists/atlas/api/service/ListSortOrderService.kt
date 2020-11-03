@@ -3,7 +3,7 @@ package com.tgt.lists.atlas.api.service
 import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
 import com.tgt.lists.atlas.api.transport.EditListSortOrderRequestTO
-import com.tgt.lists.atlas.api.util.LIST_STATUS
+import com.tgt.lists.atlas.api.util.LIST_STATE
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -21,12 +21,12 @@ class ListSortOrderService(
     fun saveListSortOrder(
         guestId: String, // list owner guest id
         listId: UUID,
-        listStatus: LIST_STATUS
+        listState: LIST_STATE
     ): Mono<Boolean> {
 
         logger.debug("[saveListSortOrder] guestId: $guestId, listId: $listId")
 
-        return if (listStatus == LIST_STATUS.PENDING) {
+        return if (listState == LIST_STATE.ACTIVE) {
             guestPreferenceSortOrderManager.saveNewOrder(guestId, listId)
                     .map { true }
                     .onErrorResume {
@@ -39,12 +39,12 @@ class ListSortOrderService(
     fun deleteListSortOrder(
         guestId: String,
         listId: UUID,
-        listStatus: LIST_STATUS
+        listState: LIST_STATE
     ): Mono<Boolean> {
 
         logger.debug("[deleteListSortOrder] guestId: $guestId, listId: $listId")
 
-        return if (listStatus == LIST_STATUS.PENDING) {
+        return if (listState == LIST_STATE.ACTIVE) {
             listItemSortOrderManager.deleteById(guestId, listId)
                     .flatMap { guestPreferenceSortOrderManager.removeListIdFromSortOrder(guestId, listId) }
                     .map { true }

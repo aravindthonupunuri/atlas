@@ -1,7 +1,10 @@
 package com.tgt.lists.atlas.persistence.cassandra
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel
+import com.datastax.oss.driver.api.core.DriverException
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.BaseFunctionalTest
+import com.tgt.lists.atlas.CassandraObjectProvider
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.util.ListDataProvider
@@ -30,16 +33,7 @@ class DataBaseTimeOutFunctionalTest extends BaseFunctionalTest {
     ListDataProvider dataProvider = new ListDataProvider()
 
     @Shared
-    boolean executeTimeout = false
-
-    def setup() {
-        daoInstrumenter.attachTestListener(new DatabaseExecTestListener() {
-            @Override
-            boolean shouldTimeout(@NotNull String daoName, @NotNull String methodName) {
-                return executeTimeout
-            }
-        })
-    }
+    CassandraObjectProvider cassandraObjectProvider = new CassandraObjectProvider()
 
     def "test timeout handling, updateList batch statement method alone times out"() {
         given:
@@ -74,10 +68,10 @@ class DataBaseTimeOutFunctionalTest extends BaseFunctionalTest {
 
         daoInstrumenter.attachTestListener(new DatabaseExecTestListener() {
             @Override
-            boolean shouldTimeout(@NotNull String daoName, @NotNull String methodName) {
+            DriverException shouldFail(@NotNull String daoName, @NotNull String methodName) {
                 if (methodName == "updateList")
-                    return true
-                else return false
+                    return cassandraObjectProvider.buildReadTimeoutException(ConsistencyLevel.ONE, 0, 1, false)
+                else return null
             }
         })
 

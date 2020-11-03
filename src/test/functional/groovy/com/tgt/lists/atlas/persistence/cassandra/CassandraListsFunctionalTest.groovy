@@ -191,6 +191,19 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
         guestListEntity.id == listIds[0]
     }
 
+    def "test get guest listid by guestId and list tyep"() {
+        given:
+        def guestId = guestIds[0]
+        def listType = listTypes[0]
+
+        when:
+        List<GuestListEntity> guestListEntities = listsRepository.findGuestListByGuestId(guestId, listType).collect(Collectors.toList()).block()
+
+        then:
+        guestListEntities != null
+        guestListEntities.size() > 0
+    }
+
     def "test update listEntity"() {
         given:
         def listId = listIds[0]

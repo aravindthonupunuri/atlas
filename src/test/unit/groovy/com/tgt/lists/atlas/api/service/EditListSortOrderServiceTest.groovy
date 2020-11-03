@@ -1,105 +1,91 @@
 package com.tgt.lists.atlas.api.service
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
-import com.tgt.lists.cart.transport.CartType
-import com.tgt.lists.common.components.exception.BadRequestException
-import com.tgt.lists.atlas.api.domain.CartManager
-import com.tgt.lists.atlas.api.domain.EventPublisher
+import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.EditListSortOrderRequestTO
 import com.tgt.lists.atlas.api.util.Direction
-import com.tgt.lists.atlas.kafka.model.EditListSortOrderActionEvent
-import com.tgt.lists.atlas.util.CartDataProvider
-import com.tgt.lists.atlas.util.TestListChannel
-import com.tgt.lists.atlas.util.TestUtilConstants
-import org.apache.kafka.clients.producer.RecordMetadata
+import com.tgt.lists.atlas.util.ListDataProvider
+import com.tgt.lists.common.components.exception.BadRequestException
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
 class EditListSortOrderServiceTest extends Specification {
 
     EditListSortOrderService editListSortOrderService
-    CartManager cartManager
-    CartDataProvider cartDataProvider
-    EventPublisher eventPublisher
+    ListRepository listRepository
+    ListDataProvider listDataProvider
+    ListSortOrderService listSortOrderService
     String guestId = "1234"
+    String listType = "SHOPPING"
 
     def setup() {
-        cartDataProvider = new CartDataProvider()
-        cartManager = Mock(CartManager)
-        eventPublisher = Mock(EventPublisher)
-        editListSortOrderService = new EditListSortOrderService(eventPublisher, cartManager)
+        listDataProvider = new ListDataProvider()
+        listRepository = Mock(ListRepository)
+        listSortOrderService = Mock(ListSortOrderService)
+        editListSortOrderService = new EditListSortOrderService(listType , listRepository, listSortOrderService)
     }
 
     def "Test editListPosition() when primary and secondary list id are same"() {
         given:
-        UUID listId = Uuids.timeBased()
-        def editSortOrderRequest = new EditListSortOrderRequestTO(listId, listId, Direction.BELOW)
+        UUID listId1 = Uuids.timeBased()
+        def listMarker = "d"
+        def editSortOrderRequest = new EditListSortOrderRequestTO(listId1, listId1, Direction.BELOW)
 
-        def cartResponse1 = cartDataProvider.getCartResponse(listId, "1234",
-                TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
+        ListEntity listEntity1 = listDataProvider.createListEntity(listId1, "list title", listType, "s", guestId, listMarker)
+        GuestListEntity guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listId1, listMarker, null, null)
 
-        def cartResponse2 = cartDataProvider.getCartResponse(listId, "1234",
-                TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
-
-        def cartContentResponse1 = cartDataProvider.getCartContentsResponse(cartResponse1, [])
 
         when:
         def actual = editListSortOrderService.editListPosition(guestId, editSortOrderRequest).block()
 
         then:
-        1 * cartManager.getListCartContents(listId, false) >> Mono.just(cartContentResponse1)
-        1 * cartManager.getAllPendingCarts(_) >> Mono.just([cartResponse1, cartResponse2])
+        1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
+        1 * listRepository.findGuestListByGuestId(_, _) >> Flux.just(guestListEntity1)
 
         actual
     }
 
     def "Test editListPosition() when primary and secondary list id are different"() {
         given:
-        UUID listId = Uuids.timeBased()
         UUID listId1 = Uuids.timeBased()
-        def editSortOrderRequest = new EditListSortOrderRequestTO(listId, listId1, Direction.BELOW)
+        UUID listId2 = Uuids.timeBased()
+        def listMarker = "d"
+        def editSortOrderRequest = new EditListSortOrderRequestTO(listId1, listId2, Direction.BELOW)
 
-        def cartResponse1 = cartDataProvider.getCartResponse(listId, "1234",
-                TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
-
-        def cartResponse2 = cartDataProvider.getCartResponse(listId1, "1234",
-                TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
-
-        def cartContentResponse1 = cartDataProvider.getCartContentsResponse(cartResponse1, [])
+        ListEntity listEntity1 = listDataProvider.createListEntity(listId1, "list title", listType, "s", guestId, listMarker)
+        GuestListEntity guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listId1, listMarker, null, null)
+        GuestListEntity guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listId2, null, null, null)
 
         when:
         def actual = editListSortOrderService.editListPosition(guestId, editSortOrderRequest).block()
 
         then:
-        1 * cartManager.getListCartContents(listId, false) >> Mono.just(cartContentResponse1)
-        1 * eventPublisher.publishEvent(EditListSortOrderActionEvent.eventType, _,listId.toString()) >> Mono.just(GroovyMock(RecordMetadata))
-        1 * cartManager.getAllPendingCarts(_) >> Mono.just([cartResponse1, cartResponse2])
+        1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
+        1 * listRepository.findGuestListByGuestId(_, _) >> Flux.just(guestListEntity1, guestListEntity2)
+        1 * listSortOrderService.editListSortOrder(guestId, editSortOrderRequest) >> Mono.just(true)
 
         actual
     }
 
     def "test editListPosition() when unauthorized list ids are passed"() {
-
         given:
-        UUID primaryListId = Uuids.timeBased()
-        UUID secondaryListId = Uuids.timeBased()
-        Direction direction = Direction.ABOVE
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        def listMarker = "d"
+        def editSortOrderRequest = new EditListSortOrderRequestTO(listId1, listId2, Direction.BELOW)
 
-        EditListSortOrderRequestTO editListSortOrderRequestTO = new EditListSortOrderRequestTO(primaryListId, secondaryListId, direction)
-        def cartResponse1 = cartDataProvider.getCartResponse(Uuids.timeBased(), "1234",
-                TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
-
-        def cartResponse2 = cartDataProvider.getCartResponse(Uuids.timeBased(), "1234",
-                TestListChannel.MOBILE.toString(), CartType.LIST, "Pending list", "My pending list", null, [(TestUtilConstants.LIST_TYPE): "SHOPPING"])
-
-        def cartContentResponse1 = cartDataProvider.getCartContentsResponse(cartResponse1, [])
+        ListEntity listEntity1 = listDataProvider.createListEntity(listId1, "list title", listType, "s", guestId, listMarker)
+        GuestListEntity guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listId1, listMarker, null, null)
 
         when:
-        editListSortOrderService.editListPosition("1234", editListSortOrderRequestTO).block()
+        editListSortOrderService.editListPosition(guestId, editSortOrderRequest).block()
 
         then:
-        1 * cartManager.getListCartContents(primaryListId, false) >> Mono.just(cartContentResponse1)
-        1 * cartManager.getAllPendingCarts(_) >> Mono.just([cartResponse1, cartResponse2])
+        1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
+        1 * listRepository.findGuestListByGuestId(_, _) >> Flux.just(guestListEntity1)
 
         thrown BadRequestException
     }

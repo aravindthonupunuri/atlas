@@ -76,7 +76,7 @@ dependencies {
     implementation "io.micronaut.data:micronaut-data-processor:1.0.2"
     implementation "io.micronaut.data:micronaut-data-jdbc:1.0.2"
 
-    implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.201.2'
+    implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.201.5'
     implementation "io.micronaut.cassandra:micronaut-cassandra"
     implementation "com.datastax.oss:java-driver-mapper-processor:${javaDriverVersion}"
 

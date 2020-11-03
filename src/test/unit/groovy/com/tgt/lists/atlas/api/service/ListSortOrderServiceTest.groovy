@@ -9,7 +9,7 @@ import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.transport.EditListSortOrderRequestTO
 import com.tgt.lists.atlas.api.util.Direction
-import com.tgt.lists.atlas.api.util.LIST_STATUS
+import com.tgt.lists.atlas.api.util.LIST_STATE
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
@@ -34,7 +34,7 @@ class ListSortOrderServiceTest extends Specification {
         String guestId = "1234"
 
         when:
-        def actual = listSortOrderService.saveListSortOrder(guestId, Uuids.timeBased(), LIST_STATUS.COMPLETED).block()
+        def actual = listSortOrderService.saveListSortOrder(guestId, UUID.randomUUID(), LIST_STATE.INACTIVE).block()
 
         then:
         actual
@@ -43,11 +43,11 @@ class ListSortOrderServiceTest extends Specification {
     def "Test saveListSortOrder() when list status is pending"() {
         given:
         String guestId = "1234"
-        def listId = Uuids.timeBased()
+        def listId = UUID.randomUUID()
         GuestPreferenceEntity guestPreference = new GuestPreferenceEntity(guestId, listId.toString())
 
         when:
-        def actual = listSortOrderService.saveListSortOrder(guestId, listId, LIST_STATUS.PENDING).block()
+        def actual = listSortOrderService.saveListSortOrder(guestId, listId, LIST_STATE.ACTIVE).block()
 
         then:
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.empty()
@@ -61,7 +61,7 @@ class ListSortOrderServiceTest extends Specification {
         String guestId = "1234"
 
         when:
-        def actual = listSortOrderService.saveListSortOrder(guestId, Uuids.timeBased(), LIST_STATUS.PENDING).block()
+        def actual = listSortOrderService.saveListSortOrder(guestId, UUID.randomUUID(), LIST_STATE.ACTIVE).block()
 
         then:
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.error(new RuntimeException("some exception"))
@@ -74,7 +74,7 @@ class ListSortOrderServiceTest extends Specification {
         String guestId = "1234"
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, Uuids.timeBased(), LIST_STATUS.COMPLETED).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, UUID.randomUUID(), LIST_STATE.INACTIVE).block()
 
         then:
         actual
@@ -90,7 +90,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATUS.PENDING).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.just(listPreferenceEntity)
@@ -110,7 +110,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATUS.PENDING).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.empty()
@@ -128,7 +128,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATUS.PENDING).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.just(listPreferenceEntity)
@@ -144,7 +144,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATUS.PENDING).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.error(new RuntimeException("some exception"))
@@ -162,7 +162,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATUS.PENDING).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.just(listPreferenceEntity)

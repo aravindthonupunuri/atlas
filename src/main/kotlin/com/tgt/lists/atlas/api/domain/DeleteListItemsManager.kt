@@ -21,6 +21,7 @@ class DeleteListItemsManager(
 
     private val logger = KotlinLogging.logger { DeleteListItemsManager::class.java.name }
 
+    // TODO Delete the item from the sort order if any
     fun deleteListItems(
         guestId: String,
         listId: UUID,

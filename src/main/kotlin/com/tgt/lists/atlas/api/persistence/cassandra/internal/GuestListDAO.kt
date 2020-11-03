@@ -2,11 +2,13 @@ package com.tgt.lists.atlas.api.persistence.cassandra.internal
 
 import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet
 import com.datastax.oss.driver.api.core.cql.BoundStatement
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder
 import com.datastax.oss.driver.api.mapper.annotations.*
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy
 import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.micronaut.cassandra.ICassandraDao
 import java.util.*
+import java.util.function.Function
 
 @Dao
 interface GuestListDAO : ICassandraDao {
@@ -18,9 +20,13 @@ interface GuestListDAO : ICassandraDao {
     fun saveGuestList(guestListEntity: GuestListEntity): BoundStatement
 
     @Select
-    @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
+    @StatementAttributes(pageSize = 500)
     // listSubtype can be null since not all lists also has a sub-type
-    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String): MappedReactiveResultSet<GuestListEntity>
+    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<GuestListEntity>
+
+    @Select
+    @StatementAttributes(pageSize = 500)
+    fun findGuestListByGuestId(guestId: String, listType: String?, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<GuestListEntity>
 
     @Select
     @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
@@ -30,6 +36,6 @@ interface GuestListDAO : ICassandraDao {
     fun deleteByIdForId(guestId: String?, type: String?, subtype: String?, marker: String?, id: UUID?): BoundStatement
 
     @Select
-    @StatementAttributes(consistencyLevel = "ONE", pageSize = 500)
-    fun findGuestListById(guestId: String, listType: String, listSubtype: String, listMarker: String, listId: UUID): MappedReactiveResultSet<GuestListEntity>
+    @StatementAttributes(pageSize = 500)
+    fun findGuestListById(guestId: String, listType: String, listSubtype: String, listMarker: String, listId: UUID, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<GuestListEntity>
 }

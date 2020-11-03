@@ -20,6 +20,7 @@ class DeleteListService(
 ) {
     private val logger = KotlinLogging.logger {}
 
+    // TODO Delete the list from the sort order if any
     fun deleteList(
         guestId: String, // this is NOT the ownerId of list, it represents operation executor who could be different than list owner
         listId: UUID

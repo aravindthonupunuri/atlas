@@ -10,6 +10,7 @@ import com.tgt.lists.atlas.api.persistence.cassandra.internal.GuestListDAO
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
 import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.micronaut.cassandra.BatchExecutor
+import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.util.*
@@ -20,8 +21,12 @@ class ListRepository(
     private val listDAO: ListDAO,
     private val guestListDAO: GuestListDAO,
     private val batchExecutor: BatchExecutor,
-    private val dataContextContainerManager: DataContextContainerManager
+    private val dataContextContainerManager: DataContextContainerManager,
+    private val retryableStatementExecutor: RetryableStatementExecutor
 ) {
+
+    private val className = ListRepository::class.java.name
+
     fun saveList(listEntity: ListEntity): Mono<ListEntity> {
         if (listEntity.createdAt == null) {
             // new list getting created
@@ -66,13 +71,15 @@ class ListRepository(
         )
 
         // add saveGuestList statement iff either marker OR state has changed against existing value
-        return Mono.from(guestListDAO.findGuestListById(
-                existingListEntity.guestId!!,
-                existingListEntity.type!!,
-                existingListEntity.subtype!!,
-                existingListEntity.marker!!,
-                existingListEntity.id!!)
-        )
+        return retryableStatementExecutor.read(className, "findGuestListById") { consistency ->
+            guestListDAO.findGuestListById(
+                    existingListEntity.guestId!!,
+                    existingListEntity.type!!,
+                    existingListEntity.subtype!!,
+                    existingListEntity.marker!!,
+                    existingListEntity.id!!,
+                    consistency)
+        }
                 .flatMap {
                     val existingGuestListEntity = it
                     if (existingGuestListEntity.state != updatedGuestListEntity.state ||
@@ -100,7 +107,8 @@ class ListRepository(
             batchStmts.add(listDAO.saveListItemBatch(updatedListItemEntity.validate()))
             batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "updateListItem")
         } else {
-            Mono.from(listDAO.saveListItem(updatedListItemEntity.validate()))
+            retryableStatementExecutor.write(className, "saveListItem") { consistency ->
+                listDAO.saveListItem(updatedListItemEntity.validate(), consistency) }
         }.map { updatedListItemEntity }
     }
 
@@ -122,7 +130,8 @@ class ListRepository(
             listItemsEntity.map { batchStmts.add(listDAO.saveListItemBatch(it.validate())) }
             batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveListItems")
         } else {
-            Mono.from(listDAO.saveListItem(listItemsEntity.first().validate()))
+            retryableStatementExecutor.write(className, "saveListItem") { consistency ->
+                listDAO.saveListItem(listItemsEntity.first().validate(), consistency) }
         }.map { items.toList() }
     }
 
@@ -131,7 +140,9 @@ class ListRepository(
             val context = it
             dataContextContainerManager.getListEntity(context, listId)?.let {
                 Mono.just(it)
-            } ?: Mono.from(listDAO.findListById(listId)).map {
+            } ?: retryableStatementExecutor.read(className, "findListById") { consistency ->
+                listDAO.findListById(listId, consistency) }
+                .map {
                 dataContextContainerManager.setListEntity(context, listId, it)
                 it
             }
@@ -143,31 +154,38 @@ class ListRepository(
     }
 
     fun findListItemsByListId(listId: UUID): Flux<ListItemEntity> {
-        return Flux.from(listDAO.findListItemsByListId(listId))
+        return retryableStatementExecutor.readFlux(className, "findListItemsByListId") { consistency ->
+            listDAO.findListItemsByListId(listId, consistency) }
     }
 
     fun findListAndItemsByListId(listId: UUID): Flux<ListItemExtEntity> {
-        return Flux.from(listDAO.findListAndItemsByListId(listId))
+        return retryableStatementExecutor.readFlux(className, "findListAndItemsByListId") { consistency ->
+            listDAO.findListAndItemsByListId(listId, consistency) }
     }
 
     fun findListAndItemsByListIdAndItemState(listId: UUID, itemState: String): Flux<ListItemExtEntity> {
-        return Flux.from(listDAO.findListAndItemsByListIdAndItemState(listId, itemState))
+        return retryableStatementExecutor.readFlux(className, "findListAndItemsByListIdAndItemState") { consistency ->
+            listDAO.findListAndItemsByListIdAndItemState(listId, itemState, consistency) }
     }
 
     fun findListItemsByListIdAndItemState(listId: UUID, itemState: String): Flux<ListItemEntity> {
-        return Flux.from(listDAO.findListItemsByListIdAndItemState(listId, itemState))
+        return retryableStatementExecutor.readFlux(className, "findListItemsByListIdAndItemState") { consistency ->
+            listDAO.findListItemsByListIdAndItemState(listId, itemState, consistency) }
     }
 
     fun findListItemByItemId(listId: UUID, itemState: String, itemId: UUID): Mono<ListItemEntity> {
-        return Mono.from(listDAO.findListItemByItemId(listId, itemState, itemId))
+        return retryableStatementExecutor.read(className, "findListItemByItemId") { consistency ->
+            listDAO.findListItemByItemId(listId, itemState, itemId, consistency) }
     }
 
     fun findListAndItemByItemId(listId: UUID, itemState: String, itemId: UUID): Mono<ListItemExtEntity> {
-        return Mono.from(listDAO.findListAndItemByItemId(listId, itemState, itemId))
+        return retryableStatementExecutor.read(className, "findListAndItemByItemId") { consistency ->
+            listDAO.findListAndItemByItemId(listId, itemState, itemId, consistency) }
     }
 
     fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String): Mono<GuestListEntity> {
-        return Mono.from(guestListDAO.findGuestListByMarker(guestId, listType, listSubtype, listMarker))
+        return retryableStatementExecutor.read(className, "findGuestListByMarker") { consistency ->
+            guestListDAO.findGuestListByMarker(guestId, listType, listSubtype, listMarker, consistency) }
     }
 
     fun findGuestListsByGuestId(guestId: String, listType: String): Flux<GuestListEntity> {
@@ -189,7 +207,13 @@ class ListRepository(
             listItemsEntity.map { batchStmts.add(listDAO.deleteListItemBatch(it)) }
             batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteListItem")
         } else {
-            Mono.from(listDAO.deleteListItem(listItemsEntity.first()))
+            retryableStatementExecutor.write(className, "deleteListItem") { consistency ->
+                listDAO.deleteListItem(listItemsEntity.first(), consistency) }
         }.map { listItemsEntity }
+    }
+
+    fun findGuestListByGuestId(guestId: String, listType: String?): Flux<GuestListEntity> {
+        return retryableStatementExecutor.readFlux(className, "findGuestListByGuestId") { consistency ->
+            guestListDAO.findGuestListByGuestId(guestId, listType, consistency) }
     }
 }

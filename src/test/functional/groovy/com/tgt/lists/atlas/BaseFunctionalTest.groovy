@@ -1,10 +1,10 @@
 package com.tgt.lists.atlas
 
+
 import com.datastax.oss.driver.api.core.CqlSession
 import io.micronaut.test.support.TestPropertyProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.CassandraContainer
 import org.testcontainers.containers.GenericContainer
 import spock.lang.Shared
