@@ -4,7 +4,10 @@ import com.tgt.lists.atlas.api.util.Constants.DATE_TIME_PATTERN
 import mu.KotlinLogging
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.time.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -28,4 +31,11 @@ fun getLocalDateTimeFromInstant(instant: Instant?): String? {
 
 fun getExpirationDate(now: Instant, expirationDays: Long): LocalDate {
     return LocalDate.ofInstant(now.plus(expirationDays, ChronoUnit.DAYS), ZoneOffset.UTC)
+}
+
+fun addZ(str: LocalDateTime?): String? {
+    if (str == null) {
+        return null
+    }
+    return str.toString() + "Z"
 }
