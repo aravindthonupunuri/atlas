@@ -94,8 +94,9 @@ class CreateListItemsManager(
                                         it.itemReqQty, userMetaDataTO?.userMetaData), listId.toString())
                     } else {
                         eventPublisher.publishEvent(CreateListItemNotifyEvent.getEventType(),
-                                CreateListItemNotifyEvent(guestId, it.id!!, it.itemId!!, it.itemTcin, it.itemTitle,
-                                        it.itemChannel, it.itemReqQty, userMetaDataTO?.userMetaData),
+                                CreateListItemNotifyEvent(guestId, it.id!!, it.itemId!!,
+                                        LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
+                                        it.itemTcin, it.itemTitle, it.itemChannel, it.itemReqQty, userMetaDataTO?.userMetaData),
                                 listId.toString())
                     }
                 }.collectList()

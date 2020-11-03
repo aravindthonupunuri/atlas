@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.tgt.lists.atlas.api.util.EventType
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import java.util.*
 
 data class CreateListItemNotifyEvent(
@@ -15,6 +16,9 @@ data class CreateListItemNotifyEvent(
 
     @JsonProperty("item_id")
     val itemId: UUID,
+
+    @JsonProperty("item_id")
+    val itemState: LIST_ITEM_STATE,
 
     @JsonProperty("tcin")
     val tcin: String?,
