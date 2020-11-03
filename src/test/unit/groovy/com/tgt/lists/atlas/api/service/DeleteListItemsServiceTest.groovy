@@ -9,7 +9,6 @@ import com.tgt.lists.atlas.api.util.ItemIncludeFields
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
-import com.tgt.lists.atlas.util.CartDataProvider
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException
 import org.apache.kafka.clients.producer.RecordMetadata
@@ -23,7 +22,6 @@ class DeleteListItemsServiceTest extends Specification {
     EventPublisher eventPublisher
     DeleteListItemsManager deleteListItemsManager
     DeleteListItemsService deleteListItemsService
-    CartDataProvider cartDataProvider
     ListDataProvider listDataProvider
     String guestId = "1234"
 
@@ -32,11 +30,10 @@ class DeleteListItemsServiceTest extends Specification {
         eventPublisher = Mock(EventPublisher)
         deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         deleteListItemsService = new DeleteListItemsService(deleteListItemsManager, listRepository)
-        cartDataProvider = new CartDataProvider()
         listDataProvider = new ListDataProvider()
     }
 
-    def "Test delete cart items with ItemIncludeFields ALL"() {
+    def "Test delete list items with ItemIncludeFields ALL"() {
         given:
         def listId = Uuids.timeBased()
         def recordMetadata = GroovyMock(RecordMetadata)
@@ -62,7 +59,7 @@ class DeleteListItemsServiceTest extends Specification {
         actual.itemIds.size() == 3
     }
 
-    def "Test delete cart items with ItemIncludeFields PENDING"() {
+    def "Test delete list items with ItemIncludeFields PENDING"() {
         given:
         def listId = Uuids.timeBased()
         def recordMetadata = GroovyMock(RecordMetadata)

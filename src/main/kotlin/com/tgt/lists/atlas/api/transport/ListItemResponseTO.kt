@@ -3,7 +3,6 @@ package com.tgt.lists.atlas.api.transport
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.util.UnitOfMeasure
-import com.tgt.lists.cart.transport.Image
 import java.util.*
 import javax.validation.constraints.NotNull
 
@@ -21,7 +20,6 @@ data class ListItemResponseTO(
     val price: Float? = null,
     val listPrice: Float? = null,
     val offerCount: Int = 0,
-    val images: Image? = null,
     val relationshipType: String? = null,
     val itemState: LIST_ITEM_STATE? = LIST_ITEM_STATE.PENDING,
     val addedTs: String? = null,

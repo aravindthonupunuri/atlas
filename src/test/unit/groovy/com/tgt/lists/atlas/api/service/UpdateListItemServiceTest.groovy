@@ -11,7 +11,6 @@ import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.validator.RefIdValidator
 import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
-import com.tgt.lists.atlas.util.CartDataProvider
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.common.components.exception.InternalServerException
@@ -25,7 +24,6 @@ class UpdateListItemServiceTest extends Specification {
     UpdateListItemService updateListItemService
     UpdateListItemManager updateListItemManager
     EventPublisher eventPublisher
-    CartDataProvider cartDataProvider
     ListDataProvider listDataProvider
     ListRepository listRepository
     ObjectMapper objectMapper
@@ -37,7 +35,6 @@ class UpdateListItemServiceTest extends Specification {
         listRepository = Mock(ListRepository)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         updateListItemService = new UpdateListItemService(listRepository, updateListItemManager)
-        cartDataProvider = new CartDataProvider()
         listDataProvider = new ListDataProvider()
         objectMapper = new ObjectMapper()
     }

@@ -9,7 +9,6 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
-import com.tgt.lists.atlas.util.CartDataProvider
 import com.tgt.lists.atlas.util.ListDataProvider
 import org.apache.kafka.clients.producer.RecordMetadata
 import reactor.core.publisher.Flux
@@ -21,7 +20,6 @@ class UpdateListItemsStateServiceTest extends Specification {
     UpdateListItemsStateService updateListItemsStateService
     UpdateListItemManager updateListItemManager
     EventPublisher eventPublisher
-    CartDataProvider cartDataProvider
     ListDataProvider listDataProvider
     ListRepository listRepository
     String guestId = "1234"
@@ -32,7 +30,6 @@ class UpdateListItemsStateServiceTest extends Specification {
         listRepository = Mock(ListRepository)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         updateListItemsStateService = new UpdateListItemsStateService(listRepository, updateListItemManager)
-        cartDataProvider = new CartDataProvider()
         listDataProvider = new ListDataProvider()
     }
 

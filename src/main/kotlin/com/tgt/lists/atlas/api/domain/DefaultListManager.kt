@@ -3,7 +3,6 @@ package com.tgt.lists.atlas.api.domain
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.CartManagerName
 import com.tgt.lists.atlas.api.util.LIST_MARKER
 import com.tgt.lists.atlas.api.util.LIST_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
@@ -18,7 +17,6 @@ import javax.inject.Singleton
 
 @Singleton
 class DefaultListManager(
-    @CartManagerName("DefaultListManager") @Inject private val cartManager: CartManager,
     @Inject private val listRepository: ListRepository,
     @Inject private val updateListManager: UpdateListManager,
     @Value("\${list.max-count}") private val maxListsCount: Int = 50,
@@ -55,7 +53,7 @@ class DefaultListManager(
     ): Mono<Boolean> {
         val defaultLists = getDefaultLists(guestLists, listId)
         if (defaultLists.isEmpty()) {
-            return Mono.just(true) // No preexisting carts with default list found
+            return Mono.just(true) // No preexisting lists with default list found
         }
         if (isFixedDefaultListEnabled) {
             return Mono.just(false)

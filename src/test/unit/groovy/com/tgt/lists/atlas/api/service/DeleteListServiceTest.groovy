@@ -27,22 +27,6 @@ class DeleteListServiceTest extends Specification {
         listDataProvider = new ListDataProvider()
     }
 
-    def "Test deleteListService when the completed cart is not present"() {
-        given:
-        UUID listId = Uuids.timeBased()
-        ListEntity listEntity = listDataProvider.createListEntity(listId, "list title", "shopping", "s", guestId, "d", Instant.now(), Instant.now())
-
-        when:
-        def actual = deleteListService.deleteList(guestId,listId).block()
-
-        then:
-        1 * listRepository.findListById(listId) >> Mono.just(listEntity)
-        1 * listRepository.deleteList(listEntity) >> Mono.just(listEntity)
-        1 * eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(), _ , guestId) >>  Mono.just(GroovyMock(RecordMetadata))
-        actual.listId == listId
-    }
-
-
     def "Test deleteListService when list not found"() {
         given:
         UUID listId = Uuids.timeBased()

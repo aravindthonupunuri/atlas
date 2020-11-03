@@ -7,7 +7,6 @@ import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.util.UnitOfMeasure
-import com.tgt.lists.atlas.util.CartDataProvider
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.atlas.util.TestListChannel
 import com.tgt.lists.common.components.exception.BadRequestException
@@ -23,7 +22,6 @@ class DeduplicationManagerTest extends Specification {
     DeduplicationManager deduplicationManager
     DeleteListItemsManager deleteListItemsManager
     UpdateListItemManager updateListItemManager
-    CartDataProvider cartDataProvider
     ListDataProvider listDataProvider
     String guestId = "1234"
 
@@ -33,7 +31,6 @@ class DeduplicationManagerTest extends Specification {
         deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager, true, 5, 5, false)
-        cartDataProvider = new CartDataProvider()
         listDataProvider = new ListDataProvider()
     }
 

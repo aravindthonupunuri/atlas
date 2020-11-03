@@ -87,14 +87,6 @@ class ListMapper {
             return metadata
         }
 
-        fun getListMetaDataFromMetadataMap(metadataMap: MetadataMap?): ListMetaDataTO {
-            var metadata: ListMetaDataTO? = mapper.readValue<ListMetaDataTO>((metadataMap?.get(Constants.LIST_METADATA) as? String).toString())
-            if (metadata == null) {
-                metadata = ListMetaDataTO(listStatus = null)
-            }
-            return metadata
-        }
-
         fun getUserMetaDataFromMetadataMap(metadataMap: MetadataMap?): UserMetaDataTO? {
             var metadata: UserMetaDataTO? = mapper.readValue<UserMetaDataTO>((metadataMap?.get(Constants.USER_METADATA) as? String).toString())
             if (metadata == null) {

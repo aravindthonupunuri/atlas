@@ -5,7 +5,6 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.util.CartDataProvider
 import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Mono
 import spock.lang.Specification
@@ -13,7 +12,6 @@ import spock.lang.Specification
 class GetListItemServiceTest extends Specification {
 
     GetListItemService getListItemService
-    CartDataProvider cartDataProvider
     ListRepository listRepository
     ListDataProvider listDataProvider
 
@@ -23,7 +21,6 @@ class GetListItemServiceTest extends Specification {
     def setup() {
         listRepository = Mock(ListRepository)
         getListItemService = new GetListItemService(listRepository)
-        cartDataProvider = new CartDataProvider()
         listDataProvider = new ListDataProvider()
     }
 

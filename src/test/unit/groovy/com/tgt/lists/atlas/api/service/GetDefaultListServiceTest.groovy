@@ -50,7 +50,7 @@ class GetDefaultListServiceTest extends Specification {
         def listSubType = "WEDDING"
 
         GuestListEntity guestListEntity = new GuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value,
-                listId, LIST_STATUS.PENDING.value)
+                listId, LIST_STATE.ACTIVE.value)
 
         def tcin1 = "1234"
         def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)
@@ -107,7 +107,7 @@ class GetDefaultListServiceTest extends Specification {
         def listSubType = "WEDDING"
 
         GuestListEntity guestListEntity = new GuestListEntity(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value,
-                listId, LIST_STATUS.PENDING.value)
+                listId, LIST_STATE.ACTIVE.value)
 
         def tcin1 = "1234"
         def tenantrefId1 = dataProvider.getItemRefId(ItemType.TCIN, tcin1)

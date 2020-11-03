@@ -26,7 +26,7 @@ class CreateListItemsManager(
 
     /**
      *
-     * Implements the functionality to add multiple cart items. Items already existing in the list
+     * Implements the functionality to add multiple list items. Items already existing in the list
      * are updated and new items are added to the list
      *
      */
@@ -46,7 +46,7 @@ class CreateListItemsManager(
 
     /**
      *
-     * Implements the functionality to add multiple cart items after completing the deduplication process.
+     * Implements the functionality to add multiple list items after completing the deduplication process.
      *
      */
     private fun addNewItems(

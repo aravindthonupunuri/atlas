@@ -53,14 +53,14 @@ class DeduplicationManager(
                     processDeduplication(guestId, listId, itemState, existingItems, newItemsMap)
                 }
                 .switchIfEmpty {
-                    logger.error("From updateDuplicateItems(), empty cart contents during dedup process")
+                    logger.error("From updateDuplicateItems(), empty list contents during dedup process")
                     Mono.just(Pair(emptyList(), mutableMapOf()))
                 }
     }
 
     /**
-     * Implements functionality to verify the final items count does not exceed the limit in both pending and
-     * completed cart. It also updates the duplicate cart items already present in the list.
+     * Implements functionality to verify the final items count does not exceed the limit.
+     * It also updates the duplicate items already present in the list.
      *
      *  Give a triple of (list of existing items, list of updatedItems, duplicateItemsMap)
      */
@@ -85,7 +85,7 @@ class DeduplicationManager(
     }
 
     /**
-     * Implements functionality to update preexisting items and also delete cart items not deduped
+     * Implements functionality to update preexisting items and also delete items not deduped
      * already existing in the list.
      *
      * Give a pair of (list of updatedItems, duplicateItemsMap)
@@ -166,7 +166,7 @@ class DeduplicationManager(
         val existingItemsCount = existingItems.count() // count before dedup
         var count = 0
         duplicateItemsMap.keys.stream().forEach { count += (duplicateItemsMap[it]?.count() ?: 0) }
-        val duplicateItemsCount = count // total no of duplicated items existing in cart
+        val duplicateItemsCount = count // total no of duplicated items existing in list
         val newItemsCount = newItems.count() // new items to be added
 
         val finalItemsCount = (existingItemsCount - duplicateItemsCount) + newItemsCount // final items count after dedupe
@@ -183,10 +183,10 @@ class DeduplicationManager(
             val itemsCountToDelete = finalItemsCount - maxItemCount
             val duplicateItems = arrayListOf<ListItemEntity>()
             duplicateItemsMap.values.forEach { duplicateItems.addAll(it) }
-            // The result will consists of items to be deleted which are old.
-            // existingCartItems -> Items that are present in the cart before dedup process.
-            // Filter the duplicate items in existingCartItems since these items will be deleted during the deduplication process in updateMultiItems() method.
-            // So the final items to be deleted since the list has reached max items count would be (existingCartItems - duplicate items).
+            // The result will consist of items to be deleted which are old.
+            // existingItems -> Items that are present in the list before dedup process.
+            // Filter the duplicate items in existingItems since these items will be deleted during the deduplication process in updateMultiItems() method.
+            // So the final items to be deleted since the list has reached max items count would be (existingItems - duplicate items).
             val result = existingItems.stream()
                     .filter { listItem -> duplicateItems.stream()
                             .noneMatch { it.itemId == listItem.itemId } }.collect(Collectors.toList())

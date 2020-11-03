@@ -10,8 +10,7 @@ object AppErrorCodes {
     val REQUEST_BODY_VIOLATION_ERROR_CODE = BaseErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE
     val RESPONSE_BODY_VIOLATION_ERROR_CODE = { fieldErrors: List<String>? -> ErrorCode(5, "Response body violation", fieldErrors) }
     val ITEM_TYPE_REQUEST_BODY_VIOLATION_ERROR_CODE = BaseErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE
-    val ERROR_RETRIEVING_COMPLETED_CART = ErrorCode(7, "Error retrieving completed cart")
-    val DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE = ErrorCode(8, "Invalid delete cart items included field")
+    val DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE = ErrorCode(8, "Invalid delete list items included field")
     val LIST_MAX_PENDING_ITEM_COUNT_VIOLATION_ERROR_CODE = { fieldErrors: List<String>? -> ErrorCode(9, "Exceeding max allowed pending item count", fieldErrors) }
     val LIST_SORT_ORDER_ERROR_CODE = { fieldErrors: List<String>? -> ErrorCode(10, "Error while dealing with sort order", fieldErrors) }
     val LIST_ITEM_SORT_ORDER_ERROR_CODE = { fieldErrors: List<String>? -> ErrorCode(11, "Error while dealing with sort order", fieldErrors) }

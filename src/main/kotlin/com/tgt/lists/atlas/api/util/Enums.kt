@@ -44,11 +44,6 @@ enum class Direction(val value: String) {
     BELOW("below")
 }
 
-enum class LIST_STATUS(val value: String) {
-    PENDING("pending"),
-    COMPLETED("completed")
-}
-
 enum class LIST_ITEM_STATE(val value: String) {
     PENDING("P"),
     COMPLETED("C")
