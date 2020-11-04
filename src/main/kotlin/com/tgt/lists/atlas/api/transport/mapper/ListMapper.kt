@@ -17,7 +17,7 @@ class ListMapper {
             guestId: String,
             listRequestTO: ListRequestTO,
             listType: String,
-            listSubtype: String? = null,
+            listSubtype: String,
             defaultList: Boolean,
             testList: Boolean,
             expirationDays: Long
