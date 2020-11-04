@@ -117,6 +117,7 @@ class ListMapper {
                     listId = listEntity.id,
                     channel = listEntity.channel,
                     listType = listEntity.type,
+                    listSubType = listEntity.subtype,
                     defaultList = (listEntity.marker == LIST_MARKER.DEFAULT.value),
                     listTitle = listEntity.title,
                     shortDescription = listEntity.description,
