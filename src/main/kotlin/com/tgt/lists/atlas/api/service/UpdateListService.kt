@@ -44,7 +44,7 @@ class UpdateListService(
                 .flatMap {
                     val existingListEntity = it.first
                     val updatedListEntity = it.second
-                    updateListManager.updateList(guestId, listId, existingListEntity, updatedListEntity)
+                    updateListManager.updateList(guestId, listId, updatedListEntity, existingListEntity)
                 }
                 .map { toListResponseTO(it) }
     }

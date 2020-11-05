@@ -19,7 +19,7 @@ import java.util.*
  */
 @OpenAnnotation
 class ListFallbackPermissionManager(
-        private val listRepository: ListRepository
+    private val listRepository: ListRepository
 ) : ListPermissionManager, BaseListPermissionManager() {
     override fun authorize(userId: String, listId: UUID, requestMethod: HttpMethod): Mono<Boolean> {
         return listRepository.findListById(listId)

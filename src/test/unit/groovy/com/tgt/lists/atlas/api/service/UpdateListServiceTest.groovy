@@ -5,6 +5,7 @@ import com.tgt.lists.atlas.api.domain.DefaultListManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.UpdateListManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.list.UserMetaDataTransformationStep
 import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
@@ -56,7 +57,12 @@ class   UpdateListServiceTest extends Specification {
         then:
         1 * defaultListManager.processDefaultListInd(*_) >> Mono.just(true)
         1 * listRepository.findListById(_) >> Mono.just(existing)
-        1 * listRepository.updateList(_ ,_) >> Mono.just(updated)
+        1 * listRepository.updateList(_ ,_ as ListEntity) >> { arguments ->
+            final ListEntity updatedList = arguments[1]
+            assert updatedList.description == updateDesc
+            assert updatedList.title == updateTitle
+            Mono.just(updated)
+        }
         1 * eventPublisher.publishEvent(UpdateListNotifyEvent.eventType, _, _) >> Mono.just(GroovyMock(RecordMetadata))
 
         actual.listId != null
@@ -94,7 +100,12 @@ class   UpdateListServiceTest extends Specification {
         then:
         1 * defaultListManager.processDefaultListInd(*_) >> Mono.just(true)
         1 * listRepository.findListById(_) >> Mono.just(existing)
-        1 * listRepository.updateList(_ ,_) >> Mono.just(updated)
+        1 * listRepository.updateList(_ , _ as ListEntity) >> { arguments ->
+            final ListEntity updatedList = arguments[1]
+            assert updatedList.description == updateDesc
+            assert updatedList.title == updateTitle
+            Mono.just(updated)
+        }
         1 * eventPublisher.publishEvent(UpdateListNotifyEvent.eventType, _, _) >> Mono.just(GroovyMock(RecordMetadata))
 
         actual.listId != null
