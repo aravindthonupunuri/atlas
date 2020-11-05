@@ -42,25 +42,25 @@ class ListMapper {
         }
 
         fun toListEntity(
-            listItemExtEntity: ListItemExtEntity?
+            listItemExtEntity: ListItemExtEntity
         ): ListEntity {
             return ListEntity(
-                    id = listItemExtEntity?.id,
-                    guestId = listItemExtEntity?.guestId,
-                    type = listItemExtEntity?.type,
-                    subtype = listItemExtEntity?.subtype,
-                    title = listItemExtEntity?.title,
-                    channel = listItemExtEntity?.channel,
-                    marker = listItemExtEntity?.marker,
-                    description = listItemExtEntity?.description,
-                    location = listItemExtEntity?.location,
-                    agentId = listItemExtEntity?.agentId,
-                    metadata = listItemExtEntity?.metadata,
-                    state = listItemExtEntity?.state,
-                    expiration = listItemExtEntity?.expiration,
-                    createdAt = listItemExtEntity?.createdAt,
-                    updatedAt = listItemExtEntity?.itemUpdatedAt,
-                    testList = listItemExtEntity?.testList)
+                    id = listItemExtEntity.id,
+                    guestId = listItemExtEntity.guestId,
+                    type = listItemExtEntity.type,
+                    subtype = listItemExtEntity.subtype,
+                    title = listItemExtEntity.title,
+                    channel = listItemExtEntity.channel,
+                    marker = listItemExtEntity.marker,
+                    description = listItemExtEntity.description,
+                    location = listItemExtEntity.location,
+                    agentId = listItemExtEntity.agentId,
+                    metadata = listItemExtEntity.metadata,
+                    state = listItemExtEntity.state,
+                    expiration = listItemExtEntity.expiration,
+                    createdAt = listItemExtEntity.createdAt,
+                    updatedAt = listItemExtEntity.itemUpdatedAt,
+                    testList = listItemExtEntity.testList)
         }
 
         fun toUpdateListEntity(existingEntity: ListEntity, updatedMetaData: UserMetaDataTO?, listUpdateRequestTO: ListUpdateRequestTO): Pair<ListEntity, ListEntity> {
@@ -118,7 +118,10 @@ class ListMapper {
                     channel = listEntity.channel,
                     listType = listEntity.type,
                     listSubType = listEntity.subtype,
-                    listState = LIST_STATE.values().first { listState -> listState.value == listEntity.state!! },
+                    listState =
+                    if (listEntity.state != null)
+                        LIST_STATE.values().first { listState -> listState.value == listEntity.state!! }
+                    else null,
                     defaultList = (listEntity.marker == LIST_MARKER.DEFAULT.value),
                     listTitle = listEntity.title,
                     shortDescription = listEntity.description,

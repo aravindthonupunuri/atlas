@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
@@ -50,20 +51,21 @@ class GetListService(
                         .collectList()
                         .flatMap {
                             val pendingListItems = it
-                            val listEntity = ListMapper.toListEntity(pendingListItems.firstOrNull())
-                            val pendingListTransformedPair = transformListItems(guestId, listId, false, pendingListItems, listItemsTransformationPipeline)
-                            pendingListTransformedPair.second
-                                    .map {
-                                        val maxPendingPageCount: Int? = try {
-                                            pendingListTransformedPair.first.getContextValue(MAX_PAGE_COUNT) as Int
-                                        } catch (e: Exception) {
-                                            null
+                            if (pendingListItems.isEmpty()) {
+                                getListResponseWithNoItems(listId)
+                            } else {
+                                val listEntity = ListMapper.toListEntity(pendingListItems.first())
+                                val pendingListTransformedPair = transformListItems(guestId, listId, false, pendingListItems, listItemsTransformationPipeline)
+                                pendingListTransformedPair.second
+                                        .map {
+                                            val maxPendingPageCount: Int? = try {
+                                                pendingListTransformedPair.first.getContextValue(MAX_PAGE_COUNT) as Int
+                                            } catch (e: Exception) {
+                                                null
+                                            }
+                                            toListResponse(listEntity, it, emptyList(), maxPendingPageCount, null)
                                         }
-                                        ListMapper.toListResponseTO(listEntity,
-                                                pendingListItems = it, completedListItems = emptyList(),
-                                                maxPendingItemCount = maxPendingItemCount, maxCompletedItemsCount = maxCompletedItemsCount,
-                                                maxPendingPageCount = maxPendingPageCount)
-                                    }
+                            }
                         }
             }
             ItemIncludeFields.COMPLETED -> {
@@ -72,20 +74,21 @@ class GetListService(
                         .collectList()
                         .flatMap {
                             val completedListItems = it
-                            val listEntity = ListMapper.toListEntity(completedListItems.firstOrNull())
-                            val completedListTransformedPair = transformListItems(guestId, listId, true, completedListItems, listItemsTransformationPipeline)
-                            completedListTransformedPair.second
-                                    .map {
-                                        val maxCompletedPageCount: Int? = try {
-                                            completedListTransformedPair.first.getContextValue(MAX_PAGE_COUNT) as Int
-                                        } catch (e: Exception) {
-                                            null
+                            if (completedListItems.isEmpty()) {
+                                getListResponseWithNoItems(listId)
+                            } else {
+                                val listEntity = ListMapper.toListEntity(completedListItems.first())
+                                val completedListTransformedPair = transformListItems(guestId, listId, true, completedListItems, listItemsTransformationPipeline)
+                                completedListTransformedPair.second
+                                        .map {
+                                            val maxCompletedPageCount: Int? = try {
+                                                completedListTransformedPair.first.getContextValue(MAX_PAGE_COUNT) as Int
+                                            } catch (e: Exception) {
+                                                null
+                                            }
+                                            toListResponse(listEntity, emptyList(), it, null, maxCompletedPageCount)
                                         }
-                                        ListMapper.toListResponseTO(listEntity,
-                                                pendingListItems = emptyList(), completedListItems = it,
-                                                maxPendingItemCount = maxPendingItemCount, maxCompletedItemsCount = maxCompletedItemsCount,
-                                                maxCompletedPageCount = maxCompletedPageCount)
-                                    }
+                            }
                         }
             }
             ItemIncludeFields.ALL -> {
@@ -94,35 +97,56 @@ class GetListService(
                         .collectList()
                         .flatMap {
                             val listItems = it
-                            val pendingListItems = listItems.filter { it.itemState == LIST_ITEM_STATE.PENDING.value }
-                            val completedListItems = listItems.filter { it.itemState == LIST_ITEM_STATE.COMPLETED.value }
-                            val listEntity = ListMapper.toListEntity(listItems.firstOrNull())
-                            val pendingListTransformedPair = transformListItems(guestId, listId, false, pendingListItems, listItemsTransformationPipeline)
-                            val completedListTransformedPair = transformListItems(guestId, listId, true, completedListItems, listItemsTransformationPipeline)
+                            if (listItems.isEmpty()) {
+                                getListResponseWithNoItems(listId)
+                            } else {
+                                val pendingListItems = listItems.filter { it.itemState == LIST_ITEM_STATE.PENDING.value }
+                                val completedListItems = listItems.filter { it.itemState == LIST_ITEM_STATE.COMPLETED.value }
+                                val listEntity = ListMapper.toListEntity(listItems.first())
+                                val pendingListTransformedPair = transformListItems(guestId, listId, false, pendingListItems, listItemsTransformationPipeline)
+                                val completedListTransformedPair = transformListItems(guestId, listId, true, completedListItems, listItemsTransformationPipeline)
 
-                            pendingListTransformedPair.second
-                                    .zipWith(completedListTransformedPair.second)
-                                    .map {
-                                        val pendingItems: List<ListItemResponseTO> = it.t1
-                                        val completedItems: List<ListItemResponseTO> = it.t2
-                                        val maxPendingPageCount: Int? = try {
-                                            pendingListTransformedPair.first.getContextValue(MAX_PAGE_COUNT) as Int
-                                        } catch (e: Exception) {
-                                            null
+                                pendingListTransformedPair.second
+                                        .zipWith(completedListTransformedPair.second)
+                                        .map {
+                                            val pendingItems: List<ListItemResponseTO> = it.t1
+                                            val completedItems: List<ListItemResponseTO> = it.t2
+                                            val maxPendingPageCount: Int? = try {
+                                                pendingListTransformedPair.first.getContextValue(MAX_PAGE_COUNT) as Int
+                                            } catch (e: Exception) {
+                                                null
+                                            }
+                                            val maxCompletedPageCount: Int? = try {
+                                                completedListTransformedPair.first.getContextValue(MAX_PAGE_COUNT) as Int
+                                            } catch (e: Exception) {
+                                                null
+                                            }
+                                            toListResponse(listEntity, pendingItems, completedItems, maxPendingPageCount, maxCompletedPageCount)
                                         }
-                                        val maxCompletedPageCount: Int? = try {
-                                            completedListTransformedPair.first.getContextValue(MAX_PAGE_COUNT) as Int
-                                        } catch (e: Exception) {
-                                            null
-                                        }
-                                        ListMapper.toListResponseTO(listEntity,
-                                                pendingListItems = pendingItems, completedListItems = completedItems,
-                                                maxPendingItemCount = maxPendingItemCount, maxCompletedItemsCount = maxCompletedItemsCount,
-                                            maxPendingPageCount = maxPendingPageCount, maxCompletedPageCount = maxCompletedPageCount)
-                                    }
+                            }
                         }
             }
         }
+    }
+
+    private fun toListResponse(
+        listEntity: ListEntity,
+        pendingItems: List<ListItemResponseTO>?,
+        completedItems: List<ListItemResponseTO>?,
+        maxPendingPageCount: Int?,
+        maxCompletedPageCount: Int?
+    ): ListResponseTO {
+        return ListMapper.toListResponseTO(listEntity,
+                pendingListItems = pendingItems, completedListItems = completedItems,
+                maxPendingItemCount = maxPendingItemCount, maxCompletedItemsCount = maxCompletedItemsCount,
+                maxPendingPageCount = maxPendingPageCount, maxCompletedPageCount = maxCompletedPageCount)
+    }
+
+    private fun getListResponseWithNoItems(listId: UUID): Mono<ListResponseTO> {
+        return listRepository.findListById(listId)
+                .map {
+                    toListResponse(it, emptyList(), emptyList(), null, null)
+                }
     }
 
     private fun transformListItems(

@@ -116,7 +116,7 @@ class GetListServiceTest extends Specification {
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
 
         then:
-        listRepository.findListAndItemsByListId(listId) >> Flux.just([completedListEntity].toArray())
+        listRepository.findListAndItemsByListId(_) >> Flux.just([completedListEntity].toArray())
 
         actual.listId == listEntity.id
         actual.channel == listEntity.channel
@@ -135,6 +135,108 @@ class GetListServiceTest extends Specification {
         completedItems[0].itemTitle == listItemEntity2.itemTitle
         completedItems[0].itemNote == listItemEntity2.itemNotes
         completedItems[0].itemType == ItemType.TCIN
+    }
+
+    def "Test getListService() ItemIncludeFields = ALL with no items"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
+
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+
+
+        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+
+        when:
+        def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.ALL).block()
+
+        then:
+        listRepository.findListAndItemsByListId(_) >> Flux.empty()
+        listRepository.findListById(listId) >> Mono.just(listEntity)
+
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
+
+        def pendingItems = actual.pendingListItems
+        pendingItems.size() == 0
+
+        def completedItems = actual.completedListItems
+        completedItems.size() == 0
+    }
+
+    def "Test getListService() ItemIncludeFields = PENDING with no items"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
+
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+
+
+        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+
+        when:
+        def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.PENDING).block()
+
+        then:
+        listRepository.findListAndItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.empty()
+        listRepository.findListById(listId) >> Mono.just(listEntity)
+
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
+
+        def pendingItems = actual.pendingListItems
+        pendingItems.size() == 0
+
+        def completedItems = actual.completedListItems
+        completedItems.size() == 0
+    }
+
+    def "Test getListService() ItemIncludeFields = COMPLETED with no items"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
+
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+
+
+        ListItemsTransformationPipeline listItemsTransformationPipeline = new ListItemsTransformationPipeline()
+        listItemsTransformationPipeline.addStep(new SortListItemsTransformationStep(ItemSortFieldGroup.ITEM_TITLE, ItemSortOrderGroup.ASCENDING))
+
+        when:
+        def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.COMPLETED).block()
+
+        then:
+        listRepository.findListAndItemsByListIdAndItemState(listId, LIST_ITEM_STATE.COMPLETED.value) >> Flux.empty()
+        listRepository.findListById(listId) >> Mono.just(listEntity)
+
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
+
+        def pendingItems = actual.pendingListItems
+        pendingItems.size() == 0
+
+        def completedItems = actual.completedListItems
+        completedItems.size() == 0
     }
 
     def "Test getListService() ItemIncludeFields = ALL with no completed items"() {
@@ -206,7 +308,7 @@ class GetListServiceTest extends Specification {
         def actual = getListService.getList(guestId, locationId, listId, listItemsTransformationPipeline, ItemIncludeFields.PENDING).block()
 
         then:
-        listRepository.findListAndItemsByListIdAndItemState(listId, "P") >> Flux.just([pendingListEntity].toArray())
+        listRepository.findListAndItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just([pendingListEntity].toArray())
 
         actual.listId == listEntity.id
         actual.channel == listEntity.channel
