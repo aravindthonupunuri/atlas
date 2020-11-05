@@ -97,9 +97,15 @@ class ListItemMapper {
                     listPrice = null,
                     offerCount = 0,
                     metadata = getUserItemMetaDataFromMetadataMap(listItemEntity.itemMetadata)?.userMetaData,
-                    itemType = ItemType.values().first { it.value == listItemEntity.itemType!! },
+                    itemType =
+                    if (listItemEntity.itemType != null)
+                        ItemType.values().first { it.value == listItemEntity.itemType!! }
+                    else null,
                     relationshipType = null,
-                    itemState = LIST_ITEM_STATE.values().first { it.value == listItemEntity.itemState!! },
+                    itemState =
+                    if (listItemEntity.itemState != null)
+                        LIST_ITEM_STATE.values().first { it.value == listItemEntity.itemState!! }
+                    else null,
                     addedTs = listItemEntity.itemCreatedAt.toString(),
                     lastModifiedTs = listItemEntity.itemUpdatedAt.toString()
             )
@@ -122,9 +128,15 @@ class ListItemMapper {
                     listPrice = null,
                     offerCount = 0,
                     metadata = getUserItemMetaDataFromMetadataMap(listItemExtEntity.itemMetadata)?.userMetaData,
-                    itemType = ItemType.values().first { it.value == listItemExtEntity.itemType!! },
+                    itemType =
+                    if (listItemExtEntity.itemType != null)
+                        ItemType.values().first { it.value == listItemExtEntity.itemType!! }
+                    else null,
                     relationshipType = null,
-                    itemState = LIST_ITEM_STATE.values().first { it.value == listItemExtEntity.itemState!! },
+                    itemState =
+                    if (listItemExtEntity.itemState != null)
+                        LIST_ITEM_STATE.values().first { it.value == listItemExtEntity.itemState!! }
+                    else null,
                     addedTs = listItemExtEntity.itemCreatedAt.toString(),
                     lastModifiedTs = listItemExtEntity.itemUpdatedAt.toString()
             )

@@ -40,6 +40,7 @@ class CreateListService(
                 .flatMap {
                     val listEntity = toNewListEntity(guestId = guestId,
                             listType = listType,
+                            listSubtype = listRequestTO.listSubType,
                             listRequestTO = listRequestTO,
                             defaultList = it,
                             expirationDays = expirationDays,

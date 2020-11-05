@@ -1,12 +1,12 @@
 package com.tgt.lists.atlas.api.service
 
-
 import com.tgt.lists.atlas.api.domain.DefaultListManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListRequestTO
 import com.tgt.lists.atlas.api.util.Constants
+import com.tgt.lists.atlas.api.util.LIST_STATE
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
 import com.tgt.lists.atlas.util.TestListChannel
 import org.apache.kafka.clients.producer.RecordMetadata
@@ -36,7 +36,7 @@ class CreateListServiceTest extends Specification {
         def title = "list1"
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
-        def listRequest = new ListRequestTO(channel, title, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
+        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:
@@ -52,14 +52,14 @@ class CreateListServiceTest extends Specification {
         actual.listTitle == title
         actual.shortDescription == desc
         actual.listType == listType
-        actual.defaultList == true
+        actual.defaultList
     }
 
     def "Test create default list for guest having preexisting default list"() {
         def title = "list1"
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
-        def listRequest = new ListRequestTO(channel, title, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
+        def listRequest = new ListRequestTO(channel, title, "fav", LIST_STATE.ACTIVE, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:
@@ -75,7 +75,7 @@ class CreateListServiceTest extends Specification {
         actual.listTitle == title
         actual.shortDescription == desc
         actual.listType == listType
-        actual.defaultList == false
+        !actual.defaultList
 
     }
 }
