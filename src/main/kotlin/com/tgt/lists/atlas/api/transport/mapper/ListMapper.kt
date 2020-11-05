@@ -36,7 +36,7 @@ class ListMapper {
                     location = listRequestTO.locationId.toString(),
                     agentId = listRequestTO.agentId,
                     metadata = mapper.writeValueAsString(listRequestTO.metadata),
-                    state = LIST_STATE.ACTIVE.value, // TODO should we default it to Inactive?
+                    state = listRequestTO.listState.value, // Should be set by the app layer
                     expiration = getExpirationDate(getLocalInstant(), expirationDays),
                     testList = testList)
         }
@@ -118,6 +118,7 @@ class ListMapper {
                     channel = listEntity.channel,
                     listType = listEntity.type,
                     listSubType = listEntity.subtype,
+                    listState = LIST_STATE.values().first { listState -> listState.value == listEntity.state!! },
                     defaultList = (listEntity.marker == LIST_MARKER.DEFAULT.value),
                     listTitle = listEntity.title,
                     shortDescription = listEntity.description,
