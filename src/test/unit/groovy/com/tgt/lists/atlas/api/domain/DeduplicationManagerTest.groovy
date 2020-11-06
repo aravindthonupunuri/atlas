@@ -2,7 +2,10 @@ package com.tgt.lists.atlas.api.domain
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.service.ListItemSortOrderService
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
@@ -19,7 +22,10 @@ class DeduplicationManagerTest extends Specification {
 
     EventPublisher eventPublisher
     ListRepository listRepository
+    ListPreferenceRepository listPreferenceRepository
+    ListItemSortOrderService listItemSortOrderService
     DeduplicationManager deduplicationManager
+    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     DeleteListItemsManager deleteListItemsManager
     UpdateListItemManager updateListItemManager
     ListDataProvider listDataProvider
@@ -28,7 +34,10 @@ class DeduplicationManagerTest extends Specification {
     def setup() {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
-        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
+        listPreferenceRepository = Mock(ListPreferenceRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listItemSortOrderService = new ListItemSortOrderService(listPreferenceSortOrderManager)
+        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher, listItemSortOrderService)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager, true, 5, 5, false)
         listDataProvider = new ListDataProvider()
@@ -141,8 +150,12 @@ class DeduplicationManagerTest extends Specification {
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
                                                        "tcn2222" : listItemRequest5] as LinkedHashMap
         def listId = Uuids.timeBased()
+        def listItemId = Uuids.timeBased()
 
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, listItemId.toString())
+        ListPreferenceEntity posUpdateListPreferenceEntity = listDataProvider.getListPreferenceEntity(listId, guestId)
+
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId,
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
                 1, "newItemNote")
 
@@ -155,6 +168,50 @@ class DeduplicationManagerTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
+        1 * listPreferenceRepository.saveListPreference(_) >> Mono.just(posUpdateListPreferenceEntity)
+        1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
+        1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
+
+        actual.first.isEmpty()
+        actual.second.isEmpty()
+    }
+
+    def "Test updateDuplicateItems() exceeding max pending items, rolling update turned on and existing item isnt part of item sort order"() {
+        given:
+        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
+                "itemNote", 1, UnitOfMeasure.EACHES, null)
+        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), "2345", null,
+                "itemNote", 1, UnitOfMeasure.EACHES, null)
+        def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), "3456", null,
+                "itemNote", 1, UnitOfMeasure.EACHES, null)
+        def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), "4567", null,
+                "itemNote", 1, UnitOfMeasure.EACHES, null)
+        def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), "2222", null,
+                "itemNote", 1, UnitOfMeasure.EACHES, null)
+
+        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
+                                                       "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
+                                                       "tcn2222" : listItemRequest5] as LinkedHashMap
+        def listId = Uuids.timeBased()
+        def listItemId = Uuids.timeBased()
+
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, Uuids.timeBased().toString())
+
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId,
+                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
+                1, "newItemNote")
+
+        def recordMetadata = GroovyMock(RecordMetadata)
+
+        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
+                true, 5, 5, true) // turning on rolling update
+        when:
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+
+        then:
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
@@ -179,8 +236,12 @@ class DeduplicationManagerTest extends Specification {
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
                                                        "tcn2222" : listItemRequest5] as LinkedHashMap
         def listId = Uuids.timeBased()
+        def listItemId = Uuids.timeBased()
 
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, listItemId.toString())
+        ListPreferenceEntity posUpdateListPreferenceEntity = listDataProvider.getListPreferenceEntity(listId, guestId)
+
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId,
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
                 1, "newItemNote")
 
@@ -193,6 +254,8 @@ class DeduplicationManagerTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
+        1 * listPreferenceRepository.saveListPreference(_) >> Mono.just(posUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
@@ -299,6 +362,8 @@ class DeduplicationManagerTest extends Specification {
                                                        "itm3456" : listItemRequest3, "itm4567" : listItemRequest4] as LinkedHashMap
         def listId = Uuids.timeBased()
 
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, Uuids.timeBased().toString())
+
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
                 1, "note1")
@@ -328,6 +393,7 @@ class DeduplicationManagerTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         // updating duplicate item
         1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
             final ListItemEntity listItem = arguments[0]

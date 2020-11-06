@@ -1,7 +1,7 @@
 package com.tgt.lists.atlas.api.service
 
 import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
-import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
+import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.transport.EditListSortOrderRequestTO
 import com.tgt.lists.atlas.api.util.LIST_STATE
 import mu.KotlinLogging
@@ -13,7 +13,7 @@ import javax.inject.Singleton
 @Singleton
 class ListSortOrderService(
     @Inject private val guestPreferenceSortOrderManager: GuestPreferenceSortOrderManager,
-    @Inject private val listItemSortOrderManager: ListItemSortOrderManager
+    @Inject private val listPreferenceSortOrderManager: ListPreferenceSortOrderManager
 ) {
 
     private val logger = KotlinLogging.logger { ListSortOrderService::class.java.name }
@@ -45,7 +45,7 @@ class ListSortOrderService(
         logger.debug("[deleteListSortOrder] guestId: $guestId, listId: $listId")
 
         return if (listState == LIST_STATE.ACTIVE) {
-            listItemSortOrderManager.deleteById(guestId, listId)
+            listPreferenceSortOrderManager.deleteById(guestId, listId)
                     .flatMap { guestPreferenceSortOrderManager.removeListIdFromSortOrder(guestId, listId) }
                     .map { true }
                     .onErrorResume {

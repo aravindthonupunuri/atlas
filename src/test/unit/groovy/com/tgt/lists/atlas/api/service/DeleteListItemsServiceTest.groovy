@@ -3,7 +3,10 @@ package com.tgt.lists.atlas.api.service
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.DeleteListItemsManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
+import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.ItemIncludeFields
 import com.tgt.lists.atlas.api.util.ItemType
@@ -20,6 +23,9 @@ class DeleteListItemsServiceTest extends Specification {
     
     ListRepository listRepository
     EventPublisher eventPublisher
+    ListPreferenceRepository listPreferenceRepository
+    ListItemSortOrderService listItemSortOrderService
+    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     DeleteListItemsManager deleteListItemsManager
     DeleteListItemsService deleteListItemsService
     ListDataProvider listDataProvider
@@ -28,7 +34,10 @@ class DeleteListItemsServiceTest extends Specification {
     def setup() {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
-        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
+        listPreferenceRepository = Mock(ListPreferenceRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listItemSortOrderService = new ListItemSortOrderService(listPreferenceSortOrderManager)
+        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher, listItemSortOrderService)
         deleteListItemsService = new DeleteListItemsService(deleteListItemsManager, listRepository)
         listDataProvider = new ListDataProvider()
     }
@@ -42,11 +51,14 @@ class DeleteListItemsServiceTest extends Specification {
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, null)
+
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.ALL).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 3
@@ -68,11 +80,14 @@ class DeleteListItemsServiceTest extends Specification {
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, null)
+
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 3
@@ -161,11 +176,14 @@ class DeleteListItemsServiceTest extends Specification {
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, null)
+
         when:
         deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> Mono.error(new RuntimeException("some error"))
 
         thrown(RuntimeException)
@@ -179,11 +197,14 @@ class DeleteListItemsServiceTest extends Specification {
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, null)
+
         when:
         deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.PENDING).block()
 
         then:
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> Mono.error(new RuntimeException("some error"))
 
         thrown(RuntimeException)
@@ -202,11 +223,14 @@ class DeleteListItemsServiceTest extends Specification {
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, listItemId3, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, null)
+
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, [listItemId1, listItemId2], null).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 2

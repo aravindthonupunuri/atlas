@@ -15,9 +15,9 @@ import javax.inject.Singleton
 
 @Singleton
 @Requires(property = "list.features.sort-position", value = "true")
-class ListItemSortOrderManager(@Inject private val listPreferenceRepository: ListPreferenceRepository) {
+class ListPreferenceSortOrderManager(@Inject private val listPreferenceRepository: ListPreferenceRepository) {
 
-    private val logger = KotlinLogging.logger { ListItemSortOrderManager::class.java.name }
+    private val logger = KotlinLogging.logger { ListPreferenceSortOrderManager::class.java.name }
 
     // guestid gives luxury to sort depending on their preference in case list is collaborated with multiple guests
     fun saveNewListItemOrder(guestId: String, listId: UUID, listItemId: UUID): Mono<ListPreferenceEntity> {

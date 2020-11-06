@@ -1,26 +1,30 @@
 package com.tgt.lists.atlas.api.service
 
-import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
+import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
+import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.transport.EditItemSortOrderRequestTO
 import com.tgt.lists.atlas.api.util.Direction
+import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.kafka.model.MultiDeleteListItem
+import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
 class ListItemSortOrderServiceTest extends Specification {
 
     ListPreferenceRepository listPreferenceRepository
-    ListItemSortOrderManager listItemSortOrderManager
+    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     ListItemSortOrderService listItemSortOrderService
+    ListDataProvider listDataProvider
     String guestId = "1234"
 
     def setup() {
+        listDataProvider = new ListDataProvider()
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        listItemSortOrderManager = new ListItemSortOrderManager(listPreferenceRepository)
-        listItemSortOrderService = new ListItemSortOrderService(listItemSortOrderManager)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listItemSortOrderService = new ListItemSortOrderService(listPreferenceSortOrderManager)
     }
 
     def "Test saveListItemSortOrder() when list item status is pending"() {
@@ -56,12 +60,15 @@ class ListItemSortOrderServiceTest extends Specification {
         UUID listId = UUID.randomUUID()
         UUID itemId = UUID.randomUUID()
         UUID itemId1 = UUID.randomUUID()
-        def multiDeleteListItem = new MultiDeleteListItem(itemId, null, null, null, LIST_ITEM_STATE.PENDING, null)
+        def tcin = "1234"
+        def tenantRefId = listDataProvider.getItemRefId(ItemType.TCIN, tcin)
+
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId, tcin, null, 1, "notes1")
         def preList = new ListPreferenceEntity(listId, guestId, itemId1.toString() + "," + itemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, itemId1.toString())
 
         when:
-        def actual = listItemSortOrderService.deleteListItemSortOrder(guestId, listId, [multiDeleteListItem]).block()
+        def actual = listItemSortOrderService.deleteListItemSortOrder(guestId, listId, [listItemEntity]).block()
 
         then:
         actual
@@ -70,30 +77,19 @@ class ListItemSortOrderServiceTest extends Specification {
         1 * listPreferenceRepository.saveListPreference(postList) >> Mono.just(postList)
     }
 
-    def "Test deleteListItemSortOrder() when list item status is null"() {
-        given:
-        UUID listId = UUID.randomUUID()
-        UUID itemId = UUID.randomUUID()
-        def multiDeleteListItem = new MultiDeleteListItem(itemId, null, null, null, null, null)
-
-        when:
-        def actual = listItemSortOrderService.deleteListItemSortOrder(guestId, listId, [multiDeleteListItem]).block()
-
-        then:
-        actual
-    }
-
-
     def "Test deleteListItemSortOrder() when list item status is pending and item to be deleted is not found"() {
         given:
         UUID listId = UUID.randomUUID()
         UUID itemId = UUID.randomUUID()
         UUID itemId1 = UUID.randomUUID()
-        def multiDeleteListItem = new MultiDeleteListItem(itemId, null, null, null, LIST_ITEM_STATE.PENDING, null)
+        def tcin = "1234"
+        def tenantRefId = listDataProvider.getItemRefId(ItemType.TCIN, tcin)
+
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId, tcin, null, 1, "notes1")
         def preList = new ListPreferenceEntity(listId, guestId, itemId1.toString())
 
         when:
-        def actual = listItemSortOrderService.deleteListItemSortOrder(guestId, listId, [multiDeleteListItem]).block()
+        def actual = listItemSortOrderService.deleteListItemSortOrder(guestId, listId, [listItemEntity]).block()
 
         then:
         !actual

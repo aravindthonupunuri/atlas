@@ -121,7 +121,7 @@ class ListMapper {
                     listState =
                     if (listEntity.state != null)
                         LIST_STATE.values().first { listState -> listState.value == listEntity.state!! }
-                    else null,
+                    else LIST_STATE.INACTIVE,
                     defaultList = (listEntity.marker == LIST_MARKER.DEFAULT.value),
                     listTitle = listEntity.title,
                     shortDescription = listEntity.description,

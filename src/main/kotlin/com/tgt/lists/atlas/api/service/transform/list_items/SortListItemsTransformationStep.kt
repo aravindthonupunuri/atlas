@@ -24,7 +24,7 @@ class SortListItemsTransformationStep(
                 return if (transformationContext.getContextValue(LIST_ITEM_STATE_KEY) == LIST_ITEM_STATE.PENDING) {
 
                     (transformationContext.transformationPipelineConfiguration as ListItemsTransformationPipelineConfiguration).sortListItemsTransformationConfiguration?.let {
-                        it.itemSortOrderManager?.getList(guestId, listId)
+                        it.listPreferenceSortOrderManager?.getList(guestId, listId)
                                 ?.map {
                                     reArrangeItems(it.itemSortOrder!!.split(","), items)
                                 }

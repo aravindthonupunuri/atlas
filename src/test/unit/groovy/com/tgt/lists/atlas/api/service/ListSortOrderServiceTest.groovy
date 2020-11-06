@@ -2,7 +2,7 @@ package com.tgt.lists.atlas.api.service
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
-import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
+import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.GuestPreferenceEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
@@ -18,15 +18,15 @@ class ListSortOrderServiceTest extends Specification {
     GuestPreferenceRepository guestPreferenceRepository
     ListPreferenceRepository listPreferenceRepository
     GuestPreferenceSortOrderManager guestPreferenceSortOrderManager
-    ListItemSortOrderManager listItemSortOrderManager
+    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     ListSortOrderService listSortOrderService
 
     def setup() {
         guestPreferenceRepository = Mock(GuestPreferenceRepository)
         listPreferenceRepository = Mock(ListPreferenceRepository)
         guestPreferenceSortOrderManager = new GuestPreferenceSortOrderManager(guestPreferenceRepository)
-        listItemSortOrderManager = new ListItemSortOrderManager(listPreferenceRepository)
-        listSortOrderService = new ListSortOrderService(guestPreferenceSortOrderManager, listItemSortOrderManager)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listSortOrderService = new ListSortOrderService(guestPreferenceSortOrderManager, listPreferenceSortOrderManager)
     }
 
     def "Test saveListSortOrder() when list status is completed"() {

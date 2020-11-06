@@ -3,6 +3,8 @@ package com.tgt.lists.atlas.api.service
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.*
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
+import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
+import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.util.ItemType
@@ -20,6 +22,9 @@ class CreateListItemsServiceTest extends Specification {
 
     EventPublisher eventPublisher
     DeduplicationManager deduplicationManager
+    ListPreferenceRepository listPreferenceRepository
+    ListItemSortOrderService listItemSortOrderService
+    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     DeleteListItemsManager deleteListItemsManager
     CreateListItemsManager createListItemsManager
     UpdateListItemManager updateListItemManager
@@ -32,7 +37,10 @@ class CreateListItemsServiceTest extends Specification {
     def setup() {
         eventPublisher = Mock(EventPublisher)
         listRepository = Mock(ListRepository)
-        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
+        listPreferenceRepository = Mock(ListPreferenceRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listItemSortOrderService = new ListItemSortOrderService(listPreferenceSortOrderManager)
+        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher, listItemSortOrderService)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 10, 10, false)
@@ -80,12 +88,15 @@ class CreateListItemsServiceTest extends Specification {
 
         List<ListItemRequestTO> itemsToAdd = [listItemRequest1, listItemRequest2, listItemRequest3, listItemRequest4]
 
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, Uuids.timeBased().toString())
+
         def recordMetadata = GroovyMock(RecordMetadata)
         when:
         def actual = createListItemsService.createListItems(guestId, listId, 1357L, itemsToAdd)
                 .block()
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5, listItemEntity6, listItemEntity7)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         // updating duplicate item
         1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
             final ListItemEntity listItem = arguments[0]

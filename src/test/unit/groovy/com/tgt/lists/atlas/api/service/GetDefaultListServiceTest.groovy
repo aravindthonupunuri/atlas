@@ -1,7 +1,7 @@
 package com.tgt.lists.atlas.api.service
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
-import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
+import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
@@ -21,7 +21,7 @@ class GetDefaultListServiceTest extends Specification {
 
     GetListService getListService
     GetDefaultListService getDefaultListService
-    ListItemSortOrderManager itemSortOrderManager
+    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     ListRepository listRepository
     ListPreferenceRepository listPreferenceRepository
     ListDataProvider dataProvider
@@ -33,8 +33,8 @@ class GetDefaultListServiceTest extends Specification {
         dataProvider = new ListDataProvider()
         listRepository = Mock(ListRepository)
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        itemSortOrderManager = new ListItemSortOrderManager(listPreferenceRepository)
-        SortListItemsTransformationConfiguration sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(itemSortOrderManager)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        SortListItemsTransformationConfiguration sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(listPreferenceSortOrderManager)
         ListItemsTransformationPipelineConfiguration transformationPipelineConfiguration = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, null)
         getListService = new GetListService(listRepository, transformationPipelineConfiguration)
         getDefaultListService = new GetDefaultListService(listRepository, getListService, "SHOPPING")

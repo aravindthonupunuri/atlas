@@ -7,15 +7,15 @@ import com.tgt.lists.atlas.api.util.Direction
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-class ListItemSortOrderManagerTest extends Specification {
+class ListPreferenceSortOrderManagerTest extends Specification {
 
-    ListItemSortOrderManager listItemSortOrderManager
+    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     ListPreferenceRepository listPreferenceRepository
     String guestId = "1234"
 
     def setup() {
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        listItemSortOrderManager = new ListItemSortOrderManager(listPreferenceRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
     }
 
     def "Test saveNewListOrder() when there is no record for list id"() {
@@ -25,7 +25,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, listItemId.toString())
 
         when:
-        def actual = listItemSortOrderManager.saveNewListItemOrder(guestId, listId, listItemId).block()
+        def actual = listPreferenceSortOrderManager.saveNewListItemOrder(guestId, listId, listItemId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.empty()
@@ -42,7 +42,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, listItemId.toString() + "," + preSaveOrder)
 
         when:
-        def actual = listItemSortOrderManager.saveNewListItemOrder(guestId,listId, listItemId).block()
+        def actual = listPreferenceSortOrderManager.saveNewListItemOrder(guestId,listId, listItemId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
@@ -57,7 +57,7 @@ class ListItemSortOrderManagerTest extends Specification {
         def listItemId = Uuids.timeBased()
 
         when:
-        listItemSortOrderManager.saveNewListItemOrder(guestId, listId, listItemId).block()
+        listPreferenceSortOrderManager.saveNewListItemOrder(guestId, listId, listItemId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.error(new RuntimeException("Some exception"))
@@ -72,7 +72,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSaveOrder)
 
         when:
-        listItemSortOrderManager.saveNewListItemOrder(guestId, listId, listItemId).block()
+        listPreferenceSortOrderManager.saveNewListItemOrder(guestId, listId, listItemId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
@@ -87,7 +87,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, listItemId.toString())
 
         when:
-        listItemSortOrderManager.saveNewListItemOrder(guestId, listId, listItemId).block()
+        listPreferenceSortOrderManager.saveNewListItemOrder(guestId, listId, listItemId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.empty()
@@ -107,7 +107,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.updateListItemSortOrder(guestId, listId,
+        def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
             listItemId3, listItemId1, Direction.ABOVE).block()
 
         then:
@@ -128,7 +128,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.updateListItemSortOrder(guestId, listId, listItemId1, listItemId3, Direction.BELOW).block()
+        def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId, listItemId1, listItemId3, Direction.BELOW).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
@@ -148,7 +148,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.updateListItemSortOrder(guestId, listId,
+        def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
             listItemId3, listItemId2, Direction.ABOVE).block()
 
         then:
@@ -170,7 +170,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.updateListItemSortOrder(guestId, listId,
+        def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
             listItemId4, listItemId2, Direction.BELOW).block()
 
         then:
@@ -191,7 +191,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.updateListItemSortOrder(guestId, listId,
+        def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
             listItemId1, listItemId3, Direction.ABOVE).block()
 
         then:
@@ -213,7 +213,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId2).block()
+        def actual = listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId2).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
@@ -233,7 +233,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId1).block()
+        def actual = listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId1).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
@@ -253,7 +253,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId3).block()
+        def actual = listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId3).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
@@ -273,7 +273,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId,
+        def actual = listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId,
             [listItemId1, listItemId3].toArray(new UUID[2])).block()
 
         then:
@@ -292,7 +292,7 @@ class ListItemSortOrderManagerTest extends Specification {
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
         when:
-        def actual = listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId1).block()
+        def actual = listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId1).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
@@ -306,7 +306,7 @@ class ListItemSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def expected = new ListPreferenceEntity(listId, guestId, "")
         when:
-        def actual = listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId1).block()
+        def actual = listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId1).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.empty()
@@ -319,7 +319,7 @@ class ListItemSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
 
         when:
-        listItemSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId1).block()
+        listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, listItemId1).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.error(new RuntimeException("some exception"))
@@ -332,7 +332,7 @@ class ListItemSortOrderManagerTest extends Specification {
         def expected = new ListPreferenceEntity(listId, guestId, "")
 
         when:
-        def actual = listItemSortOrderManager.getList(guestId, listId).block()
+        def actual = listPreferenceSortOrderManager.getList(guestId, listId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.empty()
@@ -345,7 +345,7 @@ class ListItemSortOrderManagerTest extends Specification {
         def expected = new ListPreferenceEntity(listId, guestId, "")
 
         when:
-        def actual = listItemSortOrderManager.getList(guestId, listId).block()
+        def actual = listPreferenceSortOrderManager.getList(guestId, listId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.error(new RuntimeException("some exception"))

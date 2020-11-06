@@ -5,6 +5,7 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListDeleteResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper
+import com.tgt.lists.atlas.api.util.LIST_STATE
 import com.tgt.lists.atlas.kafka.model.DeleteListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -16,18 +17,18 @@ import javax.inject.Singleton
 @Singleton
 class DeleteListService(
     @Inject private val listRepository: ListRepository,
-    @Inject private val eventPublisher: EventPublisher
+    @Inject private val eventPublisher: EventPublisher,
+    @Inject private val listSortOrderService: ListSortOrderService
 ) {
     private val logger = KotlinLogging.logger {}
 
-    // TODO Delete the list from the sort order if any
     fun deleteList(
         guestId: String, // this is NOT the ownerId of list, it represents operation executor who could be different than list owner
         listId: UUID
     ): Mono<ListDeleteResponseTO> {
         logger.debug("[deleteList] guestId: $guestId, listId: $listId")
         return listRepository.findListById(listId)
-                .flatMap { doDelete(it) }
+                .flatMap { doDelete(guestId, it) }
                 .map { ListDeleteResponseTO(it.id) }
                 .switchIfEmpty {
                     logger.debug("[deleteList] guestId: $guestId, listId: $listId, List not found")
@@ -35,13 +36,18 @@ class DeleteListService(
                 }
     }
 
-    private fun doDelete(listEntity: ListEntity): Mono<ListEntity> {
-        return listRepository.deleteList(listEntity)
+    private fun doDelete(guestId: String, listEntity: ListEntity): Mono<ListEntity> {
+        val listState = if (listEntity.state != null) LIST_STATE.values().first { listState -> listState.value == listEntity.state!! }
+        else LIST_STATE.INACTIVE
+
+        return listSortOrderService.deleteListSortOrder(guestId, listEntity.id!!, listState)
+                .flatMap { listRepository.deleteList(listEntity) }
                 .zipWhen {
                     val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(listEntity.metadata)
                     eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(),
                             DeleteListNotifyEvent(listEntity.guestId!!, listEntity.id!!, listEntity.type!!,
                                     listEntity.title!!, userMetaDataTO?.userMetaData), listEntity.guestId!!)
-                }.map { it.t1 }
+                }
+                .map { it.t1 }
     }
 }

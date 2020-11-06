@@ -1,7 +1,7 @@
 package com.tgt.lists.atlas.api.service.transform.list_items
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
-import com.tgt.lists.atlas.api.domain.ListItemSortOrderManager
+import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
@@ -18,7 +18,7 @@ import spock.lang.Specification
 class ListItemsTransformationPipelineTest extends Specification {
 
     ListItemsTransformationPipeline listItemsTransformationPipeline
-    ListItemSortOrderManager itemSortOrderManager
+    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     ListPreferenceRepository listPreferenceRepository
     ListDataProvider listDataProvider
     TransformationContext transformationContext
@@ -27,9 +27,9 @@ class ListItemsTransformationPipelineTest extends Specification {
     def setup() {
         listItemsTransformationPipeline = new ListItemsTransformationPipeline()
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        itemSortOrderManager = new ListItemSortOrderManager(listPreferenceRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
         listDataProvider = new ListDataProvider()
-        def sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(itemSortOrderManager)
+        def sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(listPreferenceSortOrderManager)
         def paginateListItemsTransformationConfiguration = new PaginateListItemsTransformationConfiguration(2)
         def transformationPipelineConfiguration = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, paginateListItemsTransformationConfiguration)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
