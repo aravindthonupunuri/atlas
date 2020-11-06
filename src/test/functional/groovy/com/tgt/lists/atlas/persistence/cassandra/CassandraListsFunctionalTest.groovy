@@ -40,7 +40,7 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
     List<UUID> listItemIds = [Uuids.timeBased(), Uuids.timeBased(), Uuids.timeBased(), Uuids.timeBased()]
 
     @Shared
-    List<String> guestIds = ["126890567", "126890567", "126890567", "531244530"]
+    List<String> guestIds = ["126890560", "126890560", "126890560", "531244530"]
 
     @Shared
     List<String> listTypes = ["shopping", "shopping", "registry", "favorites"]
@@ -75,7 +75,7 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
     def "test get lists by ids"() {
         when:
-        List<ListEntity> listEntity  = listsRepository.findMultipleListsById([listIds[0], listIds[1], listIds[2], listIds[3]]).collectList().block()
+        List<ListEntity> listEntity  = listsRepository.findMultipleListsById([listIds[0], listIds[1], listIds[2], listIds[3]] as Set).collectList().block()
 
         then:
         listEntity.size() == 4
@@ -104,6 +104,14 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
         then:
         notThrown(Throwable)
+    }
+
+    def "test findGuestLists"() {
+        when:
+        List<ListEntity> listEntity  = listsRepository.findGuestLists("126890560", "shopping").block()
+
+        then:
+        listEntity.size() == 2
     }
 
     def "test get list by id"() {

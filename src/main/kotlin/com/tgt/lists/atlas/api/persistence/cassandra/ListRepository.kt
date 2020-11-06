@@ -149,9 +149,9 @@ class ListRepository(
         }
     }
 
-    fun findMultipleListsById(listId: List<UUID>): Flux<ListEntity> {
+    fun findMultipleListsById(listId: Set<UUID>): Flux<ListEntity> {
         return retryableStatementExecutor.readFlux(className, "findMultipleListsById") { consistency ->
-            listDAO.findMultipleListsById(listId, consistency) }
+            listDAO.findMultipleListsById(listId.toList(), consistency) }
     }
 
     fun findListItemsByListId(listId: UUID): Flux<ListItemEntity> {
@@ -222,7 +222,7 @@ class ListRepository(
             if (it.isNullOrEmpty()) {
                 Mono.just(emptyList())
             } else {
-                findMultipleListsById(it.map { it.id!! }.toList()).collectList()
+                findMultipleListsById(it.map { it.id!! }.toSet()).distinct { it.id }.collectList()
             }
         }
     }
