@@ -40,7 +40,7 @@ class DeleteListService(
         val listState = if (listEntity.state != null) LIST_STATE.values().first { listState -> listState.value == listEntity.state!! }
         else LIST_STATE.INACTIVE
 
-        return listSortOrderService.deleteListSortOrder(guestId, listEntity.id!!, listState)
+        return listSortOrderService.deleteListSortOrder(guestId, listEntity.id!!)
                 .flatMap { listRepository.deleteList(listEntity) }
                 .zipWhen {
                     val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(listEntity.metadata)

@@ -29,17 +29,6 @@ class ListSortOrderServiceTest extends Specification {
         listSortOrderService = new ListSortOrderService(guestPreferenceSortOrderManager, listPreferenceSortOrderManager)
     }
 
-    def "Test saveListSortOrder() when list status is completed"() {
-        given:
-        String guestId = "1234"
-
-        when:
-        def actual = listSortOrderService.saveListSortOrder(guestId, UUID.randomUUID(), LIST_STATE.INACTIVE).block()
-
-        then:
-        actual
-    }
-
     def "Test saveListSortOrder() when list status is pending"() {
         given:
         String guestId = "1234"
@@ -69,17 +58,6 @@ class ListSortOrderServiceTest extends Specification {
         !actual
     }
 
-    def "Test deleteListSortOrder() when list status is completed"() {
-        given:
-        String guestId = "1234"
-
-        when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, UUID.randomUUID(), LIST_STATE.INACTIVE).block()
-
-        then:
-        actual
-    }
-
     def "Test deleteListSortOrder() when list status is pending"() {
         given:
         String guestId = "1234"
@@ -90,7 +68,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.just(listPreferenceEntity)
@@ -110,7 +88,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.empty()
@@ -128,7 +106,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.just(listPreferenceEntity)
@@ -144,7 +122,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.error(new RuntimeException("some exception"))
@@ -162,7 +140,7 @@ class ListSortOrderServiceTest extends Specification {
         ListPreferenceEntity listPreferenceEntity = new ListPreferenceEntity(listId: listId1, guestId: guestId)
 
         when:
-        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1, LIST_STATE.ACTIVE).block()
+        def actual = listSortOrderService.deleteListSortOrder(guestId, listId1).block()
 
         then:
         1 * listPreferenceRepository.deleteListPreferenceByListAndGuestId(listPreferenceEntity) >> Mono.just(listPreferenceEntity)

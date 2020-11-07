@@ -109,11 +109,14 @@ class DeleteListItemsServiceTest extends Specification {
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "item1235", "1235", null, 1, "notes2")
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "item1236", "1236", null, 1, "notes3")
 
+        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, null)
+
         when:
         def actual = deleteListItemsService.deleteListItems(guestId, listId, null, ItemIncludeFields.COMPLETED).block()
 
         then:
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.COMPLETED.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
+        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 3

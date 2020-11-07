@@ -77,6 +77,17 @@ class ListItemSortOrderServiceTest extends Specification {
         1 * listPreferenceRepository.saveListPreference(postList) >> Mono.just(postList)
     }
 
+    def "Test deleteListItemSortOrder() when deleteListItems size is 0"() {
+        given:
+        UUID listId = UUID.randomUUID()
+
+        when:
+        def actual = listItemSortOrderService.deleteListItemSortOrder(guestId, listId, []).block()
+
+        then:
+        actual
+    }
+
     def "Test deleteListItemSortOrder() when list item status is pending and item to be deleted is not found"() {
         given:
         UUID listId = UUID.randomUUID()

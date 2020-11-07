@@ -44,17 +44,13 @@ class ListItemSortOrderService(
 
         logger.debug("[deleteListItemSortOrder] guestId: $guestId listId: $listId, deleteListItems: $deleteListItems")
 
-        return deleteListItems.filter { it.itemState == LIST_ITEM_STATE.PENDING.value }
-                .takeIf { !it.isNullOrEmpty() }
-                ?.let {
-                    val itemIdsToDelete = it.map { item -> item.itemId!! }.toTypedArray()
-                    listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, itemIdsToDelete)
-                            .map { true }
-                            .onErrorResume {
-                                logger.error("Exception while deleting list item sort order", it)
-                                Mono.just(false)
-                            }
-                } ?: Mono.just(true)
+        val itemIdsToDelete = deleteListItems.map { item -> item.itemId!! }.toTypedArray()
+        return listPreferenceSortOrderManager.removeListItemIdFromSortOrder(guestId, listId, itemIdsToDelete)
+                .map { true }
+                .onErrorResume {
+                    logger.error("Exception while deleting list item sort order", it)
+                    Mono.just(false)
+                }
     }
 
     fun editListItemSortOrder(

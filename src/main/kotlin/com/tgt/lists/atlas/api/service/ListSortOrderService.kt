@@ -38,21 +38,18 @@ class ListSortOrderService(
 
     fun deleteListSortOrder(
         guestId: String,
-        listId: UUID,
-        listState: LIST_STATE
+        listId: UUID
     ): Mono<Boolean> {
 
         logger.debug("[deleteListSortOrder] guestId: $guestId, listId: $listId")
 
-        return if (listState == LIST_STATE.ACTIVE) {
-            listPreferenceSortOrderManager.deleteById(guestId, listId)
-                    .flatMap { guestPreferenceSortOrderManager.removeListIdFromSortOrder(guestId, listId) }
-                    .map { true }
-                    .onErrorResume {
-                        logger.error("Exception while deleting list sort order", it)
-                        Mono.just(false)
-                    }
-        } else { Mono.just(true) }
+        return listPreferenceSortOrderManager.deleteById(guestId, listId)
+                .flatMap { guestPreferenceSortOrderManager.removeListIdFromSortOrder(guestId, listId) }
+                .map { true }
+                .onErrorResume {
+                    logger.error("Exception while deleting list sort order", it)
+                    Mono.just(false)
+                }
     }
 
     fun editListSortOrder(
