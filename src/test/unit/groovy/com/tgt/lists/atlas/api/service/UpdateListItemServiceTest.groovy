@@ -431,11 +431,7 @@ class UpdateListItemServiceTest extends Specification {
                     return true
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
                     return true
-                } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
-                } else {
-                    return false
-                }
+                } else return listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType
             }
         }, null)
 

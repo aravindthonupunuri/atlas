@@ -36,7 +36,8 @@ data class ListItemUpdateRequestTO(
                 this.itemType == null &&
                 this.metadata == null &&
                 this.itemState == null &&
-                this.requestedQuantity == null) {
+                this.requestedQuantity == null &&
+                this.userItemMetaDataTransformationStep == null) {
             throw BadRequestException(AppErrorCodes.ITEM_TYPE_REQUEST_BODY_VIOLATION_ERROR_CODE(arrayListOf("Empty request body")))
         }
         if ((itemTitle != null && itemTitle.trim().isBlank())) {
