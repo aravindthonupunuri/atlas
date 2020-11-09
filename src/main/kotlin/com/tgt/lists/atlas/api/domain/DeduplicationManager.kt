@@ -10,7 +10,6 @@ import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
 import java.util.stream.Collectors
 import javax.inject.Inject
@@ -43,19 +42,19 @@ class DeduplicationManager(
         newItemsMap: Map<String, ListItemRequestTO>,
         itemState: LIST_ITEM_STATE
     ): Mono<Pair<List<ListItemEntity>, MutableMap<String, List<ListItemEntity>>>> {
-        return listRepository.findListItemsByListId(listId).collectList()
-                .flatMap {
-                    val existingItems: List<ListItemEntity> = if (itemState == LIST_ITEM_STATE.PENDING) {
-                        it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.PENDING.value }
-                    } else {
-                        it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.COMPLETED.value }
-                    }
-                    processDeduplication(guestId, listId, itemState, existingItems, newItemsMap)
+        return listRepository.findListItemsByListId(listId).collectList().flatMap {
+            if (it.isNullOrEmpty()) {
+                logger.error("From updateDuplicateItems(), empty list with no list items")
+                Mono.just(Pair(emptyList(), mutableMapOf()))
+            } else {
+                val existingItems: List<ListItemEntity> = if (itemState == LIST_ITEM_STATE.PENDING) {
+                    it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.PENDING.value }
+                } else {
+                    it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.COMPLETED.value }
                 }
-                .switchIfEmpty {
-                    logger.error("From updateDuplicateItems(), empty list contents during dedup process")
-                    Mono.just(Pair(emptyList(), mutableMapOf()))
-                }
+                processDeduplication(guestId, listId, itemState, existingItems, newItemsMap)
+            }
+        }
     }
 
     /**

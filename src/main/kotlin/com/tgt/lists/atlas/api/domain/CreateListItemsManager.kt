@@ -7,7 +7,6 @@ import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.CreateListItemNotifyEvent
-import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -66,7 +65,7 @@ class CreateListItemsManager(
             return Mono.just(listItems)
         }
 
-        return addListItems(guestId, listId, itemsToCreate, false)
+        return addListItems(guestId, listId, itemsToCreate)
                 .map {
                     listItems.addAll(it)
                     listItems.addAll(updatedItems)
@@ -77,8 +76,7 @@ class CreateListItemsManager(
     fun addListItems(
         guestId: String,
         listId: UUID,
-        listItems: List<ListItemEntity>,
-        update: Boolean // flag to differentiate is the call is made from add items or update items
+        listItems: List<ListItemEntity>
     ): Mono<List<ListItemEntity>> {
         return if (listItems.isNullOrEmpty()) {
             logger.debug("[createListItems] guestId: $guestId listId:$listId, No list items to insert")
@@ -88,19 +86,11 @@ class CreateListItemsManager(
             return listRepository.saveListItems(listItems).zipWhen { items ->
                 Flux.fromIterable(items.asIterable()).flatMap {
                     val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(it.itemMetadata)
-                    if (update) {
-                        eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(),
-                                UpdateListItemNotifyEvent(guestId, it.id!!, it.itemId!!, it.itemTcin, it.itemTitle,
-                                        it.itemReqQty, userMetaDataTO?.userMetaData), listId.toString())
-                    } else {
-                        eventPublisher.publishEvent(CreateListItemNotifyEvent.getEventType(),
-                                CreateListItemNotifyEvent(guestId, it.id!!, it.itemId!!,
-                                        LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
-                                        it.itemTcin, it.itemTitle, it.itemChannel, it.itemReqQty, userMetaDataTO?.userMetaData),
-                                listId.toString())
-                    }
-                }.collectList()
-            }.map { it.t1 }
+                    eventPublisher.publishEvent(CreateListItemNotifyEvent.getEventType(),
+                            CreateListItemNotifyEvent(guestId, it.id!!, it.itemId!!,
+                                    LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
+                                    it.itemTcin, it.itemTitle, it.itemChannel, it.itemReqQty, userMetaDataTO?.userMetaData),
+                            listId.toString()) }.collectList() }.map { it.t1 }
         }
     }
 }

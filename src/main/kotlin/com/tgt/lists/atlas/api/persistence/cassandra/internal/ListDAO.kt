@@ -36,8 +36,8 @@ interface ListDAO : ICassandraDao {
     @StatementAttributes(pageSize = 500)
     fun findListItemsByListId(id: UUID, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<ListItemEntity>
 
-    @Select(customWhereClause = "id IN :ids")
-    fun findMultipleListsById(ids: List<UUID>, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<ListEntity>
+    @Query("SELECT distinct id,title,type,subtype,guest_id,description,expiration,channel,subchannel,marker,location,notes,state,metadata,agent_id,created_at,updated_at,test_list FROM \${qualifiedTableId} WHERE id IN :ids")
+    fun findLists(ids: List<UUID>, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<ListEntity>
 
     @Select
     @StatementAttributes(pageSize = 500)
@@ -50,9 +50,6 @@ interface ListDAO : ICassandraDao {
     @Select
     @StatementAttributes(pageSize = 500)
     fun findListAndItemsByListId(id: UUID, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<ListItemExtEntity>
-
-    @Select
-    fun findListAndItemByItemId(id: UUID, itemState: String, itemId: UUID, setAttributes: Function<BoundStatementBuilder, BoundStatementBuilder>): MappedReactiveResultSet<ListItemExtEntity>
 
     @Select
     @StatementAttributes(pageSize = 500)

@@ -8,7 +8,6 @@ import com.tgt.lists.atlas.api.util.LIST_MARKER
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,12 +29,8 @@ class GetDefaultListService(
 
         logger.debug("[getDefaultList] guestId: $guestId, locationId: $locationId")
 
-        val listMarker = LIST_MARKER.DEFAULT.value
-        return listRepository.findGuestListByMarker(guestId, listType, listSubType, listMarker)
-                .switchIfEmpty { Mono.empty() }
-                .flatMap {
-                    val defaultGuestList = it
-                    getListService.getList(guestId, locationId, defaultGuestList.id!!, listItemsTransformationPipeline, includeItems)
-                }
+        return listRepository.findGuestListByMarker(guestId, listType, listSubType, LIST_MARKER.DEFAULT.value).flatMap {
+            getListService.getList(guestId, locationId, it.id!!, listItemsTransformationPipeline, includeItems)
+        }
     }
 }

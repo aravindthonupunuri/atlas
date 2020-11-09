@@ -4,10 +4,8 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListItemResponseTO
 import com.tgt.lists.atlas.api.util.GuestId
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,11 +24,6 @@ class GetListItemService(@Inject private val listRepository: ListRepository) {
 
         logger.debug("[getListItem] guestId: $guestId, listId: $listId, listItemId: $listItemId, locationId: $locationId")
 
-        return listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, listItemId)
-                .switchIfEmpty {
-                    logger.debug { "Item is not found in pending state, check for item in completed state" }
-                    listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.COMPLETED.value, listItemId)
-                }
-                .map { toListItemResponseTO(it) }
+        return listRepository.findListItemByItemId(listId, listItemId).map { toListItemResponseTO(it) }
     }
 }

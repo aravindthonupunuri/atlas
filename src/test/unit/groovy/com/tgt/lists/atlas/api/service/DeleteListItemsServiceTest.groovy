@@ -68,7 +68,7 @@ class DeleteListItemsServiceTest extends Specification {
         3 * eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(), _ , listId.toString()) >>  Mono.just(recordMetadata)
 
         actual.listId == listId
-        actual.itemIds.size() == 3
+        actual.deletedItemIds.size() == 3
     }
 
     def "Test delete list items with ItemIncludeFields PENDING"() {
@@ -97,7 +97,7 @@ class DeleteListItemsServiceTest extends Specification {
         3 * eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(), _ , listId.toString()) >>  Mono.just(recordMetadata)
 
         actual.listId == listId
-        actual.itemIds.size() == 3
+        actual.deletedItemIds.size() == 3
     }
 
     def "Test delete items with ItemIncludeFields COMPLETED"() {
@@ -126,7 +126,7 @@ class DeleteListItemsServiceTest extends Specification {
         3 * eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(), _ , listId.toString()) >>  Mono.just(recordMetadata)
 
         actual.listId == listId
-        actual.itemIds.size() == 3
+        actual.deletedItemIds.size() == 3
     }
 
 
@@ -142,7 +142,7 @@ class DeleteListItemsServiceTest extends Specification {
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.empty()
 
         actual.listId == listId
-        actual.itemIds.size() == 0
+        actual.deletedItemIds.size() == 0
     }
 
     def "Test delete items with ItemIncludeFields ALL with exception getting list items"() {
@@ -242,9 +242,9 @@ class DeleteListItemsServiceTest extends Specification {
         2 * eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(), _ , listId.toString()) >>  Mono.just(recordMetadata)
 
         actual.listId == listId
-        actual.itemIds.size() == 2
-        actual.itemIds.contains(listItemId1)
-        actual.itemIds.contains(listItemId2)
+        actual.deletedItemIds.size() == 2
+        actual.deletedItemIds.contains(listItemId1)
+        actual.deletedItemIds.contains(listItemId2)
     }
 
     def "Test delete items with when listItemIds to be deleted are passed with exception getting items from list"() {
@@ -274,7 +274,7 @@ class DeleteListItemsServiceTest extends Specification {
         1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
 
         actual.listId == listId
-        actual.itemIds.size() == 0
+        actual.deletedItemIds.size() == 0
     }
 
     def "Test delete items with ItemIncludeFields PENDING but no pending items to delete in the list"() {
@@ -288,7 +288,7 @@ class DeleteListItemsServiceTest extends Specification {
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.empty()
 
         actual.listId == listId
-        actual.itemIds.size() == 0
+        actual.deletedItemIds.size() == 0
     }
 
     def "Test delete items with when listItemIds to be deleted are passed but not items to delete in list"() {
@@ -304,7 +304,7 @@ class DeleteListItemsServiceTest extends Specification {
         1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
 
         actual.listId == listId
-        actual.itemIds.size() == 0
+        actual.deletedItemIds.size() == 0
     }
 
     def "Test delete items  when both itemIds and itemIncludeFields given"() {

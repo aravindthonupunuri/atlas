@@ -17,7 +17,7 @@ data class CreateListItemNotifyEvent(
     @JsonProperty("item_id")
     val itemId: UUID,
 
-    @JsonProperty("item_id")
+    @JsonProperty("item_state")
     val itemState: LIST_ITEM_STATE,
 
     @JsonProperty("tcin")

@@ -8,11 +8,14 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.DataContextContainerManager
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.GuestListDAO
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.micronaut.cassandra.BatchExecutor
 import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
+import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
 import javax.inject.Singleton
 
@@ -24,8 +27,8 @@ class ListRepository(
     private val dataContextContainerManager: DataContextContainerManager,
     private val retryableStatementExecutor: RetryableStatementExecutor
 ) {
-
     private val className = ListRepository::class.java.name
+    private val logger = KotlinLogging.logger { className }
 
     fun saveList(listEntity: ListEntity): Mono<ListEntity> {
         if (listEntity.createdAt == null) {
@@ -53,6 +56,101 @@ class ListRepository(
                 .map { listEntity }
     }
 
+    fun saveListItems(listItemsEntity: List<ListItemEntity>): Mono<List<ListItemEntity>> {
+        val now = getLocalInstant()
+        val items = arrayListOf<ListItemEntity>()
+        listItemsEntity.map {
+            if (it.itemCreatedAt == null) {
+                // new list item getting created
+                items.add(it.copy(itemCreatedAt = now, itemUpdatedAt = it.itemCreatedAt))
+            } else {
+                // existing list item update
+                items.add(it.copy(itemUpdatedAt = now))
+            }
+        }
+
+        return if (items.size > 1) {
+            val batchStmts = arrayListOf<BatchableStatement<*>>()
+            listItemsEntity.map { batchStmts.add(listDAO.saveListItemBatch(it.validate())) }
+            batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveListItems")
+        } else {
+            retryableStatementExecutor.write(className, "saveListItem") { consistency ->
+                listDAO.saveListItem(listItemsEntity.first().validate(), consistency) }.map { true }.switchIfEmpty { Mono.just(true) } // TODO: Move switchIfEmpty to library
+        }.map { items.toList() }
+    }
+
+    fun findListById(listId: UUID): Mono<ListEntity> {
+        return Mono.subscriberContext().flatMap {
+            val context = it
+            dataContextContainerManager.getListEntity(context, listId)?.let {
+                Mono.just(it)
+            } ?: retryableStatementExecutor.read(className, "findListById") { consistency ->
+                listDAO.findListById(listId, consistency) }
+                .map {
+                dataContextContainerManager.setListEntity(context, listId, it)
+                it
+            }
+        }
+    }
+
+    fun findGuestLists(guestId: String, listType: String): Mono<List<ListEntity>> {
+        return findGuestListsByGuestId(guestId, listType).collectList().flatMap {
+            if (it.isNullOrEmpty()) {
+                Mono.just(emptyList())
+            } else {
+                findLists(it.map { it.id!! }.toSet()).collectList()
+            }
+        }
+    }
+
+    fun findLists(listId: Set<UUID>): Flux<ListEntity> {
+        return retryableStatementExecutor.readFlux(className, "findMultipleListsById") { consistency ->
+            listDAO.findLists(listId.toList(), consistency) }
+    }
+
+    fun findListItemByItemId(listId: UUID, itemId: UUID): Mono<ListItemEntity> {
+        return findListItemByItemIdAndState(listId, itemId, LIST_ITEM_STATE.PENDING.value)
+                .switchIfEmpty {
+                    logger.debug { "Item is not found in pending state, check for item in completed state" }
+                    findListItemByItemIdAndState(listId, itemId, LIST_ITEM_STATE.COMPLETED.value)
+                }
+    }
+
+    fun findListItemByItemIdAndState(listId: UUID, itemId: UUID, itemState: String): Mono<ListItemEntity> {
+        return retryableStatementExecutor.read(className, "findListItemByItemId") { consistency ->
+            listDAO.findListItemByItemId(listId, itemState, itemId, consistency) }
+    }
+
+    fun findListItemsByListId(listId: UUID): Flux<ListItemEntity> {
+        return retryableStatementExecutor.readFlux(className, "findListItemsByListId") { consistency ->
+            listDAO.findListItemsByListId(listId, consistency) }.filter { it.itemId != null }
+    }
+
+    fun findListItemsByListIdAndItemState(listId: UUID, itemState: String): Flux<ListItemEntity> {
+        return retryableStatementExecutor.readFlux(className, "findListItemsByListIdAndItemState") { consistency ->
+            listDAO.findListItemsByListIdAndItemState(listId, itemState, consistency) }
+    }
+
+    fun findListAndItemsByListId(listId: UUID): Flux<ListItemExtEntity> {
+        return retryableStatementExecutor.readFlux(className, "findListAndItemsByListId") { consistency ->
+            listDAO.findListAndItemsByListId(listId, consistency) }.filter { it.itemId != null }
+    }
+
+    fun findListAndItemsByListIdAndItemState(listId: UUID, itemState: String): Flux<ListItemExtEntity> {
+        return retryableStatementExecutor.readFlux(className, "findListAndItemsByListIdAndItemState") { consistency ->
+            listDAO.findListAndItemsByListIdAndItemState(listId, itemState, consistency) }
+    }
+
+    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String): Mono<GuestListEntity> {
+        return retryableStatementExecutor.read(className, "findGuestListByMarker") { consistency ->
+            guestListDAO.findGuestListByMarker(guestId, listType, listSubtype, listMarker, consistency) }
+    }
+
+    fun findGuestListsByGuestId(guestId: String, listType: String): Flux<GuestListEntity> {
+        return retryableStatementExecutor.readFlux(className, "findGuestListsByGuestId") { consistency ->
+            guestListDAO.findGuestListsByGuestId(guestId, listType, consistency) }
+    }
+
     fun updateList(existingListEntity: ListEntity, updatedListEntity: ListEntity): Mono<ListEntity> {
         // existing list update
         updatedListEntity.updatedAt = getLocalInstant()
@@ -70,7 +168,7 @@ class ListRepository(
                 listDAO.saveList(updatedListEntity)
         )
 
-        // add saveGuestList statement iff either marker OR state has changed against existing value
+        // add saveGuestList statement if either marker OR state has changed against existing value
         return retryableStatementExecutor.read(className, "findGuestListById") { consistency ->
             guestListDAO.findGuestListById(
                     existingListEntity.guestId!!,
@@ -99,99 +197,18 @@ class ListRepository(
     }
 
     fun updateListItem(updatedListItemEntity: ListItemEntity, existingListItemEntity: ListItemEntity?): Mono<ListItemEntity> {
-        // existing list item update
         updatedListItemEntity.itemUpdatedAt = getLocalInstant()
+        // existingItem entity not passed when its called from Deduplication Manager
+        // If the state is getting updated, we need to delete the existing entity and create a new entity since itemState is part of the primary key hence cannot be updated
         return if (existingListItemEntity != null && existingListItemEntity.itemState != updatedListItemEntity.itemState) {
             val batchStmts = arrayListOf<BatchableStatement<*>>()
             batchStmts.add(listDAO.deleteListItemBatch(existingListItemEntity))
             batchStmts.add(listDAO.saveListItemBatch(updatedListItemEntity.validate()))
             batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "updateListItem")
         } else {
-            retryableStatementExecutor.write(className, "saveListItem") { consistency ->
-                listDAO.saveListItem(updatedListItemEntity.validate(), consistency) }
+            retryableStatementExecutor.write(className, "updateListItem") { consistency ->
+                listDAO.saveListItem(updatedListItemEntity.validate(), consistency) }.map { true }.switchIfEmpty { Mono.just(true) } // TODO: Move switchIfEmpty to library
         }.map { updatedListItemEntity }
-    }
-
-    fun saveListItems(listItemsEntity: List<ListItemEntity>): Mono<List<ListItemEntity>> {
-        val now = getLocalInstant()
-        val items = arrayListOf<ListItemEntity>()
-        listItemsEntity.map {
-            if (it.itemCreatedAt == null) {
-                // new list item getting created
-                items.add(it.copy(itemCreatedAt = now, itemUpdatedAt = it.itemCreatedAt))
-            } else {
-                // existing list item update
-                items.add(it.copy(itemUpdatedAt = now))
-            }
-        }
-
-        return if (items.size > 1) {
-            val batchStmts = arrayListOf<BatchableStatement<*>>()
-            listItemsEntity.map { batchStmts.add(listDAO.saveListItemBatch(it.validate())) }
-            batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveListItems")
-        } else {
-            retryableStatementExecutor.write(className, "saveListItem") { consistency ->
-                listDAO.saveListItem(listItemsEntity.first().validate(), consistency) }
-        }.map { items.toList() }
-    }
-
-    fun findListById(listId: UUID): Mono<ListEntity> {
-        return Mono.subscriberContext().flatMap {
-            val context = it
-            dataContextContainerManager.getListEntity(context, listId)?.let {
-                Mono.just(it)
-            } ?: retryableStatementExecutor.read(className, "findListById") { consistency ->
-                listDAO.findListById(listId, consistency) }
-                .map {
-                dataContextContainerManager.setListEntity(context, listId, it)
-                it
-            }
-        }
-    }
-
-    fun findMultipleListsById(listId: Set<UUID>): Flux<ListEntity> {
-        return retryableStatementExecutor.readFlux(className, "findMultipleListsById") { consistency ->
-            listDAO.findMultipleListsById(listId.toList(), consistency) }
-    }
-
-    fun findListItemsByListId(listId: UUID): Flux<ListItemEntity> {
-        return retryableStatementExecutor.readFlux(className, "findListItemsByListId") { consistency ->
-            listDAO.findListItemsByListId(listId, consistency) }
-    }
-
-    fun findListAndItemsByListId(listId: UUID): Flux<ListItemExtEntity> {
-        return retryableStatementExecutor.readFlux(className, "findListAndItemsByListId") { consistency ->
-            listDAO.findListAndItemsByListId(listId, consistency) }
-    }
-
-    fun findListAndItemsByListIdAndItemState(listId: UUID, itemState: String): Flux<ListItemExtEntity> {
-        return retryableStatementExecutor.readFlux(className, "findListAndItemsByListIdAndItemState") { consistency ->
-            listDAO.findListAndItemsByListIdAndItemState(listId, itemState, consistency) }
-    }
-
-    fun findListItemsByListIdAndItemState(listId: UUID, itemState: String): Flux<ListItemEntity> {
-        return retryableStatementExecutor.readFlux(className, "findListItemsByListIdAndItemState") { consistency ->
-            listDAO.findListItemsByListIdAndItemState(listId, itemState, consistency) }
-    }
-
-    fun findListItemByItemId(listId: UUID, itemState: String, itemId: UUID): Mono<ListItemEntity> {
-        return retryableStatementExecutor.read(className, "findListItemByItemId") { consistency ->
-            listDAO.findListItemByItemId(listId, itemState, itemId, consistency) }
-    }
-
-    fun findListAndItemByItemId(listId: UUID, itemState: String, itemId: UUID): Mono<ListItemExtEntity> {
-        return retryableStatementExecutor.read(className, "findListAndItemByItemId") { consistency ->
-            listDAO.findListAndItemByItemId(listId, itemState, itemId, consistency) }
-    }
-
-    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String): Mono<GuestListEntity> {
-        return retryableStatementExecutor.read(className, "findGuestListByMarker") { consistency ->
-            guestListDAO.findGuestListByMarker(guestId, listType, listSubtype, listMarker, consistency) }
-    }
-
-    fun findGuestListsByGuestId(guestId: String, listType: String): Flux<GuestListEntity> {
-        return retryableStatementExecutor.readFlux(className, "findGuestListsByGuestId") { consistency ->
-            guestListDAO.findGuestListsByGuestId(guestId, listType, consistency) }
     }
 
     fun deleteList(listEntity: ListEntity): Mono<ListEntity> {
@@ -210,20 +227,7 @@ class ListRepository(
             batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "deleteListItem")
         } else {
             retryableStatementExecutor.write(className, "deleteListItem") { consistency ->
-                listDAO.deleteListItem(listItemsEntity.first(), consistency) }
+                listDAO.deleteListItem(listItemsEntity.first(), consistency) }.map { true }.switchIfEmpty { Mono.just(true) } // TODO: Move switchIfEmpty to library
         }.map { listItemsEntity }
-    }
-
-    fun findGuestLists(
-        guestId: String,
-        listType: String
-    ): Mono<List<ListEntity>> {
-        return findGuestListsByGuestId(guestId, listType).collectList().flatMap {
-            if (it.isNullOrEmpty()) {
-                Mono.just(emptyList())
-            } else {
-                findMultipleListsById(it.map { it.id!! }.toSet()).distinct { it.id }.collectList()
-            }
-        }
     }
 }

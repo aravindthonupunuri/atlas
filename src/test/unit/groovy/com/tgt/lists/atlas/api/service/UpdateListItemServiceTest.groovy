@@ -71,7 +71,7 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
         // updating duplicate items
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
@@ -120,7 +120,7 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
         // updating duplicate items
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
@@ -171,7 +171,7 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
         // updating duplicate items
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
@@ -214,7 +214,7 @@ class UpdateListItemServiceTest extends Specification {
         updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
 
         thrown(InternalServerException)
     }
@@ -250,7 +250,7 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
         // updating duplicate items
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
@@ -292,7 +292,7 @@ class UpdateListItemServiceTest extends Specification {
         updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
 
         thrown(InternalServerException)
 
@@ -329,7 +329,7 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
         // updating duplicate items
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
@@ -371,7 +371,7 @@ class UpdateListItemServiceTest extends Specification {
         updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, LIST_ITEM_STATE.PENDING.value, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
 
         thrown(InternalServerException)
     }

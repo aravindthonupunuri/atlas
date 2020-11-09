@@ -22,7 +22,7 @@ class UpdateListItemManager(
         guestId: String,
         listId: UUID,
         updatedItem: ListItemEntity,
-        existingItem: ListItemEntity? = null
+        existingItem: ListItemEntity? = null // existingItem entity not passed when its called from Deduplication Manager
     ): Mono<ListItemEntity> {
         logger.debug("[updateListItem] Updating list item")
         return listRepository.updateListItem(updatedItem, existingItem).zipWhen {

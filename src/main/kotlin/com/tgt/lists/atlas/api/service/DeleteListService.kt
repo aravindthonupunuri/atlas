@@ -5,7 +5,6 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListDeleteResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper
-import com.tgt.lists.atlas.api.util.LIST_STATE
 import com.tgt.lists.atlas.kafka.model.DeleteListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -37,9 +36,6 @@ class DeleteListService(
     }
 
     private fun doDelete(guestId: String, listEntity: ListEntity): Mono<ListEntity> {
-        val listState = if (listEntity.state != null) LIST_STATE.values().first { listState -> listState.value == listEntity.state!! }
-        else LIST_STATE.INACTIVE
-
         return listSortOrderService.deleteListSortOrder(guestId, listEntity.id!!)
                 .flatMap { listRepository.deleteList(listEntity) }
                 .zipWhen {

@@ -85,7 +85,7 @@ class DeleteListItemsService(
     ): Mono<ListItemsDeleteResponseTO> {
         return deleteListItemsManager.deleteListItems(guestId, listId, itemsToDelete)
                 .map { itemsDeleted ->
-                    ListItemsDeleteResponseTO(listId, itemsDeleted.map { it.itemId !! }.toList())
+                    ListItemsDeleteResponseTO(listId, itemsDeleted.map { it.itemId !! })
                 }
     }
 }
