@@ -1,9 +1,8 @@
 package com.tgt.lists.atlas.api.service
 
 import com.tgt.lists.atlas.api.domain.CreateListItemsManager
-import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
-import com.tgt.lists.atlas.api.transport.ListItemsResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
+import com.tgt.lists.atlas.api.transport.ListItemsResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListItemResponseTO
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import mu.KotlinLogging
@@ -26,13 +25,6 @@ class CreateListItemsService(@Inject private val createListItemsManager: CreateL
         logger.debug("[addMultipleListItem] guestId: $guestId, listId: $listId, locationId: $locationId")
 
         return createListItemsManager.createListItems(guestId, listId, LIST_ITEM_STATE.PENDING, items)
-                .flatMap { toListItemMultiAddResponseTO(it, listId) }
-    }
-
-    private fun toListItemMultiAddResponseTO(
-        listItems: List<ListItemEntity>,
-        listId: UUID
-    ): Mono<ListItemsResponseTO> {
-        return Mono.just(ListItemsResponseTO(listId, listItems.map { toListItemResponseTO(it) }))
+                .map { listItems -> ListItemsResponseTO(listId, listItems.map { toListItemResponseTO(it) }) }
     }
 }

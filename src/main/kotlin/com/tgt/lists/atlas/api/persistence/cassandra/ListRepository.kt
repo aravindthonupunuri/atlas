@@ -141,7 +141,7 @@ class ListRepository(
             listDAO.findListAndItemsByListIdAndItemState(listId, itemState, consistency) }
     }
 
-    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String?, listMarker: String): Mono<GuestListEntity> {
+    fun findGuestListByMarker(guestId: String, listType: String, listSubtype: String, listMarker: String): Mono<GuestListEntity> {
         return retryableStatementExecutor.read(className, "findGuestListByMarker") { consistency ->
             guestListDAO.findGuestListByMarker(guestId, listType, listSubtype, listMarker, consistency) }
     }

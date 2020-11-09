@@ -26,21 +26,17 @@ class DefaultListManager(
 ) {
 
     private val logger = KotlinLogging.logger { DefaultListManager::class.java.name }
-
+    //  1. Check if the new list being created exceeds the max allowed lists for a user
+    //  2. Update defaultListIndicator
     fun processDefaultListInd(guestId: String, defaultListIndicator: Boolean, listId: UUID? = null): Mono<Boolean> {
         return listRepository.findGuestLists(guestId, listType).flatMap {
             if (it.isNullOrEmpty()) {
                 logger.debug("[processDefaultListInd] No lists found for guest with guestId: $guestId and listType: $listType")
                 Mono.just(true) // No preexisting lists found
             } else {
-                // this method can be called either during create new list (listId=null)or during update if an existing list (listId NOT null)
-                // create list is always called with the guestId as ownerId for new list
-                // whereas update may be called with guestId as operation executor who could be different than list owner
-                // hence we make the check to block default list indicator processing if its not the owner of the list
-                if (listId != null && it.firstOrNull { it.id == listId } == null) {
-                    throw ForbiddenException(BaseErrorCodes.FORBIDDEN_ERROR_CODE(listOf("guestId not authorized to update" +
-                            " default list indicator, guestId: $guestId is not the owner of the list")))
-                }
+                // check if list exceeds max lists allowed per user
+                checkGuestListsCount(it, listId)
+                // update defaultListIndicator
                 setDefaultList(it, guestId, defaultListIndicator, listId)
             }
         }
@@ -52,22 +48,23 @@ class DefaultListManager(
         defaultListIndicator: Boolean,
         listId: UUID?
     ): Mono<Boolean> {
-        checkGuestListsCount(guestLists, listId)
-        val defaultLists = getDefaultLists(guestLists, listId)
-        if (defaultLists.isEmpty()) {
-            return Mono.just(true) // No preexisting default lists found
-        }
-        if (isFixedDefaultListEnabled) {
-            return Mono.just(false) // List cannot be updated to default list
-        }
-
         return if (defaultListIndicator) {
-            Flux.fromIterable(defaultLists.asIterable()).flatMap { guestList ->
+            // This method can be called either during create new list (listId=null) or during update of an existing list (listId NOT null).
+            // Create list is always called with guestId as ownerId for new list.
+            // Update can be called with guestId as operation executor who could be different than list owner.
+            // So we have a check to block default list indicator processing if its not the owner of the list.
+            if (listId != null && guestLists.firstOrNull { it.id == listId } == null) {
+                throw ForbiddenException(BaseErrorCodes.FORBIDDEN_ERROR_CODE(listOf("guestId not authorized to update default list indicator, guestId: $guestId is not the owner of the list")))
+            }
+            if (isFixedDefaultListEnabled) {
+                throw BadRequestException(AppErrorCodes.BAD_REQUEST_ERROR_CODE(arrayListOf("FixedDefaultListEnabled, cannot update default list")))
+            }
+            Flux.fromIterable(getDefaultLists(guestLists, listId).asIterable()).flatMap { guestList ->
                 updateListManager.updateList(guestId = guestId, listId = guestList.id!!,
                         updatedListEntity = guestList.copy(marker = ""), existingListEntity = guestList)
-            }.then(Mono.just(defaultListIndicator))
+            }.then(Mono.just(true))
         } else {
-            Mono.just(defaultListIndicator)
+            Mono.just(true)
         }
     }
 
@@ -82,8 +79,11 @@ class DefaultListManager(
         guestLists: List<ListEntity>,
         listId: UUID?
     ): List<ListEntity> {
-        // Skip the list that you are trying to process, since its already a default list..
-        return guestLists
-            .filter { (it.state == LIST_STATE.ACTIVE.value) && (it.marker == LIST_MARKER.DEFAULT.value) && (listId == null || it.id != listId) }.toList()
+        // Skip the list that you are trying to process, since its already a default list.
+        return guestLists.filter {
+            (it.state == LIST_STATE.ACTIVE.value) &&
+                    (it.marker == LIST_MARKER.DEFAULT.value) &&
+                    (listId == null || it.id != listId)
+        }.toList()
     }
 }

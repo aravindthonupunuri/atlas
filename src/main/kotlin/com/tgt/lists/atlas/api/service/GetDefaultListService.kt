@@ -24,7 +24,7 @@ class GetDefaultListService(
         locationId: Long,
         listItemsTransformationPipeline: ListItemsTransformationPipeline,
         includeItems: ItemIncludeFields,
-        listSubType: String? = null
+        listSubType: String
     ): Mono<ListResponseTO> {
 
         logger.debug("[getDefaultList] guestId: $guestId, locationId: $locationId")

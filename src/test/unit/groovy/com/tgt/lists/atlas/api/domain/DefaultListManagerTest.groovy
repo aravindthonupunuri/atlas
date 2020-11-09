@@ -88,9 +88,9 @@ class DefaultListManagerTest extends Specification {
         def actual = defaultListManager.processDefaultListInd(guestId, false, null).block()
 
         then:
-        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity])
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity]) // We only check for max lists count and no DefaultListInd processing is done since defaultListIndicator is false in the request.
 
-        !actual
+        actual
     }
 
     def "Test processDefaultListInd() while creating a list with default list as true and one default preexisting list"() {
