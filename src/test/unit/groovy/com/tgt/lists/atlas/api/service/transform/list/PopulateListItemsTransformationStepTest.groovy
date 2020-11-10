@@ -86,35 +86,35 @@ class PopulateListItemsTransformationStepTest extends Specification {
         actual.size() == 5
         actual[0].listTitle == "first-list"
         actual[0].pendingItems != null
-        actual[0].compeletedItems != null
+        actual[0].completedItems != null
         actual[0].pendingItemsCount == 1
         actual[0].completedItemsCount == 1
         actual[0].totalItemsCount == 2
 
         actual[1].listTitle == "second-list"
         actual[1].pendingItems != null
-        actual[1].compeletedItems == null
+        actual[1].completedItems == null
         actual[1].pendingItemsCount == 1
         actual[1].completedItemsCount == 0
         actual[1].totalItemsCount == 1
 
         actual[2].listTitle == "third-list"
         actual[2].pendingItems == null
-        actual[2].compeletedItems != null
+        actual[2].completedItems != null
         actual[2].pendingItemsCount == 0
         actual[2].completedItemsCount == 1
         actual[2].totalItemsCount == 1
 
         actual[3].listTitle == "fourth-list"
         actual[3].pendingItems != null
-        actual[3].compeletedItems != null
+        actual[3].completedItems != null
         actual[3].pendingItemsCount == 2
         actual[3].completedItemsCount == 1
         actual[3].totalItemsCount == 3
 
         actual[4].listTitle == "fifth-list"
         actual[4].pendingItems != null
-        actual[4].compeletedItems == null
+        actual[4].completedItems == null
         actual[4].pendingItemsCount == 1
         actual[4].completedItemsCount == 0
         actual[4].totalItemsCount == 1

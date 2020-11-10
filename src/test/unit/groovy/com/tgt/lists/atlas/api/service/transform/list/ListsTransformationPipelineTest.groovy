@@ -55,23 +55,23 @@ class ListsTransformationPipelineTest extends Specification {
         actual.size() == 5
         actual[0].listTitle == "first-list"
         actual[0].pendingItems == null
-        actual[0].compeletedItems == null
+        actual[0].completedItems == null
 
         actual[1].listTitle == "second-list"
         actual[1].pendingItems == null
-        actual[1].compeletedItems == null
+        actual[1].completedItems == null
 
         actual[2].listTitle == "third-list"
         actual[2].pendingItems == null
-        actual[2].compeletedItems == null
+        actual[2].completedItems == null
 
         actual[3].listTitle == "fourth-list"
         actual[3].pendingItems == null
-        actual[3].compeletedItems == null
+        actual[3].completedItems == null
 
         actual[4].listTitle == "fifth-list"
         actual[4].pendingItems == null
-        actual[4].compeletedItems == null
+        actual[4].completedItems == null
     }
 
     def "Test executePipeline with sort and populate list items"() {
@@ -109,31 +109,31 @@ class ListsTransformationPipelineTest extends Specification {
 
         actual[0].listTitle == "fifth-list"
         actual[0].pendingItems != null
-        actual[0].compeletedItems == null
+        actual[0].completedItems == null
         actual[0].pendingItemsCount == 1
         actual[0].completedItemsCount == 0
 
         actual[1].listTitle == "first-list"
         actual[0].pendingItems != null
-        actual[0].compeletedItems == null
+        actual[0].completedItems == null
         actual[0].pendingItemsCount == 1
         actual[0].completedItemsCount == 0
 
         actual[2].listTitle == "fourth-list"
         actual[2].pendingItems == null
-        actual[2].compeletedItems == null
+        actual[2].completedItems == null
         actual[2].pendingItemsCount == 0
         actual[2].completedItemsCount == 0
 
         actual[3].listTitle == "second-list"
         actual[2].pendingItems == null
-        actual[2].compeletedItems == null
+        actual[2].completedItems == null
         actual[2].pendingItemsCount == 0
         actual[2].completedItemsCount == 0
 
         actual[4].listTitle == "third-list"
         actual[0].pendingItems != null
-        actual[0].compeletedItems == null
+        actual[0].completedItems == null
         actual[0].pendingItemsCount == 1
         actual[0].completedItemsCount == 0
     }

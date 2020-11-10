@@ -8,6 +8,7 @@ import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipelin
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.getUserMetaDataFromMetadataMap
 import com.tgt.lists.atlas.api.util.LIST_MARKER
+import com.tgt.lists.atlas.api.util.LIST_STATE
 import com.tgt.lists.atlas.api.util.getLocalDateTimeFromInstant
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
@@ -52,6 +53,10 @@ class GetAllListService(
                                 listId = it.id,
                                 channel = it.channel,
                                 listType = it.type,
+                                listSubType = it.subtype,
+                                listState = if (it.state != null)
+                                    LIST_STATE.values().first { listState -> listState.value == it.state!! }
+                                else LIST_STATE.INACTIVE,
                                 listTitle = it.title,
                                 shortDescription = it.description,
                                 agentId = it.agentId,

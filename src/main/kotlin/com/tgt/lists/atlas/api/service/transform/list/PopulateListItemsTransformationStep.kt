@@ -40,7 +40,7 @@ class PopulateListItemsTransformationStep : ListsTransformationStep {
                             val pendingItemsCount = pendingListItems?.size ?: 0
                             val completedItemsCount = completedListItems?.size ?: 0
 
-                            list.copy(pendingItems = pendingListItems, compeletedItems = completedListItems,
+                            list.copy(pendingItems = pendingListItems, completedItems = completedListItems,
                                     pendingItemsCount = pendingItemsCount, completedItemsCount = completedItemsCount, totalItemsCount = pendingItemsCount + completedItemsCount)
                         }
             }.collectList()
