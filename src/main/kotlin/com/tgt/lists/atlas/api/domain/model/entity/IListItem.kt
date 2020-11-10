@@ -25,4 +25,5 @@ interface IListItem {
     var itemReqQty: Int?
     var itemCreatedAt: Instant?
     var itemUpdatedAt: Instant?
+    var itemAgentId: String?
 }

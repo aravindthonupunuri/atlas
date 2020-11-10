@@ -35,6 +35,7 @@ data class ListItemExtEntity(
     override var itemReqQty: Int? = null,
     override var itemCreatedAt: Instant? = null,
     override var itemUpdatedAt: Instant? = null,
+    override var itemAgentId: String? = null,
 
     override var title: String? = null,
     override var type: String? = null,

@@ -38,9 +38,10 @@ class ListItemMapper {
                     itemDesc = null,
                     itemChannel = listItemRequestTO.channel,
                     itemSubchannel = null,
+                    itemAgentId = listItemRequestTO.agentId,
                     itemMetadata = mapper.writeValueAsString(listItemRequestTO.metadata),
                     itemNotes = listItemRequestTO.itemNote,
-                    itemQty = null,
+                    itemQty = listItemRequestTO.fulfilledQuantity,
                     itemQtyUom = null,
                     itemReqQty = listItemRequestTO.requestedQuantity)
         }
@@ -65,7 +66,7 @@ class ListItemMapper {
                     itemSubchannel = existingListItemEntity.itemSubchannel,
                     itemMetadata = listItemUpdateRequestTO.metadata.let { mapper.writeValueAsString(listItemUpdateRequestTO.metadata) } ?: existingListItemEntity.itemMetadata,
                     itemNotes = listItemUpdateRequestTO.itemNote ?: existingListItemEntity.itemNotes,
-                    itemQty = existingListItemEntity.itemQty,
+                    itemQty = listItemUpdateRequestTO.fulfilledQuantity ?: existingListItemEntity.itemQty,
                     itemQtyUom = existingListItemEntity.itemQtyUom,
                     itemReqQty = listItemUpdateRequestTO.requestedQuantity ?: existingListItemEntity.itemReqQty,
                     itemCreatedAt = existingListItemEntity.itemCreatedAt,
@@ -91,6 +92,7 @@ class ListItemMapper {
                     tcin = listItemEntity.itemTcin,
                     itemTitle = listItemEntity.itemTitle ?: listItemEntity.itemDesc,
                     requestedQuantity = listItemEntity.itemReqQty,
+                    fulfilledQuantity = listItemEntity.itemQty,
                     unitOfMeasure = listItemEntity.itemQtyUom?.let { UnitOfMeasure.valueOf(it) },
                     itemNote = listItemEntity.itemNotes,
                     price = null,
@@ -106,6 +108,7 @@ class ListItemMapper {
                     if (listItemEntity.itemState != null)
                         LIST_ITEM_STATE.values().first { it.value == listItemEntity.itemState!! }
                     else null,
+                    agentId = listItemEntity.itemAgentId,
                     addedTs = listItemEntity.itemCreatedAt.toString(),
                     lastModifiedTs = listItemEntity.itemUpdatedAt.toString()
             )
@@ -122,6 +125,7 @@ class ListItemMapper {
                     tcin = listItemExtEntity.itemTcin,
                     itemTitle = listItemExtEntity.itemTitle ?: listItemExtEntity.itemDesc,
                     requestedQuantity = listItemExtEntity.itemReqQty,
+                    fulfilledQuantity = listItemExtEntity.itemQty,
                     unitOfMeasure = listItemExtEntity.itemQtyUom?.let { UnitOfMeasure.valueOf(it) },
                     itemNote = listItemExtEntity.itemNotes,
                     price = null,
@@ -137,6 +141,7 @@ class ListItemMapper {
                     if (listItemExtEntity.itemState != null)
                         LIST_ITEM_STATE.values().first { it.value == listItemExtEntity.itemState!! }
                     else null,
+                    agentId = listItemExtEntity.itemAgentId,
                     addedTs = listItemExtEntity.itemCreatedAt.toString(),
                     lastModifiedTs = listItemExtEntity.itemUpdatedAt.toString()
             )

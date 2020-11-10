@@ -41,7 +41,7 @@ class UpdateListItemServiceTest extends Specification {
 
     def "test updateListItem() integrity"() {
         given:
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                  if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -91,7 +91,7 @@ class UpdateListItemServiceTest extends Specification {
 
     def "test updateListItem() updating item state"() {
         given:
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, LIST_ITEM_STATE.COMPLETED, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, LIST_ITEM_STATE.COMPLETED, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -146,7 +146,7 @@ class UpdateListItemServiceTest extends Specification {
         def tcin = "1234"
         def updatedTcin = "4567"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(updatedTcin, null, null, null, listDataProvider.getItemRefId(ItemType.TCIN, updatedTcin), null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(updatedTcin, null, null, null, listDataProvider.getItemRefId(ItemType.TCIN, updatedTcin), null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -193,7 +193,7 @@ class UpdateListItemServiceTest extends Specification {
         def tcin = "1234"
         def updatedTcin = "4567"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(updatedTcin, null, null, null, null, null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(updatedTcin, null, null, null, null, null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -225,7 +225,7 @@ class UpdateListItemServiceTest extends Specification {
         def itemId = Uuids.timeBased()
         def updatedTitle = "updated title"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, updatedTitle, null, null, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, updatedTitle), null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, updatedTitle, null, null, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, updatedTitle), null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -271,7 +271,7 @@ class UpdateListItemServiceTest extends Specification {
         def itemId = Uuids.timeBased()
         def updatedTitle = "updated title"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, updatedTitle, null, null, null, null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, updatedTitle, null, null, null, null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -304,7 +304,7 @@ class UpdateListItemServiceTest extends Specification {
         def itemId = Uuids.timeBased()
         def tcin = "1234"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(tcin, null, null, ItemType.TCIN, listDataProvider.getItemRefId(ItemType.TCIN, tcin), null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(tcin, null, null, ItemType.TCIN, listDataProvider.getItemRefId(ItemType.TCIN, tcin), null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -350,7 +350,7 @@ class UpdateListItemServiceTest extends Specification {
         def itemId = Uuids.timeBased()
         def tcin = "1234"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(tcin, null, null, ItemType.TCIN, null, null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(tcin, null, null, ItemType.TCIN, null, null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -379,7 +379,7 @@ class UpdateListItemServiceTest extends Specification {
     def "test updateListItem() updating item type from GENERIC ITEM to TCIN item without tcin in request"() {
 
         when:
-        new ListItemUpdateRequestTO(null, null, null, ItemType.TCIN, null, null, null, null, new RefIdValidator() {
+        new ListItemUpdateRequestTO(null, null, null, ItemType.TCIN, null, null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -401,7 +401,7 @@ class UpdateListItemServiceTest extends Specification {
     def "test updateListItem() updating item type from TCIN to GENERIC_ITEM "() {
 
         when:
-        new ListItemUpdateRequestTO(null, null, null, ItemType.GENERIC_ITEM, null, null, null, null, new RefIdValidator() {
+        new ListItemUpdateRequestTO(null, null, null, ItemType.GENERIC_ITEM, null, null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -424,7 +424,7 @@ class UpdateListItemServiceTest extends Specification {
     def "test updateListItem() with empty request "() {
 
         when:
-        new ListItemUpdateRequestTO(null, null, null, null, null, null, null, null, new RefIdValidator() {
+        new ListItemUpdateRequestTO(null, null, null, null, null, null, null, null, null, new RefIdValidator() {
             @Override
             boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {

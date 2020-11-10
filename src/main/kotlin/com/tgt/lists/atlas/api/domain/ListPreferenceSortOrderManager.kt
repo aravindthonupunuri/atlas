@@ -13,6 +13,7 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
+// TODO remove list.features.sort-position from config - its a redundant prop
 @Singleton
 @Requires(property = "list.features.sort-position", value = "true")
 class ListPreferenceSortOrderManager(@Inject private val listPreferenceRepository: ListPreferenceRepository) {

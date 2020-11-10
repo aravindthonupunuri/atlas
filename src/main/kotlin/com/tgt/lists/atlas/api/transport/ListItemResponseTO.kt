@@ -15,6 +15,7 @@ data class ListItemResponseTO(
     val itemTitle: String? = null,
     val itemNote: String? = null,
     val requestedQuantity: Int? = 1,
+    val fulfilledQuantity: Int? = null,
     val unitOfMeasure: UnitOfMeasure? = null,
     val metadata: Map<String, Any>? = null,
     val price: Float? = null,
@@ -22,6 +23,7 @@ data class ListItemResponseTO(
     val offerCount: Int = 0,
     val relationshipType: String? = null,
     val itemState: LIST_ITEM_STATE? = LIST_ITEM_STATE.PENDING,
+    val agentId: String? = null,
     val addedTs: String? = null,
     val lastModifiedTs: String? = null
 )

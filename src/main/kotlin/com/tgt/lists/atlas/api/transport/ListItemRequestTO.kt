@@ -15,7 +15,9 @@ data class ListItemRequestTO(
     val itemTitle: String? = null,
     val itemNote: String? = null,
     val requestedQuantity: Int? = null,
+    val fulfilledQuantity: Int? = null,
     val unitOfMeasure: UnitOfMeasure? = UnitOfMeasure.EACHES,
+    val agentId: String? = null,
     val metadata: Map<String, Any>? = null
 ) {
 

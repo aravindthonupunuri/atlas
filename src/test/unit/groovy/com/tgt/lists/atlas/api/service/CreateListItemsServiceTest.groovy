@@ -64,13 +64,13 @@ class CreateListItemsServiceTest extends Specification {
         def tenantrefId5 = listDataProvider.getItemRefId(ItemType.TCIN, tcin5)
 
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tenantrefId1, TestListChannel.WEB.toString(), tcin1, null,
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, tenantrefId2, TestListChannel.WEB.toString(), tcin2, null,
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, tenantrefId3, TestListChannel.WEB.toString(), tcin3, null,
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, tenantrefId4, TestListChannel.WEB.toString(), tcin4, null,
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
 
         ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, null, 2, "notes1")
         ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, null, 3, "notes1")
@@ -130,13 +130,13 @@ class CreateListItemsServiceTest extends Specification {
         def gItemTenantrefId1 = listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
 
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tcinTenantRefId1, TestListChannel.WEB.toString(), tcin1, null,
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
 
         def listItemRequest2 = new ListItemRequestTO(ItemType.GENERIC_ITEM, gItemTenantrefId1, TestListChannel.WEB.toString(), null, gItem1,
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
 
         def listItemRequest3 = new ListItemRequestTO(ItemType.GENERIC_ITEM, gItemTenantrefId1, TestListChannel.WEB.toString(), null, gItem1,
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
 
         def itemsToAdd = [listItemRequest1, listItemRequest2, listItemRequest3]
 
@@ -163,7 +163,7 @@ class CreateListItemsServiceTest extends Specification {
 
         when:
         new ListItemRequestTO(ItemType.TCIN, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
         then:
         thrown(BadRequestException)
     }
@@ -175,7 +175,7 @@ class CreateListItemsServiceTest extends Specification {
 
         when:
         new ListItemRequestTO(ItemType.GENERIC_ITEM, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
         then:
         thrown(BadRequestException)
     }
@@ -187,7 +187,7 @@ class CreateListItemsServiceTest extends Specification {
 
         when:
         new ListItemRequestTO(ItemType.OFFER, tenantrefId1, TestListChannel.WEB.toString(), tcin1, "title",
-                "test item", null, UnitOfMeasure.EACHES, null)
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
         then:
         thrown(BadRequestException)
     }

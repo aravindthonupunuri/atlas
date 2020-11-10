@@ -46,7 +46,7 @@ class DeduplicationManagerTest extends Specification {
     def "Test checkIfItemPreExist() for list with no preexisting items, so skipping dedup process"() {
         given:
         def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(),"1234", null,
-            "itemNote", 1, UnitOfMeasure.EACHES, null)
+            "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest ] as LinkedHashMap
         def listId = Uuids.timeBased()
 
@@ -63,7 +63,7 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() with no matching pending items"() {
         given:
         def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest ] as LinkedHashMap
         def listId = Uuids.timeBased()
 
@@ -84,7 +84,7 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() with no matching item type to dedup, so skipping dedup"() {
         given:
         def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest ] as LinkedHashMap
         def listId = Uuids.timeBased()
 
@@ -105,15 +105,15 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() exceeding max pending items"() {
         given:
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), "2345", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), "3456", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), "4567", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), "2222", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
 
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
@@ -136,15 +136,15 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() exceeding max pending items but rolling update turned on"() {
         given:
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), "2345", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), "3456", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), "4567", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), "2222", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
 
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
@@ -180,15 +180,15 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() exceeding max pending items, rolling update turned on and existing item isnt part of item sort order"() {
         given:
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), "2345", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), "3456", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), "4567", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), "2222", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
 
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
@@ -222,15 +222,15 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() exceeding max pending items but rolling update turned on and dedupe turned off"() {
         given:
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), "2345", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), "3456", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), "4567", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), "2222", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
 
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
@@ -267,15 +267,15 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() exceeding max pending items with rolling update turned on and not exceeding max count"() {
         given:
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), "2345", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), "3456", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), "4567", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), "2222", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
 
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
@@ -301,15 +301,15 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() with rolling update turned on and dedup"() {
         given:
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), "2345", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), "3456", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), "4567", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn1111",  TestListChannel.WEB.toString(), "1111", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
 
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
@@ -350,13 +350,13 @@ class DeduplicationManagerTest extends Specification {
     def "Test updateDuplicateItems() with multiple PreExisting items"() {
         given:
         def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), "1234", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), "2345", null,
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest3 = new ListItemRequestTO(ItemType.GENERIC_ITEM, "itm3456",  TestListChannel.WEB.toString(), null, "genericItem1",
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
         def listItemRequest4 = new ListItemRequestTO(ItemType.GENERIC_ITEM, "itm4567", TestListChannel.WEB.toString(), null,  "genericItem2",
-                "itemNote", 1, UnitOfMeasure.EACHES, null)
+                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
 
         Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
                                                        "itm3456" : listItemRequest3, "itm4567" : listItemRequest4] as LinkedHashMap

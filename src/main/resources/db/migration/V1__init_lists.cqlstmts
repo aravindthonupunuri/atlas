@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS backpack.lists (
     item_req_qty        int,
     item_created_at     timestamp,
     item_updated_at     timestamp,
+    item_agent_id         text,
 
     PRIMARY KEY (id, item_state, item_id)
 ) WITH CLUSTERING ORDER BY (item_state ASC, item_id ASC )

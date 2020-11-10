@@ -11,6 +11,7 @@ import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.common.components.exception.InternalServerException
 import io.micronaut.core.annotation.Introspected
 
+// TODO is agentid to be updated at all?
 @Introspected
 data class ListItemUpdateRequestTO(
     val tcin: String? = null,
@@ -21,6 +22,7 @@ data class ListItemUpdateRequestTO(
     val metadata: Map<String, Any>? = null,
     val itemState: LIST_ITEM_STATE? = null,
     val requestedQuantity: Int? = null,
+    val fulfilledQuantity: Int? = null,
     val refIdValidator: RefIdValidator,
     val userItemMetaDataTransformationStep: UserItemMetaDataTransformationStep? = null
 ) {
@@ -37,6 +39,7 @@ data class ListItemUpdateRequestTO(
                 this.metadata == null &&
                 this.itemState == null &&
                 this.requestedQuantity == null &&
+                this.fulfilledQuantity == null &&
                 this.userItemMetaDataTransformationStep == null) {
             throw BadRequestException(AppErrorCodes.ITEM_TYPE_REQUEST_BODY_VIOLATION_ERROR_CODE(arrayListOf("Empty request body")))
         }

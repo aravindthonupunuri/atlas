@@ -36,7 +36,8 @@ data class ListItemEntity(
     override var itemQtyUom: String? = null,
     override var itemReqQty: Int? = null,
     override var itemCreatedAt: Instant? = null,
-    override var itemUpdatedAt: Instant? = null
+    override var itemUpdatedAt: Instant? = null,
+    override var itemAgentId: String? = null
 ) : IListItem {
 
     fun validate(): ListItemEntity {
