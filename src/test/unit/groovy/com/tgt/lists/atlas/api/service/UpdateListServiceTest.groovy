@@ -44,7 +44,7 @@ class   UpdateListServiceTest extends Specification {
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
         def updateDesc = "description updated"
-        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null)
+        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null, null)
 
         UUID listId = Uuids.timeBased()
 
@@ -87,7 +87,7 @@ class   UpdateListServiceTest extends Specification {
             }
         }
 
-        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, transformationStep)
+        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null, transformationStep)
 
         UUID listId = Uuids.timeBased()
 
@@ -117,7 +117,7 @@ class   UpdateListServiceTest extends Specification {
 
     def "Test updateList() with false default List value"() {
         given:
-        def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", null, false, null, null)
+        def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", null, false, null, null, null)
         UUID listId = Uuids.timeBased()
 
         when:

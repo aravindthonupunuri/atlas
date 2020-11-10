@@ -71,7 +71,8 @@ class ListMapper {
                     marker = if (listUpdateRequestTO.defaultList != null && listUpdateRequestTO.defaultList) LIST_MARKER.DEFAULT.value
                     else existingEntity.marker,
                     notes = listUpdateRequestTO.shortDescription ?: existingEntity.notes,
-                    state = existingEntity.state,
+                    state = if (listUpdateRequestTO.listState != null) listUpdateRequestTO.listState.value
+                    else existingEntity.state,
                     updatedAt = getLocalInstant(),
                     metadata = mapper.writeValueAsString(updatedMetaData?.userMetaData)))
         }
