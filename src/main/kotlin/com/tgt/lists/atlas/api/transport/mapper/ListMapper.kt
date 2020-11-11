@@ -141,5 +141,26 @@ class ListMapper {
                     maxCompletedPageCount = maxCompletedPageCount
             )
         }
+
+        fun toListGetAllResponseTO(listEntity: ListEntity, maxListsCount: Int? = 50): ListGetAllResponseTO {
+            return ListGetAllResponseTO(
+                    listId = listEntity.id,
+                    channel = listEntity.channel,
+                    subChannel = listEntity.subchannel,
+                    listType = listEntity.type,
+                    listSubType = listEntity.subtype,
+                    listState = if (listEntity.state != null)
+                        LIST_STATE.values().first { listState -> listState.value == listEntity.state!! }
+                    else LIST_STATE.INACTIVE,
+                    listTitle = listEntity.title,
+                    shortDescription = listEntity.description,
+                    agentId = listEntity.agentId,
+                    metadata = getUserMetaDataFromMetadataMap(listEntity.metadata)?.userMetaData,
+                    defaultList = (listEntity.marker == LIST_MARKER.DEFAULT.value),
+                    maxListsCount = maxListsCount!!,
+                    addedTs = getLocalDateTimeFromInstant(listEntity.createdAt),
+                    lastModifiedTs = getLocalDateTimeFromInstant(listEntity.updatedAt)
+            )
+        }
     }
 }

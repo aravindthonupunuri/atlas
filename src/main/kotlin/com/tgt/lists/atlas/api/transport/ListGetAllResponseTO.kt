@@ -6,6 +6,7 @@ import java.util.*
 data class ListGetAllResponseTO(
     val listId: UUID?,
     val channel: String? = null,
+    val subChannel: String? = null,
     val listType: String?,
     val listSubType: String? = null,
     val listState: LIST_STATE? = null,
