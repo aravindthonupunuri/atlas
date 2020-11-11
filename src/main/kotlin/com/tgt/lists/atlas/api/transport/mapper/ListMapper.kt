@@ -36,7 +36,7 @@ class ListMapper {
                     description = listRequestTO.shortDescription,
                     location = listRequestTO.locationId.toString(),
                     agentId = listRequestTO.agentId,
-                    metadata = mapper.writeValueAsString(listRequestTO.metadata),
+                    metadata = mapper.writeValueAsString(setMetadataMapFromList(listRequestTO.metadata)),
                     state = listRequestTO.listState.value, // Should be set by the app layer
                     expiration = getExpirationDate(getLocalInstant(), expirationDays),
                     testList = testList)
@@ -76,7 +76,7 @@ class ListMapper {
                     state = if (listUpdateRequestTO.listState != null) listUpdateRequestTO.listState.value
                     else existingEntity.state,
                     updatedAt = getLocalInstant(),
-                    metadata = mapper.writeValueAsString(updatedMetaData?.userMetaData)))
+                    metadata = mapper.writeValueAsString(setMetadataMapFromList(updatedMetaData?.userMetaData))))
         }
 
         fun setMetadataMapFromList(tenantMetaData: Map<String, Any>? = null): MetadataMap {
@@ -99,11 +99,7 @@ class ListMapper {
         }
 
         fun getUserMetaDataFromMetadataMap(userMetaData: String?): UserMetaDataTO? {
-            var metadata: UserMetaDataTO? = userMetaData?.let { mapper.readValue<UserMetaDataTO>(it) }
-            if (metadata == null) {
-                metadata = UserMetaDataTO()
-            }
-            return metadata
+            return UserMetaDataTO(userMetaData?.let { mapper.readValue<Map<String, Any>>(it) })
         }
 
         fun toListResponseTO(

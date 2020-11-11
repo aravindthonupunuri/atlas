@@ -2,7 +2,7 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.transport.mapper.ListMapper
+import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -26,7 +26,7 @@ class UpdateListItemManager(
     ): Mono<ListItemEntity> {
         logger.debug("[updateListItem] Updating list item")
         return listRepository.updateListItem(updatedItem, existingItem).zipWhen {
-            val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(it.itemMetadata)
+            val userMetaDataTO = ListItemMapper.getUserItemMetaDataFromMetadataMap(it.itemMetadata)
             eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(),
                     UpdateListItemNotifyEvent(guestId, it.id!!, it.itemId!!, it.itemTcin, it.itemTitle, it.itemReqQty,
                             userMetaDataTO?.userMetaData), listId.toString())

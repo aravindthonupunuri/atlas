@@ -3,7 +3,7 @@ package com.tgt.lists.atlas.api.domain
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.ListItemSortOrderService
-import com.tgt.lists.atlas.api.transport.mapper.ListMapper
+import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.kafka.model.MultiDeleteListItem
@@ -41,7 +41,7 @@ class DeleteListItemsManager(
                                 .flatMap {
                                     val itemEntity = it
                                     val itemState = LIST_ITEM_STATE.values().first { it.value == itemEntity.itemState }
-                                    val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(itemEntity.itemMetadata)
+                                    val userMetaDataTO = ListItemMapper.getUserItemMetaDataFromMetadataMap(itemEntity.itemMetadata)
 
                                     eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(),
                                             DeleteListItemNotifyEvent(guestId, itemEntity.id!!,

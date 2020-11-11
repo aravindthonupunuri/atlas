@@ -4,7 +4,6 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
-import com.tgt.lists.atlas.api.transport.mapper.ListMapper
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.CreateListItemNotifyEvent
 import mu.KotlinLogging
@@ -85,7 +84,7 @@ class CreateListItemsManager(
             logger.debug("[createListItems] guestId: $guestId listId:$listId")
             return listRepository.saveListItems(listItems).zipWhen { items ->
                 Flux.fromIterable(items.asIterable()).flatMap {
-                    val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(it.itemMetadata)
+                    val userMetaDataTO = ListItemMapper.getUserItemMetaDataFromMetadataMap(it.itemMetadata)
                     eventPublisher.publishEvent(CreateListItemNotifyEvent.getEventType(),
                             CreateListItemNotifyEvent(guestId, it.id!!, it.itemId!!,
                                     LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
