@@ -11,6 +11,7 @@ data class ListItemResponseTO(
     @field:NotNull(message = "Item type must not be empty") val itemType: ItemType? = null,
     @field:NotNull(message = "Item ref id must not be empty") val itemRefId: String,
     val channel: String? = null,
+    val subChannel: String? = null,
     val tcin: String? = null,
     val itemTitle: String? = null,
     val itemNote: String? = null,

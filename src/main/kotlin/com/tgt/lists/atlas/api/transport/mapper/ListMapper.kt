@@ -31,6 +31,7 @@ class ListMapper {
                     subtype = listSubtype,
                     title = listRequestTO.listTitle,
                     channel = listRequestTO.channel,
+                    subchannel = listRequestTO.subChannel,
                     marker = if (defaultList) LIST_MARKER.DEFAULT.value else null,
                     description = listRequestTO.shortDescription,
                     location = listRequestTO.locationId.toString(),
@@ -51,6 +52,7 @@ class ListMapper {
                     subtype = listItemExtEntity.subtype,
                     title = listItemExtEntity.title,
                     channel = listItemExtEntity.channel,
+                    subchannel = listItemExtEntity.subchannel,
                     marker = listItemExtEntity.marker,
                     description = listItemExtEntity.description,
                     location = listItemExtEntity.location,
@@ -117,6 +119,7 @@ class ListMapper {
             return ListResponseTO(
                     listId = listEntity.id,
                     channel = listEntity.channel,
+                    subChannel = listEntity.subchannel,
                     listType = listEntity.type,
                     listSubType = listEntity.subtype,
                     listState =

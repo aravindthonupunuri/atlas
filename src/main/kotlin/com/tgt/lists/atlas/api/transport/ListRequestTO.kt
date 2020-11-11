@@ -8,6 +8,7 @@ data class ListRequestTO(
     @field:NotEmpty(message = "List title must not be empty") val listTitle: String,
     @field:NotEmpty(message = "List sub type must not be empty") val listSubType: String,
     @field:NotEmpty(message = "List sub type must not be empty") val listState: LIST_STATE,
+    val subChannel: String? = null,
     val locationId: Long? = null,
     val shortDescription: String? = null,
     val defaultList: Boolean = false,

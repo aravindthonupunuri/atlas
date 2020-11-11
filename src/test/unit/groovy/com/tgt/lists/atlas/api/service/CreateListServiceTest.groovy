@@ -36,7 +36,7 @@ class CreateListServiceTest extends Specification {
         def title = "list1"
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
-        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
+        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:
@@ -59,7 +59,7 @@ class CreateListServiceTest extends Specification {
         def title = "list1"
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
-        def listRequest = new ListRequestTO(channel, title, "fav", LIST_STATE.ACTIVE, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
+        def listRequest = new ListRequestTO(channel, title, "fav", LIST_STATE.ACTIVE, null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:

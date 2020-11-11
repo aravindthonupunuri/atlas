@@ -13,6 +13,7 @@ data class ListResponseTO(
     @field:NotEmpty(message = "List type must not be empty") val listSubType: String?,
     @field:NotEmpty(message = "List type must not be empty") val listState: LIST_STATE?,
     @field:NotEmpty(message = "List title must not be empty") val listTitle: String?,
+    val subChannel: String? = null,
     val shortDescription: String?,
     val agentId: String?,
     val defaultList: Boolean? = false,
