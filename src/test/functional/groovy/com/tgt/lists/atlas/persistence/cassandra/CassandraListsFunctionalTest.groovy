@@ -11,8 +11,6 @@ import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.util.ListDataProvider
 import io.micronaut.test.annotation.MicronautTest
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import spock.lang.Shared
 import spock.lang.Stepwise
 import spock.lang.Unroll

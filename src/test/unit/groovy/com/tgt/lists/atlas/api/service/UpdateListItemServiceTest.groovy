@@ -2,6 +2,7 @@ package com.tgt.lists.atlas.api.service
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.tgt.lists.atlas.api.domain.DeduplicationManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
@@ -16,6 +17,7 @@ import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.common.components.exception.InternalServerException
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.jetbrains.annotations.NotNull
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
@@ -23,6 +25,7 @@ class UpdateListItemServiceTest extends Specification {
 
     UpdateListItemService updateListItemService
     UpdateListItemManager updateListItemManager
+    DeduplicationManager deduplicationManager
     EventPublisher eventPublisher
     ListDataProvider listDataProvider
     ListRepository listRepository
@@ -33,8 +36,9 @@ class UpdateListItemServiceTest extends Specification {
     def setup() {
         eventPublisher = Mock(EventPublisher)
         listRepository = Mock(ListRepository)
+        deduplicationManager = Mock(DeduplicationManager)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
-        updateListItemService = new UpdateListItemService(listRepository, updateListItemManager)
+        updateListItemService = new UpdateListItemService(listRepository, updateListItemManager, deduplicationManager)
         listDataProvider = new ListDataProvider()
         objectMapper = new ObjectMapper()
     }
@@ -71,8 +75,8 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
-        // updating duplicate items
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
             assert updatedListItem.id == listId
@@ -120,8 +124,8 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
-        // updating duplicate items
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
             assert updatedListItem.id == listId
@@ -171,8 +175,8 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
-        // updating duplicate items
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
             assert updatedListItem.id == listId
@@ -214,7 +218,7 @@ class UpdateListItemServiceTest extends Specification {
         updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
 
         thrown(InternalServerException)
     }
@@ -250,8 +254,8 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
-        // updating duplicate items
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
             assert updatedListItem.id == listId
@@ -292,7 +296,7 @@ class UpdateListItemServiceTest extends Specification {
         updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
 
         thrown(InternalServerException)
 
@@ -329,8 +333,8 @@ class UpdateListItemServiceTest extends Specification {
         def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
-        // updating duplicate items
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedListItem = arguments[0]
             assert updatedListItem.id == listId
@@ -371,7 +375,7 @@ class UpdateListItemServiceTest extends Specification {
         updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemByItemId(listId, itemId) >> Mono.just(listItemEntity)
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
 
         thrown(InternalServerException)
     }
@@ -418,7 +422,6 @@ class UpdateListItemServiceTest extends Specification {
 
         then:
         thrown(BadRequestException)
-
     }
 
     def "test updateListItem() with empty request "() {

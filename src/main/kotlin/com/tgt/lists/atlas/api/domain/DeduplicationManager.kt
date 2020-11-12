@@ -2,7 +2,6 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
@@ -39,48 +38,44 @@ class DeduplicationManager(
     fun updateDuplicateItems(
         guestId: String,
         listId: UUID,
-        newItemsMap: Map<String, ListItemRequestTO>,
+        items: List<ListItemEntity>,
+        existingItems: List<ListItemEntity>,
         itemState: LIST_ITEM_STATE
-    ): Mono<Pair<List<ListItemEntity>, MutableMap<String, List<ListItemEntity>>>> {
-        return listRepository.findListItemsByListId(listId).collectList().flatMap {
-            if (it.isNullOrEmpty()) {
-                logger.error("From updateDuplicateItems(), empty list with no list items")
-                Mono.just(Pair(emptyList(), mutableMapOf()))
+    ): Mono<List<ListItemEntity>> {
+        return if (existingItems.isNullOrEmpty()) {
+            logger.debug("[updateDuplicateItems] No existing items in list skipping deduplication process")
+                Mono.just(emptyList())
             } else {
-                val existingItems: List<ListItemEntity> = if (itemState == LIST_ITEM_STATE.PENDING) {
-                    it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.PENDING.value }
-                } else {
-                    it.filter { listItem -> listItem.itemState == LIST_ITEM_STATE.COMPLETED.value }
-                }
-                processDeduplication(guestId, listId, itemState, existingItems, newItemsMap)
-            }
+            val duplicateItemsMap = getDuplicateItemsMap(existingItems, items)
+            return checkMaxItemsCount(guestId, listId, existingItems, items, itemState, duplicateItemsMap)
+                    .flatMap { processDedupe(guestId, listId, items, duplicateItemsMap) }
         }
     }
 
     /**
-     * Implements functionality to verify the final items count does not exceed the limit.
-     * It also updates the duplicate items already present in the list.
-     *
-     *  Give a triple of (list of existing items, list of updatedItems, duplicateItemsMap)
+     * Implements functionality to find the duplicates for every new item being added.
      */
-    private fun processDeduplication(
-        guestId: String,
-        listId: UUID,
-        itemState: LIST_ITEM_STATE,
+    private fun getDuplicateItemsMap(
         existingItems: List<ListItemEntity>,
-        newItemsMap: Map<String, ListItemRequestTO>
-    ): Mono<Pair<List<ListItemEntity>, MutableMap<String, List<ListItemEntity>>>> {
-        if (existingItems.isNullOrEmpty()) {
-            logger.debug("[processDeduplication] No existing items in list skipping deduplication process")
-            return Mono.just(Pair(emptyList(), mutableMapOf()))
+        items: List<ListItemEntity>
+    ): MutableMap<String, List<ListItemEntity>> {
+        if (!isDedupeEnabled) {
+            logger.debug("[getDuplicateItemsMap] Deduplication is turned off")
+            return mutableMapOf()
+        } else {
+            val duplicateItemsMap = mutableMapOf<String, List<ListItemEntity>>()
+            items.stream().forEach { listItemEntity ->
+                val duplicateItems = existingItems.filter { it.itemRefId == listItemEntity.itemRefId }
+                if (!duplicateItems.isNullOrEmpty()) {
+                    duplicateItemsMap[listItemEntity.itemRefId!!] = duplicateItems
+                }
+            }
+
+            logger.debug("DuplicateItemsMap: keys ${duplicateItemsMap.keys} and " +
+                    "values: ${duplicateItemsMap.values.forEach { it.forEach { listItem -> listItem.itemId } }}")
+
+            return duplicateItemsMap
         }
-
-        val newItems = newItemsMap.values.toList() // new items to be added
-        val duplicateItemsMap = getDuplicateItemsMap(existingItems, newItems)
-
-        return checkMaxItemsCount(guestId, listId, existingItems, newItems, itemState, duplicateItemsMap)
-                .flatMap { updateDuplicateItems(guestId, listId, newItemsMap, it) }
-                .map { Pair(it.first, it.second) }
     }
 
     /**
@@ -89,16 +84,17 @@ class DeduplicationManager(
      *
      * Give a pair of (list of updatedItems, duplicateItemsMap)
      */
-    private fun updateDuplicateItems(
+    private fun processDedupe(
         guestId: String,
         listId: UUID,
-        newItemsMap: Map<String, ListItemRequestTO>,
+        items: List<ListItemEntity>,
         duplicateItemsMap: MutableMap<String, List<ListItemEntity>>
-    ): Mono<Pair<List<ListItemEntity>, MutableMap<String, List<ListItemEntity>>>> {
-        val dedupeDataList = arrayListOf<DedupeData>()
+    ): Mono<List<ListItemEntity>> {
+        val deDupeData = arrayListOf<DedupeData>()
+        val itemsMap = items.map { it.itemRefId to it }.toMap()
 
         duplicateItemsMap.map { it ->
-            val newItem = newItemsMap[it.key]
+            val newItem = itemsMap[it.key]
             val duplicateItems = it.value
 
             if (newItem != null && !duplicateItems.isNullOrEmpty()) {
@@ -118,11 +114,11 @@ class DeduplicationManager(
                     updatedRequestedQuantity += listItem.itemReqQty ?: 1
                 }
 
-                updatedRequestedQuantity += (newItem.requestedQuantity ?: 1)
-                updatedItemNote = if (newItem.itemNote.isNullOrEmpty()) {
+                updatedRequestedQuantity += (newItem.itemReqQty ?: 1)
+                updatedItemNote = if (newItem.itemNotes.isNullOrEmpty()) {
                     updatedItemNote
                 } else {
-                    newItem.itemNote + "\n" + updatedItemNote
+                    newItem.itemNotes + "\n" + updatedItemNote
                 }
 
                 val itemToUpdate = sortedExistingItemList.first()
@@ -130,43 +126,43 @@ class DeduplicationManager(
                 val itemsToDelete = sortedExistingItemList
                         .filter { it.itemId != sortedExistingItemList.first().itemId }
 
-                dedupeDataList.add(DedupeData(itemToUpdate, itemsToDelete))
+                deDupeData.add(DedupeData(itemToUpdate, itemsToDelete))
             }
         }
 
         val totalItemsToDelete = arrayListOf<ListItemEntity>()
-        dedupeDataList.map { totalItemsToDelete.addAll(it.itemsToDelete) }
+        deDupeData.map { totalItemsToDelete.addAll(it.itemsToDelete) }
 
-        val totalItemsToUpdate = dedupeDataList.map { it.itemToUpdate }
+        val totalItemsToUpdate = deDupeData.map { it.itemToUpdate }
 
-        if (totalItemsToUpdate.isNullOrEmpty()) {
-            logger.debug("[updateDuplicateItems] No items to dedupe")
-            return Mono.just(Pair(emptyList(), duplicateItemsMap))
+        return if (totalItemsToUpdate.isNullOrEmpty()) {
+            logger.debug("[processDedupe] No items to dedupe")
+            Mono.just(emptyList())
+        } else {
+            val itemIdsToDelete = totalItemsToDelete.map { it.itemId!! }
+            logger.debug("[processDedupe] Items to Update: $totalItemsToUpdate ItemIds to delete: $itemIdsToDelete")
+
+            Flux.fromIterable(totalItemsToUpdate.asIterable())
+                    .flatMap { updateListItemManager.updateListItem(guestId, listId, it) }.collectList()
+                    .zipWith(deleteListItemsManager.deleteListItems(guestId, listId, totalItemsToDelete))
+                    .map { it.t1 }
         }
-
-        val itemIdsToDelete = totalItemsToDelete.map { it.itemId!! }
-        logger.debug("[updateDuplicateItems] Items to Update: $totalItemsToUpdate ItemIds to delete: $itemIdsToDelete")
-
-        return Flux.fromIterable(totalItemsToUpdate.asIterable())
-                .flatMap { updateListItemManager.updateListItem(guestId, listId, it) }.collectList()
-                .zipWith(deleteListItemsManager.deleteListItems(guestId, listId, totalItemsToDelete))
-                .map { Pair(it.t1, duplicateItemsMap) }
     }
 
     private fun checkMaxItemsCount(
         guestId: String,
         listId: UUID,
         existingItems: List<ListItemEntity>,
-        newItems: List<ListItemRequestTO>,
+        itemsToDedup: List<ListItemEntity>,
         itemState: LIST_ITEM_STATE,
         duplicateItemsMap: MutableMap<String, List<ListItemEntity>> // map of new item ref id to its duplicate existing items
-    ): Mono<MutableMap<String, List<ListItemEntity>>> {
+    ): Mono<Boolean> {
         // Validate max items count
         val existingItemsCount = existingItems.count() // count before dedup
         var count = 0
         duplicateItemsMap.keys.stream().forEach { count += (duplicateItemsMap[it]?.count() ?: 0) }
         val duplicateItemsCount = count // total no of duplicated items existing in list
-        val newItemsCount = newItems.count() // new items to be added
+        val newItemsCount = itemsToDedup.count() // new items to be added
 
         val finalItemsCount = (existingItemsCount - duplicateItemsCount) + newItemsCount // final items count after dedupe
         if (itemState == LIST_ITEM_STATE.PENDING && !rollingUpdate && finalItemsCount > maxPendingItemCount) {
@@ -193,46 +189,10 @@ class DeduplicationManager(
             logger.debug("[checkMaxItemsCount] Exceeding max items count in list, stale items to be delete count" +
                     " $itemsCountToDelete")
 
-            return deleteListItemsManager.deleteListItems(guestId, listId, result.take(itemsCountToDelete))
-                    .map { duplicateItemsMap }
-                    .onErrorResume {
-                        logger.error { it.message ?: it.cause?.message }
-                        Mono.just(duplicateItemsMap)
-                    }
+            return deleteListItemsManager.deleteListItems(guestId, listId, result.take(itemsCountToDelete)).map { true }
         } else {
-            return Mono.just(duplicateItemsMap)
+            return Mono.just(true)
         }
-    }
-
-    /**
-     * Implements functionality to find the duplicates for every new item being added.
-     */
-    private fun getDuplicateItemsMap(
-        existingItems: List<ListItemEntity>,
-        newItems: List<ListItemRequestTO>
-    ): MutableMap<String, List<ListItemEntity>> {
-        if (!isDedupeEnabled) {
-            logger.debug("[getDuplicateItemsMap] Deduplication is turned off")
-            return mutableMapOf()
-        } else {
-            val duplicateItemsMap = mutableMapOf<String, List<ListItemEntity>>()
-            newItems.stream().forEach { listItemRequestTO ->
-                val duplicateItems = existingItems.filter { itemFilter(it, listItemRequestTO) }
-                if (!duplicateItems.isNullOrEmpty()) {
-                    duplicateItemsMap[listItemRequestTO.itemRefId] = duplicateItems
-                }
-            }
-
-            logger.debug("DuplicateItemsMap: keys ${duplicateItemsMap.keys} and " +
-                    "values: ${duplicateItemsMap.values.forEach { it.forEach { listItem -> listItem.itemId } }}")
-
-            return duplicateItemsMap
-        }
-    }
-
-    private fun itemFilter(existingItem: ListItemEntity, newItem: ListItemRequestTO): Boolean {
-        return (existingItem.itemType == newItem.itemType.value) &&
-                (newItem.itemRefId == existingItem.itemRefId)
     }
 
     data class DedupeData(

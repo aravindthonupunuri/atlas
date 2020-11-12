@@ -2,6 +2,7 @@ package com.tgt.lists.atlas.api.service
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.github.dockerjava.api.exception.BadRequestException
+import com.tgt.lists.atlas.api.domain.DeduplicationManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
@@ -18,6 +19,7 @@ import spock.lang.Specification
 class UpdateListItemsStateServiceTest extends Specification {
 
     UpdateListItemsStateService updateListItemsStateService
+    DeduplicationManager deduplicationManager
     UpdateListItemManager updateListItemManager
     EventPublisher eventPublisher
     ListDataProvider listDataProvider
@@ -28,8 +30,9 @@ class UpdateListItemsStateServiceTest extends Specification {
     def setup() {
         eventPublisher = Mock(EventPublisher)
         listRepository = Mock(ListRepository)
+        deduplicationManager = Mock(DeduplicationManager)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
-        updateListItemsStateService = new UpdateListItemsStateService(listRepository, updateListItemManager)
+        updateListItemsStateService = new UpdateListItemsStateService(listRepository, updateListItemManager, deduplicationManager)
         listDataProvider = new ListDataProvider()
     }
 
@@ -57,6 +60,7 @@ class UpdateListItemsStateServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
         // updating item1
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedlistItem = arguments[0]
@@ -98,6 +102,7 @@ class UpdateListItemsStateServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
         // updating item1
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedlistItem = arguments[0]
@@ -148,6 +153,7 @@ class UpdateListItemsStateServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
         // updating item1
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
             final ListItemEntity updatedlistItem = arguments[0]

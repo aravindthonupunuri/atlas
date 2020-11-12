@@ -6,15 +6,11 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.ListItemSortOrderService
-import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.util.UnitOfMeasure
 import com.tgt.lists.atlas.util.ListDataProvider
-import com.tgt.lists.atlas.util.TestListChannel
 import com.tgt.lists.common.components.exception.BadRequestException
 import org.apache.kafka.clients.producer.RecordMetadata
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
@@ -45,111 +41,69 @@ class DeduplicationManagerTest extends Specification {
 
     def "Test checkIfItemPreExist() for list with no preexisting items, so skipping dedup process"() {
         given:
-        def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-            "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest ] as LinkedHashMap
         def listId = Uuids.timeBased()
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
 
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity], [], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
-
-        actual.first.isEmpty()
-        actual.second.isEmpty()
+        actual.isEmpty()
     }
 
     def "Test updateDuplicateItems() with no matching pending items"() {
         given:
-        def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest ] as LinkedHashMap
         def listId = Uuids.timeBased()
-
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn5678", "5678", null,
-                1, "notes1")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, "5678"), "5678", null, 1, "notes1")
 
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1], [listItemEntity2], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
-
-        actual.first.isEmpty()
-        actual.second.isEmpty()
+        actual.isEmpty()
     }
 
     def "Test updateDuplicateItems() with no matching item type to dedup, so skipping dedup"() {
         given:
-        def listItemRequest = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest ] as LinkedHashMap
         def listId = Uuids.timeBased()
-
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "tcn1234", null, "title",
-                1, "notes1")
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "gnrtitle", null, "title", 1, "notes1")
 
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1], [listItemEntity2], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
-
-        actual.first.isEmpty()
-        actual.second.isEmpty()
+        actual.isEmpty()
     }
 
     def "Test updateDuplicateItems() exceeding max pending items"() {
         given:
-        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), null, "2345", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), null, "3456", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), null, "4567", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), null, "2222", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
-                                                       "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
-                                                       "tcn2222" : listItemRequest5] as LinkedHashMap
         def listId = Uuids.timeBased()
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2345", "2345", null, 1, "itemNote")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn3456", "3456", null, 1, "itemNote")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn4567", "4567", null, 1, "itemNote")
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2222", "2222", null, 1, "itemNote")
 
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", null,
-                1, "newItemNote")
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", null, 1, "newItemNote")
 
         when:
-        deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
-
         thrown(BadRequestException)
     }
 
     def "Test updateDuplicateItems() exceeding max pending items but rolling update turned on"() {
         given:
-        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), null, "2345", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), null, "3456", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), null, "4567", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), null, "2222", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
-                                                       "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
-                                                       "tcn2222" : listItemRequest5] as LinkedHashMap
         def listId = Uuids.timeBased()
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2345", "2345", null, 1, "itemNote")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn3456", "3456", null, 1, "itemNote")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn4567", "4567", null, 1, "itemNote")
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2222", "2222", null, 1, "itemNote")
+
         def listItemId = Uuids.timeBased()
 
         ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, listItemId.toString())
@@ -164,36 +118,26 @@ class DeduplicationManagerTest extends Specification {
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 5, 5, true) // turning on rolling update
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
         1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listPreferenceRepository.saveListPreference(_) >> Mono.just(posUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
-        actual.first.isEmpty()
-        actual.second.isEmpty()
+        actual.isEmpty()
     }
 
     def "Test updateDuplicateItems() exceeding max pending items, rolling update turned on and existing item isnt part of item sort order"() {
         given:
-        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), null, "2345", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), null, "3456", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), null, "4567", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), null, "2222", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
-                                                       "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
-                                                       "tcn2222" : listItemRequest5] as LinkedHashMap
         def listId = Uuids.timeBased()
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2345", "2345", null, 1, "itemNote")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn3456", "3456", null, 1, "itemNote")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn4567", "4567", null, 1, "itemNote")
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2222", "2222", null, 1, "itemNote")
+
         def listItemId = Uuids.timeBased()
 
         ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, Uuids.timeBased().toString())
@@ -207,205 +151,153 @@ class DeduplicationManagerTest extends Specification {
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 5, 5, true) // turning on rolling update
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
         1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
-        actual.first.isEmpty()
-        actual.second.isEmpty()
+        actual.isEmpty()
     }
 
     def "Test updateDuplicateItems() exceeding max pending items but rolling update turned on and dedupe turned off"() {
         given:
-        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), null, "2345", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), null, "3456", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), null, "4567", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), null, "2222", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
-                                                       "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
-                                                       "tcn2222" : listItemRequest5] as LinkedHashMap
         def listId = Uuids.timeBased()
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2345", "2345", null, 1, "itemNote")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn3456", "3456", null, 1, "itemNote")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn4567", "4567", null, 1, "itemNote")
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2222", "2222", null, 1, "itemNote")
+
         def listItemId = Uuids.timeBased()
 
         ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, listItemId.toString())
         ListPreferenceEntity posUpdateListPreferenceEntity = listDataProvider.getListPreferenceEntity(listId, guestId)
 
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId,
-                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
-                1, "newItemNote")
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, listItemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item", 1, "newItemNote")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 false, 5, 5, true) // turning on rolling update and dedupe turned off
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
         1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listPreferenceRepository.saveListPreference(_) >> Mono.just(posUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
-        actual.first.isEmpty()
-        actual.second.isEmpty()
-
+        actual.isEmpty()
     }
 
     def "Test updateDuplicateItems() exceeding max pending items with rolling update turned on and not exceeding max count"() {
         given:
-        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), null, "2345", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), null, "3456", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), null, "4567", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn2222",  TestListChannel.WEB.toString(), null, "2222", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
-                                                       "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
-                                                       "tcn2222" : listItemRequest5] as LinkedHashMap
         def listId = Uuids.timeBased()
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2345", "2345", null, 1, "itemNote")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn3456", "3456", null, 1, "itemNote")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn4567", "4567", null, 1, "itemNote")
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2222", "2222", null, 1, "itemNote")
 
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
-                1, "newItemNote")
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item", 1, "newItemNote")
 
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 10, 5, true) // turning on rolling update
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
-
-        actual.first.isEmpty()
-        actual.second.isEmpty()
+        actual.isEmpty()
     }
 
     def "Test updateDuplicateItems() with rolling update turned on and dedup"() {
         given:
-        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), null, "2345", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest3 = new ListItemRequestTO(ItemType.TCIN, "tcn3456",  TestListChannel.WEB.toString(), null, "3456", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest4 = new ListItemRequestTO(ItemType.TCIN, "tcn4567",  TestListChannel.WEB.toString(), null, "4567", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest5 = new ListItemRequestTO(ItemType.TCIN, "tcn1111",  TestListChannel.WEB.toString(), null, "1111", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
-                                                       "tcn3456" : listItemRequest3, "tcn4567" : listItemRequest4,
-                                                       "tcn1111" : listItemRequest5] as LinkedHashMap
         def listId = Uuids.timeBased()
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2345", "2345", null, 1, "itemNote")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn3456", "3456", null, 1, "itemNote")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn4567", "4567", null, 1, "itemNote")
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", null, 1, "itemNote")
+
         def recordMetadata = GroovyMock(RecordMetadata)
 
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
-                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
-                1, "newItemNote")
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item", 1, "newItemNote")
 
-        ListItemEntity updatedListItemEntity = listDataProvider.createListItemEntity(listId, listItemEntity.itemId,
-                LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listItemEntity.itemRefId, listItemEntity.itemTcin,
-                "new item", listItemRequest1.requestedQuantity + listItemEntity.itemReqQty,
-                "newItemNote\nitemNote")
+        ListItemEntity updatedListItemEntity = listDataProvider.createListItemEntity(listId, listItemEntity.itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listItemEntity.itemRefId, listItemEntity.itemTcin, "new item", listItemEntity1.itemReqQty + listItemEntity.itemReqQty, "newItemNote\nitemNote")
 
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
                 true, 5, 5, true) // turning on rolling update
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
         // updating duplicate items
         1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
             final ListItemEntity listItem = arguments[0]
             assert listItem.id == listId
-            assert listItem.itemReqQty == listItemRequest1.requestedQuantity + listItemEntity.itemReqQty
+            assert listItem.itemReqQty == listItemEntity1.itemReqQty + listItemEntity.itemReqQty
             Mono.just(updatedListItemEntity)
         }
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
-        actual.first.size() == 1
-        actual.second.size() == 1
-
+        actual.size() == 1
     }
 
     def "Test updateDuplicateItems() with multiple PreExisting items"() {
         given:
-        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, "tcn1234",  TestListChannel.WEB.toString(), null, "1234", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest2 = new ListItemRequestTO(ItemType.TCIN, "tcn2345",  TestListChannel.WEB.toString(), null, "2345", null,
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest3 = new ListItemRequestTO(ItemType.GENERIC_ITEM, "itm3456",  TestListChannel.WEB.toString(), null, null, "genericItem1",
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-        def listItemRequest4 = new ListItemRequestTO(ItemType.GENERIC_ITEM, "itm4567", TestListChannel.WEB.toString(), null, null,  "genericItem2",
-                "itemNote", 1, null, UnitOfMeasure.EACHES, null, null)
-
-        Map<String, ListItemRequestTO> newItemsMap = [ "tcn1234" : listItemRequest1, "tcn2345" : listItemRequest2,
-                                                       "itm3456" : listItemRequest3, "itm4567" : listItemRequest4] as LinkedHashMap
         def listId = Uuids.timeBased()
+
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", null, 1, "itemNote")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn2345", "2345", null, 1, "itemNote")
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1", 1, "itemNote")
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm4567", null, "genericItem2", 1, "itemNote")
 
         ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, Uuids.timeBased().toString())
 
-        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
                 1, "note1")
 
-        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+        ListItemEntity listItemEntity6 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1",
                 1, "note2")
 
-        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+        ListItemEntity listItemEntity7 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1",
                 1, "note3")
 
-        ListItemEntity updatedListItemEntity1 = listDataProvider.createListItemEntity(listId, listItemEntity1.itemId,
-                listItemEntity1.itemState, listItemEntity1.itemType, listItemEntity1.itemRefId, listItemEntity1.itemTcin,
-                listItemEntity1.itemTitle, listItemRequest1.requestedQuantity + listItemEntity1.itemReqQty,
+        ListItemEntity updatedListItemEntity1 = listDataProvider.createListItemEntity(listId, listItemEntity5.itemId,
+                listItemEntity5.itemState, listItemEntity5.itemType, listItemEntity5.itemRefId, listItemEntity5.itemTcin,
+                listItemEntity5.itemTitle, listItemEntity1.itemReqQty + listItemEntity5.itemReqQty,
                 "note1\nitemNote")
 
-        ListItemEntity updatedListItemEntity2 = listDataProvider.createListItemEntity(listId, listItemEntity2.itemId,
-                listItemEntity2.itemState, listItemEntity2.itemType, listItemEntity2.itemRefId, listItemEntity2.itemTcin,
-                listItemEntity2.itemTitle, listItemRequest3.requestedQuantity + listItemEntity2.itemReqQty + listItemEntity3.itemReqQty,
+        ListItemEntity updatedListItemEntity2 = listDataProvider.createListItemEntity(listId, listItemEntity6.itemId,
+                listItemEntity6.itemState, listItemEntity6.itemType, listItemEntity6.itemRefId, listItemEntity6.itemTcin,
+                listItemEntity6.itemTitle, listItemEntity3.itemReqQty + listItemEntity6.itemReqQty + listItemEntity7.itemReqQty,
                 "note2\nnote3\nitemNote")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:
-        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, newItemsMap, LIST_ITEM_STATE.PENDING).block()
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4], [listItemEntity5, listItemEntity6, listItemEntity7], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
         1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         // updating duplicate item
         1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
             final ListItemEntity listItem = arguments[0]
-            assert listItem.itemId == listItemEntity1.itemId
-            assert listItem.itemReqQty == listItemRequest1.requestedQuantity + listItemEntity1.itemReqQty
+            assert listItem.itemId == listItemEntity5.itemId
+            assert listItem.itemReqQty == listItemEntity1.itemReqQty + listItemEntity5.itemReqQty
             Mono.just(updatedListItemEntity1)
         }
         // updating duplicate item
         1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
             final ListItemEntity listItem = arguments[0]
-            assert listItem.itemId == listItemEntity2.itemId
-            assert listItem.itemReqQty == listItemRequest3.requestedQuantity + listItemEntity2.itemReqQty + listItemEntity3.itemReqQty
+            assert listItem.itemId == listItemEntity6.itemId
+            assert listItem.itemReqQty == listItemEntity3.itemReqQty + listItemEntity6.itemReqQty + listItemEntity7.itemReqQty
             Mono.just(updatedListItemEntity2)
         }
         // deleting duplicate items
@@ -413,12 +305,11 @@ class DeduplicationManagerTest extends Specification {
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 1
             assert listItems[0].id == listId
-            assert listItems[0].itemId == listItemEntity3.itemId
-            Mono.just([listItemEntity3])
+            assert listItems[0].itemId == listItemEntity7.itemId
+            Mono.just([listItemEntity7])
         }
         3 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
-        actual.first.size() == 2
-        actual.second.size() == 2
+        actual.size() == 2
     }
 }

@@ -95,7 +95,7 @@ class CreateListItemsServiceTest extends Specification {
         def actual = createListItemsService.createListItems(guestId, listId, 1357L, itemsToAdd)
                 .block()
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5, listItemEntity6, listItemEntity7)
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5, listItemEntity6, listItemEntity7)
         1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         // updating duplicate item
         1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
@@ -113,9 +113,17 @@ class CreateListItemsServiceTest extends Specification {
         }
 
         // deleting duplicate items
-        1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity2, listItemEntity4, listItemEntity5])
+        1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
+            final List<ListItemEntity> items = arguments[0]
+            assert items.size() == 3
+            Mono.just([listItemEntity2, listItemEntity4, listItemEntity5])
+        }
         // inserting new items
-        1 * listRepository.saveListItems(_) >> Mono.just([newListItemEntity1, newListItemEntity2])
+        1 * listRepository.saveListItems(_ as List<ListItemEntity>) >> { arguments ->
+            final List<ListItemEntity> items = arguments[0]
+            assert items.size() == 2
+            Mono.just([newListItemEntity1, newListItemEntity2])
+        }
         // events published
         7 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
         actual.items.size() == 4
@@ -149,9 +157,13 @@ class CreateListItemsServiceTest extends Specification {
         createListItemsService.createListItems(guestId, listId, 1357L, itemsToAdd).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.empty()
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.empty()
         // inserting new items
-        1 * listRepository.saveListItems(_) >> Mono.just([newListItemEntity1, newListItemEntity2])
+        1 * listRepository.saveListItems(_ as List<ListItemEntity>) >> { arguments ->
+            final List<ListItemEntity> items = arguments[0]
+            assert items.size() == 2
+            Mono.just([newListItemEntity1, newListItemEntity2])
+        }
         // events published
         2 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
     }

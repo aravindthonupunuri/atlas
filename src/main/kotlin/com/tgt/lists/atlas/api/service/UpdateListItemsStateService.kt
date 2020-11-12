@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.tgt.lists.atlas.api.domain.DeduplicationManager
 import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
@@ -15,7 +16,8 @@ import javax.inject.Singleton
 @Singleton
 class UpdateListItemsStateService(
     @Inject private val listRepository: ListRepository,
-    @Inject private val updateListItemManager: UpdateListItemManager
+    @Inject private val updateListItemManager: UpdateListItemManager,
+    @Inject private val deduplicationManager: DeduplicationManager
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -30,13 +32,18 @@ class UpdateListItemsStateService(
         locationId: Long,
         listId: UUID,
         listItemState: LIST_ITEM_STATE,
-        itemIds: List<UUID>
+        itemIdsToUpdate: List<UUID>
     ): Mono<ListItemsStateUpdateResponseTO> {
 
-        logger.debug("[updateMultipleListItemState] guestId: $guestId, listId: $listId, listItemState: $listItemState, itemIds: $itemIds, locationId: $locationId")
+        logger.debug("[updateMultipleListItemState] guestId: $guestId, listId: $listId, listItemState: $listItemState, itemIds: $itemIdsToUpdate, locationId: $locationId")
 
-        return validateItems(listId, itemIds, listItemState).flatMap { triple ->
-            updateState(guestId, listId, triple.first, listItemState).map { updatedItems ->
+        return listRepository.findListItemsByListId(listId).collectList().flatMap {
+            val triple = validateItems(
+                    existingItems = it,
+                    itemIdsToUpdate = itemIdsToUpdate,
+                    listItemState = listItemState
+            )
+            updateState(guestId, listId, it, triple.first, listItemState).map { updatedItems ->
                 val successItems = arrayListOf<UUID>()
                 successItems.addAll(updatedItems.map { it.itemId!! })
                 successItems.addAll(triple.second)
@@ -54,17 +61,15 @@ class UpdateListItemsStateService(
      *
      */
     private fun validateItems(
-        listId: UUID,
-        listItemIds: List<UUID>,
+        existingItems: List<ListItemEntity>,
+        itemIdsToUpdate: List<UUID>,
         listItemState: LIST_ITEM_STATE
-    ): Mono<Triple<List<ListItemEntity>, List<UUID>, List<UUID>>> {
+    ): Triple<List<ListItemEntity>, List<UUID>, List<UUID>> {
         val itemsToUpdate = arrayListOf<ListItemEntity>()
         val itemsAlreadyUpdated = arrayListOf<UUID>()
         val invalidItems = arrayListOf<UUID>()
-
-        return listRepository.findListItemsByListId(listId).collectList().map { items ->
-            listItemIds.stream().forEach { itemId ->
-                val item = items.firstOrNull { it.itemId == itemId }
+        itemIdsToUpdate.stream().forEach { itemId ->
+                val item = existingItems.firstOrNull { it.itemId == itemId }
                 if (item != null) {
                     val itemState = item.itemState!!
                     if (itemState == listItemState.value) {
@@ -78,8 +83,7 @@ class UpdateListItemsStateService(
             }
             logger.debug("ItemsToUpdate: ${itemsToUpdate.map { it.itemId } }, ItemsAlreadyUpdated: $itemsAlreadyUpdated, InvalidItems: $invalidItems ")
 
-            Triple(itemsToUpdate, itemsAlreadyUpdated, invalidItems)
-        }
+            return Triple(itemsToUpdate, itemsAlreadyUpdated, invalidItems)
     }
 
     /**
@@ -91,6 +95,7 @@ class UpdateListItemsStateService(
     private fun updateState(
         guestId: String,
         listId: UUID,
+        existingItems: List<ListItemEntity>,
         itemsToUpdate: List<ListItemEntity>,
         listItemState: LIST_ITEM_STATE
     ): Mono<List<ListItemEntity>> {
@@ -98,9 +103,19 @@ class UpdateListItemsStateService(
             logger.debug("[updateState] No items to update")
             Mono.just(itemsToUpdate)
         } else {
-            Flux.fromIterable(itemsToUpdate.asIterable()).flatMap {
-                updateListItemManager.updateListItem(guestId, listId, it.copy(itemState = listItemState.value), it)
-            }.collectList()
+            deduplicationManager.updateDuplicateItems(
+                    guestId = guestId,
+                    listId = listId,
+                    items = itemsToUpdate,
+                    existingItems = existingItems.filter { it.itemState == listItemState.value }, // Filtering existing items which are in the same state as the items that are being updated, to check for duplicates.
+                    itemState = listItemState
+            ).flatMap { updatedItems ->
+                // Filtering out the items updated in the deduplication process
+                val items = itemsToUpdate.filter { item -> !(updatedItems.parallelStream().anyMatch { it.itemRefId == item.itemRefId }) }
+                Flux.fromIterable(items.asIterable()).flatMap {
+                    updateListItemManager.updateListItem(guestId, listId, it.copy(itemState = listItemState.value), it)
+                }.collectList()
+            }
         }
     }
 }
