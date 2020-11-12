@@ -3,15 +3,12 @@ package com.tgt.lists.atlas.api.validator
 import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
 import com.tgt.lists.atlas.api.util.ItemType
 
-/**
- * RefIdValidator is used to figure out if the update request also requires itemRefId as part of the request.
- * itemRefId is calculated in the app layer and that could comprise of some of the attributes in the ListItemUpdateRequestTO,
- * so updating just those attributes will also cuase change in the itemRefId.
- * Like for example if we are trying to update tcin value for a TCIN item, then the request ListItemUpdateRequestTO
- * should also have itemRefId as part of ListItemUpdateRequestTO since tcin value is used to calculate the itemRefId
- * So refIdValidator interface is a required field in ListItemUpdateRequestTO, based on which we determine if
- * itemRefId is supposed to be part of ListItemUpdateRequestTO or not.
- */
+// populateRefIdIfRequired is called to get the updated itemRefId in case when the attributes responsible for building the
+// item refId are being updated as part of ListItemUpdateRequestTO.
+// ItemRefId is calculated in the app layer and that could comprise of some of the attributes in the ListItemUpdateRequestTO,
+// so updating those attributes will also cause change in the itemRefId.
+// So refIdValidator interface is a required field in ListItemUpdateRequestTO, based on which we determine if
+// the itemRefId is supposed to be updated or not.
 interface RefIdValidator {
-    fun requireRefId(itemType: ItemType, listItemUpdateRequestTO: ListItemUpdateRequestTO): Boolean
+    fun populateRefIdIfRequired(itemType: ItemType, listItemUpdateRequestTO: ListItemUpdateRequestTO): String?
 }

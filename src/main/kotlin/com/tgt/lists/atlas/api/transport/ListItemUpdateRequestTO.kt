@@ -8,7 +8,6 @@ import com.tgt.lists.atlas.api.util.isNullOrEmpty
 import com.tgt.lists.atlas.api.validator.RefIdValidator
 import com.tgt.lists.atlas.api.validator.validateItemType
 import com.tgt.lists.common.components.exception.BadRequestException
-import com.tgt.lists.common.components.exception.InternalServerException
 import io.micronaut.core.annotation.Introspected
 
 // TODO is agentid to be updated at all?
@@ -18,7 +17,6 @@ data class ListItemUpdateRequestTO(
     val itemTitle: String? = null,
     val itemNote: String? = null,
     val itemType: ItemType? = null,
-    val itemRefId: String? = null,
     val metadata: Map<String, Any>? = null,
     val itemState: LIST_ITEM_STATE? = null,
     val requestedQuantity: Int? = null,
@@ -34,7 +32,6 @@ data class ListItemUpdateRequestTO(
         if (isNullOrEmpty(tcin) &&
                 isNullOrEmpty(itemTitle) &&
                 isNullOrEmpty(itemNote) &&
-                isNullOrEmpty(itemRefId) &&
                 this.itemType == null &&
                 this.metadata == null &&
                 this.itemState == null &&
@@ -65,16 +62,13 @@ data class ListItemUpdateRequestTO(
         return this
     }
 
-    fun validateRefId(itemType: ItemType) {
-        // refIdValidator is used to figure out if the update request also requires itemRefId as part of the request.
-        // itemRefId is calculated in the app layer and that could comprise of some of the attributes in the ListItemUpdateRequestTO,
-        // so updating just those attributes will also cuase change in the itemRefId.
-        // Like for example if we are trying to update tcin value for a TCIN item, then the request ListItemUpdateRequestTO
-        // should also have itemRefId as part of ListItemUpdateRequestTO since tcin value is used to calculate the itemRefId
+    fun updateRefId(itemType: ItemType): String? {
+        // updateRefId is called to get the updated itemRefId in case when the attributes responsible for building the
+        // item refId are being updated as part of ListItemUpdateRequestTO.
+        // ItemRefId is calculated in the app layer and that could comprise of some of the attributes in the ListItemUpdateRequestTO,
+        // so updating those attributes will also cause change in the itemRefId.
         // So refIdValidator interface is a required field in ListItemUpdateRequestTO, based on which we determine if
-        // itemRefId is supposed to be part of ListItemUpdateRequestTO or not.
-        if (refIdValidator.requireRefId(itemType, this) && isNullOrEmpty(itemRefId)) {
-            throw InternalServerException(AppErrorCodes.ITEM_TYPE_REQUEST_BODY_VIOLATION_ERROR_CODE(arrayListOf("RefId is required")))
-        }
+        // the itemRefId is supposed to be updated or not.
+        return refIdValidator.populateRefIdIfRequired(itemType, this)
     }
 }

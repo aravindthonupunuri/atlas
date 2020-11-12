@@ -45,17 +45,17 @@ class UpdateListItemServiceTest extends Specification {
 
     def "test updateListItem() integrity"() {
         given:
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, null, null, new RefIdValidator() {
             @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
-                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                     return true
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+                if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
+                     return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
                 } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                     return true
+                     return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
                  } else {
-                     return false
+                     return null
                  }
             }
         }, null)
@@ -95,17 +95,17 @@ class UpdateListItemServiceTest extends Specification {
 
     def "test updateListItem() updating item state"() {
         given:
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, LIST_ITEM_STATE.COMPLETED, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, LIST_ITEM_STATE.COMPLETED, null, null, new RefIdValidator() {
             @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
                 } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
                 } else {
-                    return false
+                    return null
                 }
             }
         }, null)
@@ -143,31 +143,31 @@ class UpdateListItemServiceTest extends Specification {
         actual.itemType.value == updatesListItemEntity.itemType
     }
 
-    def "test updateListItem() updating tcin and refId for TCIN item"() {
+    def "test updateListItem() updating tcin for TCIN item"() {
         given:
         def listId = Uuids.timeBased()
         def itemId = Uuids.timeBased()
         def tcin = "1234"
         def updatedTcin = "4567"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(updatedTcin, null, null, null, listDataProvider.getItemRefId(ItemType.TCIN, updatedTcin), null, null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(updatedTcin, null, null, null, null, null, null, null, new RefIdValidator() {
             @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
                 } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
                 } else {
-                    return false
+                    return null
                 }
             }
         }, null)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, tcin), tcin, "title", 1, "note")
 
-        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listItemUpdateRequest.itemRefId, listItemUpdateRequest.tcin, "title", 1, "note")
+        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, updatedTcin), listItemUpdateRequest.tcin, "title", 1, "note")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
@@ -190,63 +190,30 @@ class UpdateListItemServiceTest extends Specification {
         actual.tcin == updatesListItemEntity.itemTcin
     }
 
-    def "test updateListItem() updating tcin without refId in request for TCIN item"() {
-        given:
-        def listId = Uuids.timeBased()
-        def itemId = Uuids.timeBased()
-        def tcin = "1234"
-        def updatedTcin = "4567"
-
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(updatedTcin, null, null, null, null, null, null, null, null, new RefIdValidator() {
-            @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
-                if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
-                } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
-                } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-        }, null)
-
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, tcin), tcin, "title", 1, "note")
-
-        when:
-        updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
-
-        then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
-
-        thrown(InternalServerException)
-    }
-
     def "test updateListItem() updating item title for GENERIC ITEM item"() {
         given:
         def listId = Uuids.timeBased()
         def itemId = Uuids.timeBased()
         def updatedTitle = "updated title"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, updatedTitle, null, null, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, updatedTitle), null, null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, updatedTitle, null, null, null, null, null, null, new RefIdValidator() {
             @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
                 } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
                 } else {
-                    return false
+                    return null
                 }
             }
         }, null)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, "title"), null, "title", 1, "note")
 
-        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, listItemUpdateRequest.itemRefId, null, listItemUpdateRequest.itemTitle, 1, "note")
+        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, updatedTitle), null, listItemUpdateRequest.itemTitle, 1, "note")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
@@ -269,63 +236,30 @@ class UpdateListItemServiceTest extends Specification {
         actual.itemTitle == updatesListItemEntity.itemTitle
     }
 
-    def "test updateListItem() updating item title without refId in request for GENERIC ITEM item"() {
-        given:
-        def listId = Uuids.timeBased()
-        def itemId = Uuids.timeBased()
-        def updatedTitle = "updated title"
-
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, updatedTitle, null, null, null, null, null, null, null, new RefIdValidator() {
-            @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
-                if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
-                } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
-                } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-        }, null)
-
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, "title"), null, "title", 1, "note")
-
-        when:
-        updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
-
-        then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
-
-        thrown(InternalServerException)
-
-    }
-
     def "test updateListItem() updating item type from GENERIC ITEM to TCIN item"() {
         given:
         def listId = Uuids.timeBased()
         def itemId = Uuids.timeBased()
         def tcin = "1234"
 
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(tcin, null, null, ItemType.TCIN, listDataProvider.getItemRefId(ItemType.TCIN, tcin), null, null, null, null, new RefIdValidator() {
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(tcin, null, null, ItemType.TCIN, null, null, null, null, new RefIdValidator() {
             @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
                 } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
                 } else {
-                    return false
+                    return null
                 }
             }
         }, null)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, "title"), null, "title", 1, "note")
 
-        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listItemUpdateRequest.itemRefId, listItemUpdateRequest.tcin, "title", 1, "note")
+        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, tcin), listItemUpdateRequest.tcin, "title", 1, "note")
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
@@ -348,52 +282,20 @@ class UpdateListItemServiceTest extends Specification {
         actual.itemTitle == updatesListItemEntity.itemTitle
     }
 
-    def "test updateListItem() updating item type from GENERIC ITEM to TCIN item without refId in request"() {
-        given:
-        def listId = Uuids.timeBased()
-        def itemId = Uuids.timeBased()
-        def tcin = "1234"
-
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(tcin, null, null, ItemType.TCIN, null, null, null, null, null, new RefIdValidator() {
-            @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
-                if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
-                } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
-                } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-        }, null)
-
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, "title"), null, "title", 1, "note")
-
-        when:
-        updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
-
-        then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
-
-        thrown(InternalServerException)
-    }
-
     def "test updateListItem() updating item type from GENERIC ITEM to TCIN item without tcin in request"() {
 
         when:
-        new ListItemUpdateRequestTO(null, null, null, ItemType.TCIN, null, null, null, null, null, new RefIdValidator() {
+        new ListItemUpdateRequestTO(null, null, null, ItemType.TCIN, null, null, null, null, new RefIdValidator() {
             @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
                 } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
                 } else {
-                    return false
+                    return null
                 }
             }
         }, null)
@@ -405,17 +307,17 @@ class UpdateListItemServiceTest extends Specification {
     def "test updateListItem() updating item type from TCIN to GENERIC_ITEM "() {
 
         when:
-        new ListItemUpdateRequestTO(null, null, null, ItemType.GENERIC_ITEM, null, null, null, null, null, new RefIdValidator() {
+        new ListItemUpdateRequestTO(null, null, null, ItemType.GENERIC_ITEM, null, null, null, null, new RefIdValidator() {
             @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
                 } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return true
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
                 } else {
-                    return false
+                    return null
                 }
             }
         }, null)
@@ -427,14 +329,18 @@ class UpdateListItemServiceTest extends Specification {
     def "test updateListItem() with empty request "() {
 
         when:
-        new ListItemUpdateRequestTO(null, null, null, null, null, null, null, null, null, new RefIdValidator() {
+        new ListItemUpdateRequestTO(null, null, null, null, null, null, null, null, new RefIdValidator() {
             @Override
-            boolean requireRefId(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return true
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
                 } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return true
-                } else return listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
+                } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
+                } else {
+                    return null
+                }
             }
         }, null)
 
