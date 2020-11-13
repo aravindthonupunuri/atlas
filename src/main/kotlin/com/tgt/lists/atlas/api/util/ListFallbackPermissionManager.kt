@@ -5,7 +5,6 @@ import com.tgt.lists.common.components.exception.BaseErrorCodes
 import com.tgt.lists.common.components.exception.ForbiddenException
 import com.tgt.lists.common.components.exception.ResourceNotFoundException
 import com.tgt.lists.common.components.filters.auth.permissions.BaseListPermissionManager
-import com.tgt.lists.common.components.filters.auth.permissions.ListPermissionManager
 import com.tgt.lists.common.components.util.OpenAnnotation
 import io.micronaut.http.HttpMethod
 import reactor.core.publisher.Mono
@@ -20,7 +19,7 @@ import java.util.*
 @OpenAnnotation
 class ListFallbackPermissionManager(
     private val listRepository: ListRepository
-) : ListPermissionManager, BaseListPermissionManager() {
+) : BaseListPermissionManager() {
     override fun authorize(userId: String, listId: UUID, requestMethod: HttpMethod): Mono<Boolean> {
         return listRepository.findListById(listId)
                 .switchIfEmpty {
@@ -35,5 +34,13 @@ class ListFallbackPermissionManager(
                         true
                 }
                 .doOnError { handleError(it) }
+    }
+
+    override fun useFallbackForResourceNotFound(): Boolean {
+        return false
+    }
+
+    override fun useFallbackForFailedAccess(): Boolean {
+        return false
     }
 }
