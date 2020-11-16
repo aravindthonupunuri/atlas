@@ -23,9 +23,6 @@ class DeleteListItemsServiceTest extends Specification {
     
     ListRepository listRepository
     EventPublisher eventPublisher
-    ListPreferenceRepository listPreferenceRepository
-    ListItemSortOrderService listItemSortOrderService
-    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     DeleteListItemsManager deleteListItemsManager
     DeleteListItemsService deleteListItemsService
     ListDataProvider listDataProvider
@@ -34,10 +31,7 @@ class DeleteListItemsServiceTest extends Specification {
     def setup() {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
-        listPreferenceRepository = Mock(ListPreferenceRepository)
-        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
-        listItemSortOrderService = new ListItemSortOrderService(listPreferenceSortOrderManager)
-        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher, listItemSortOrderService)
+        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         deleteListItemsService = new DeleteListItemsService(deleteListItemsManager, listRepository)
         listDataProvider = new ListDataProvider()
     }
@@ -58,7 +52,6 @@ class DeleteListItemsServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 3
@@ -87,7 +80,6 @@ class DeleteListItemsServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 3
@@ -116,7 +108,6 @@ class DeleteListItemsServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.COMPLETED.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 3
@@ -186,7 +177,6 @@ class DeleteListItemsServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> Mono.error(new RuntimeException("some error"))
 
         thrown(RuntimeException)
@@ -207,7 +197,6 @@ class DeleteListItemsServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> Mono.error(new RuntimeException("some error"))
 
         thrown(RuntimeException)
@@ -233,7 +222,6 @@ class DeleteListItemsServiceTest extends Specification {
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2, listItemEntity3)
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
             final List<ListItemEntity> listItems = arguments[0]
             assert listItems.size() == 2

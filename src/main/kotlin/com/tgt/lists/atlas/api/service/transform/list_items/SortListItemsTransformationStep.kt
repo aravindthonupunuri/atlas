@@ -24,9 +24,10 @@ class SortListItemsTransformationStep(
                 return if (transformationContext.getContextValue(LIST_ITEM_STATE_KEY) == LIST_ITEM_STATE.PENDING) {
 
                     (transformationContext.transformationPipelineConfiguration as ListItemsTransformationPipelineConfiguration).sortListItemsTransformationConfiguration?.let {
-                        it.listPreferenceSortOrderManager?.getList(guestId, listId)
+                        val listPreferenceSortOrderManager = it.listPreferenceSortOrderManager
+                        listPreferenceSortOrderManager?.getListPreference(guestId, listId)
                                 ?.map {
-                                    reArrangeItems(it.itemSortOrder!!.split(","), items)
+                                    listPreferenceSortOrderManager.sortListItemsByPosition(it.itemSortOrder!!, items)
                                 }
                     } ?: Mono.just(items)
                 } else {
@@ -55,29 +56,5 @@ class SortListItemsTransformationStep(
                 else -> it.addedTs
             }
         }
-    }
-
-    private fun reArrangeItems(sortOrderList: List<String>, pendingItems: List<ListItemResponseTO>): List<ListItemResponseTO> {
-        var newItemsList: MutableList<ListItemResponseTO>? = arrayListOf()
-        // If sortOrderList is null or empty return pending list
-        if (sortOrderList.isNotEmpty()) {
-            for (itemId in sortOrderList) {
-                // when the item is empty return pending Items Ex:List(listId, ",,,")
-                if (itemId.isNotEmpty()) {
-                    val sortedItem = pendingItems.firstOrNull { pItem ->
-                        pItem.listItemId.toString() == itemId && pItem.itemState == LIST_ITEM_STATE.PENDING
-                    }
-                    sortedItem?.let { newItemsList?.add(sortedItem) }
-                }
-            }
-            // Pending Items check is been done in the caller
-            if (newItemsList != null)
-                newItemsList.addAll(pendingItems.asIterable().minus(newItemsList))
-            else
-                newItemsList = pendingItems.toMutableList()
-        } else {
-            newItemsList = pendingItems.toMutableList()
-        }
-        return newItemsList
     }
 }

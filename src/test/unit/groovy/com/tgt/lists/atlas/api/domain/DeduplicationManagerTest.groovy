@@ -3,9 +3,7 @@ package com.tgt.lists.atlas.api.domain
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
-import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.service.ListItemSortOrderService
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.util.ListDataProvider
@@ -18,10 +16,7 @@ class DeduplicationManagerTest extends Specification {
 
     EventPublisher eventPublisher
     ListRepository listRepository
-    ListPreferenceRepository listPreferenceRepository
-    ListItemSortOrderService listItemSortOrderService
     DeduplicationManager deduplicationManager
-    ListPreferenceSortOrderManager listPreferenceSortOrderManager
     DeleteListItemsManager deleteListItemsManager
     UpdateListItemManager updateListItemManager
     ListDataProvider listDataProvider
@@ -30,10 +25,7 @@ class DeduplicationManagerTest extends Specification {
     def setup() {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
-        listPreferenceRepository = Mock(ListPreferenceRepository)
-        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
-        listItemSortOrderService = new ListItemSortOrderService(listPreferenceSortOrderManager)
-        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher, listItemSortOrderService)
+        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager, true, 5, 5, false)
         listDataProvider = new ListDataProvider()
@@ -121,8 +113,6 @@ class DeduplicationManagerTest extends Specification {
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
-        1 * listPreferenceRepository.saveListPreference(_) >> Mono.just(posUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
@@ -154,7 +144,6 @@ class DeduplicationManagerTest extends Specification {
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
@@ -185,8 +174,6 @@ class DeduplicationManagerTest extends Specification {
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
-        1 * listPreferenceRepository.saveListPreference(_) >> Mono.just(posUpdateListPreferenceEntity)
         1 * listRepository.deleteListItems(_) >> Mono.just([listItemEntity])
         1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
 
@@ -285,7 +272,6 @@ class DeduplicationManagerTest extends Specification {
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4], [listItemEntity5, listItemEntity6, listItemEntity7], LIST_ITEM_STATE.PENDING).block()
 
         then:
-        1 * listPreferenceRepository.getListPreference(_,_) >> Mono.just(preUpdateListPreferenceEntity)
         // updating duplicate item
         1 * listRepository.updateListItem(_ as ListItemEntity, null) >> { arguments ->
             final ListItemEntity listItem = arguments[0]

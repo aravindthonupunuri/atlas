@@ -45,7 +45,7 @@ class ListsTransformationPipelineTest extends Specification {
 
         def lists = [list1,list2,list3,list4,list5]
 
-        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager, false)
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
 
         when:
@@ -91,7 +91,7 @@ class ListsTransformationPipelineTest extends Specification {
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
                 1, "newItemNote")
 
-        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager, false)
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
         listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep()).addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_TITLE, ListSortOrderGroup.ASCENDING))
 

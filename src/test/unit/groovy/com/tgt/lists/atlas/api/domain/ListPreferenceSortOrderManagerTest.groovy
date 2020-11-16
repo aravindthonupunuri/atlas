@@ -3,7 +3,12 @@ package com.tgt.lists.atlas.api.domain
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.Direction
+import com.tgt.lists.atlas.api.util.ItemType
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.util.ListDataProvider
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
@@ -11,11 +16,14 @@ class ListPreferenceSortOrderManagerTest extends Specification {
 
     ListPreferenceSortOrderManager listPreferenceSortOrderManager
     ListPreferenceRepository listPreferenceRepository
+    ListRepository listRepository
+    ListDataProvider listDataProvider = new ListDataProvider()
     String guestId = "1234"
 
     def setup() {
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listRepository = Mock(ListRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository, listRepository)
     }
 
     def "Test saveNewListOrder() when there is no record for list id"() {
@@ -101,19 +109,23 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId3.toString()
-        def postSortOrder = listItemId3.toString() + "," + listItemId1.toString() + "," + listItemId2.toString()
+        def preSortOrder = [listItemId1,listItemId2,listItemId3].join(",")
+        def postSortOrder = [listItemId3,listItemId1,listItemId2].join(",")
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
-        ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
+        ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, postSortOrder)
+
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [listItemId1,listItemId2,listItemId3], guestId)
 
         when:
         def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
             listItemId3, listItemId1, Direction.ABOVE).block()
 
         then:
+        actual == expected
+
+        1 * listRepository.findListAndItemsByListIdAndItemState(_,_) >> Flux.fromIterable(listItemExtEntities)
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
-        1 * listPreferenceRepository.saveListPreference(postSaveList) >> Mono.just(postSaveList)
-        actual == postSaveList
+        1 * listPreferenceRepository.saveListPreference(expected) >> Mono.just(expected)
     }
 
     def "Test updateListItemSortOrder() when moving listId1 to position below listId3"() {
@@ -122,18 +134,22 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId3.toString()
-        def postSortOrder = listItemId2.toString() + "," + listItemId3.toString() + "," + listItemId1.toString()
+        def preSortOrder = [listItemId1,listItemId2,listItemId3].join(",")
+        def postSortOrder = [listItemId2,listItemId3,listItemId1].join(",")
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
-        ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
+        ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, postSortOrder)
+
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [listItemId1,listItemId2,listItemId3], guestId)
 
         when:
         def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId, listItemId1, listItemId3, Direction.BELOW).block()
 
         then:
+        actual == expected
+
+        1 * listRepository.findListAndItemsByListIdAndItemState(_,_) >> Flux.fromIterable(listItemExtEntities)
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
-        1 * listPreferenceRepository.saveListPreference(postSaveList) >> Mono.just(postSaveList)
-        actual == postSaveList
+        1 * listPreferenceRepository.saveListPreference(expected) >> Mono.just(expected)
     }
 
     def "Test updateListItemSortOrder() when moving listId3 to position above listId2"() {
@@ -142,19 +158,23 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId3.toString()
-        def postSortOrder = listItemId1.toString() + "," + listItemId3.toString() + "," + listItemId2.toString()
+        def preSortOrder = [listItemId1,listItemId2,listItemId3].join(",")
+        def postSortOrder = [listItemId1,listItemId3,listItemId2].join(",")
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
-        ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
+        ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, postSortOrder)
+
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [listItemId1,listItemId2,listItemId3], guestId)
 
         when:
         def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
             listItemId3, listItemId2, Direction.ABOVE).block()
 
         then:
+        actual == expected
+
+        1 * listRepository.findListAndItemsByListIdAndItemState(_,_) >> Flux.fromIterable(listItemExtEntities)
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
-        1 * listPreferenceRepository.saveListPreference(postSaveList) >> Mono.just(postSaveList)
-        actual == postSaveList
+        1 * listPreferenceRepository.saveListPreference(expected) >> Mono.just(expected)
     }
 
     def "Test updateListItemSortOrder() when moving listId4 to position below listId2"() {
@@ -164,19 +184,23 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
         def listItemId4 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId3.toString() + "," + listItemId4.toString()
-        def postSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId4.toString() + "," + listItemId3.toString()
+        def preSortOrder = [listItemId1,listItemId2,listItemId3,listItemId4].join(",")
+        def postSortOrder = [listItemId1,listItemId2,listItemId4,listItemId3].join(",")
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
-        ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
+        ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, postSortOrder)
+
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [listItemId1,listItemId2,listItemId3], guestId)
 
         when:
         def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
             listItemId4, listItemId2, Direction.BELOW).block()
 
         then:
+        actual == expected
+
+        1 * listRepository.findListAndItemsByListIdAndItemState(_,_) >> Flux.fromIterable(listItemExtEntities)
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
-        1 * listPreferenceRepository.saveListPreference(postSaveList) >> Mono.just(postSaveList)
-        actual == postSaveList
+        1 * listPreferenceRepository.saveListPreference(expected) >> Mono.just(expected)
     }
 
     def "Test updateListItemSortOrder() when moving listId 1 to position of listId 3 where listId 3 not present"() {
@@ -185,10 +209,12 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString()
-        def postSortOrder = listItemId1.toString() + "," + listItemId3.toString() + "," + listItemId2.toString()
+        def preSortOrder = [listItemId1,listItemId2].join(",")
+        def postSortOrder = [listItemId2,listItemId1,listItemId3].join(",")
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
         ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, postSortOrder)
+
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [listItemId1,listItemId2,listItemId3], guestId)
 
         when:
         def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
@@ -197,8 +223,81 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         then:
         actual == expected
 
+        1 * listRepository.findListAndItemsByListIdAndItemState(_,_) >> Flux.fromIterable(listItemExtEntities)
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
         1 * listPreferenceRepository.saveListPreference(expected) >> Mono.just(expected)
+    }
+
+
+    def "Test updateListItemSortOrder() when moving listId6 to position above listId0"() {
+        given:
+        def listId = Uuids.timeBased()
+        // 8 listItemIds in natural saved order
+        def listItemIds = [Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased()]
+        // saved sorted order in db
+        def preSortOrder = [listItemIds[3], listItemIds[0], listItemIds[2], listItemIds[1]].join(",")
+
+        def postSortOrder = [listItemIds[3], listItemIds[6], listItemIds[0], listItemIds[2], listItemIds[1],listItemIds[4], listItemIds[5], listItemIds[7]].join(",")
+        ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
+        ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, postSortOrder)
+
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, listItemIds, guestId)
+
+        when:
+        def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
+                listItemIds[6], listItemIds[0], Direction.ABOVE).block()
+
+        then:
+        actual == expected
+
+        1 * listRepository.findListAndItemsByListIdAndItemState(_,_) >> Flux.fromIterable(listItemExtEntities)
+        1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preSaveList)
+        1 * listPreferenceRepository.saveListPreference(expected) >> Mono.just(expected)
+    }
+
+    def "Test updateListItemSortOrder() when moving listId6 to position above listId0 without existing db sortorder"() {
+        given:
+        def listId = Uuids.timeBased()
+        // 8 listItemIds in natural saved order
+        def listItemIds = [Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased()]
+
+        def postSortOrder = [listItemIds[6], listItemIds[0], listItemIds[1], listItemIds[2], listItemIds[3],listItemIds[4], listItemIds[5], listItemIds[7]].join(",")
+
+        ListPreferenceEntity expected = new ListPreferenceEntity(listId, guestId, postSortOrder)
+
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, listItemIds, guestId)
+
+        when:
+        def actual = listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
+                listItemIds[6], listItemIds[0], Direction.ABOVE).block()
+
+        then:
+        actual == expected
+
+        1 * listRepository.findListAndItemsByListIdAndItemState(_,_) >> Flux.fromIterable(listItemExtEntities)
+        1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.empty()
+        1 * listPreferenceRepository.saveListPreference(expected) >> Mono.just(expected)
+    }
+
+    def "Test updateListItemSortOrder() when moving listId6 to position above listId0 with db sortorder access error"() {
+        given:
+        def listId = Uuids.timeBased()
+        // 8 listItemIds in natural saved order
+        def listItemIds = [Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased(),Uuids.timeBased()]
+
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, listItemIds, guestId)
+
+        when:
+        listPreferenceSortOrderManager.updateListItemSortOrder(guestId, listId,
+                listItemIds[6], listItemIds[0], Direction.ABOVE).block()
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message == "access failed"
+
+        1 * listRepository.findListAndItemsByListIdAndItemState(_,_) >> Flux.fromIterable(listItemExtEntities)
+        1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.error(new RuntimeException("access failed"))
+        0 * listPreferenceRepository.saveListPreference(_)
     }
 
     def "Test removeListItemIdFromSortOrder() when removing listId2 from sort order"() {
@@ -207,8 +306,8 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId3.toString()
-        def postSortOrder = listItemId1.toString() + "," + listItemId3.toString()
+        def preSortOrder = [listItemId1,listItemId2,listItemId3].join(",")
+        def postSortOrder = [listItemId1,listItemId3].join(",")
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
@@ -227,8 +326,8 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId3.toString()
-        def postSortOrder = listItemId2.toString() + "," + listItemId3.toString()
+        def preSortOrder = [listItemId1,listItemId2,listItemId3].join(",")
+        def postSortOrder = [listItemId2,listItemId3].join(",")
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
@@ -247,8 +346,8 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId3.toString()
-        def postSortOrder = listItemId1.toString() + "," + listItemId2.toString()
+        def preSortOrder = [listItemId1,listItemId2,listItemId3].join(",")
+        def postSortOrder = [listItemId1,listItemId2].join(",")
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
 
@@ -267,7 +366,7 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def listItemId1 = Uuids.timeBased()
         def listItemId2 = Uuids.timeBased()
         def listItemId3 = Uuids.timeBased()
-        def preSortOrder = listItemId1.toString() + "," + listItemId2.toString() + "," + listItemId3.toString()
+        def preSortOrder = [listItemId1,listItemId2,listItemId3].join(",")
         def postSortOrder = listItemId2.toString()
         ListPreferenceEntity preSaveList = new ListPreferenceEntity(listId, guestId, preSortOrder)
         ListPreferenceEntity postSaveList = new ListPreferenceEntity(listId, guestId, postSortOrder)
@@ -332,7 +431,7 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def expected = new ListPreferenceEntity(listId, guestId, "")
 
         when:
-        def actual = listPreferenceSortOrderManager.getList(guestId, listId).block()
+        def actual = listPreferenceSortOrderManager.getListPreference(guestId, listId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.empty()
@@ -345,7 +444,7 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         def expected = new ListPreferenceEntity(listId, guestId, "")
 
         when:
-        def actual = listPreferenceSortOrderManager.getList(guestId, listId).block()
+        def actual = listPreferenceSortOrderManager.getListPreference(guestId, listId).block()
 
         then:
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.error(new RuntimeException("some exception"))

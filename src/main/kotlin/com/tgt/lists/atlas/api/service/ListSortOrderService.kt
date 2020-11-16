@@ -54,12 +54,13 @@ class ListSortOrderService(
 
     fun editListSortOrder(
         guestId: String,
+        listType: String,
         editListSortOrderRequestTO: EditListSortOrderRequestTO
     ): Mono<Boolean> {
 
         logger.debug("[editListSortOrder] editListSortOrderRequestTO: $editListSortOrderRequestTO")
 
-        return guestPreferenceSortOrderManager.updateSortOrder(guestId, editListSortOrderRequestTO.primaryListId,
+        return guestPreferenceSortOrderManager.updateSortOrder(guestId, listType, editListSortOrderRequestTO.primaryListId,
                 editListSortOrderRequestTO.secondaryListId, editListSortOrderRequestTO.direction).map { true }
                 .onErrorResume {
                     logger.error("Exception while editing list sort order", it)

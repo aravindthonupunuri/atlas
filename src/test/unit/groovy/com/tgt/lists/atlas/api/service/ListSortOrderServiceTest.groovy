@@ -7,9 +7,11 @@ import com.tgt.lists.atlas.api.domain.model.entity.GuestPreferenceEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.EditListSortOrderRequestTO
 import com.tgt.lists.atlas.api.util.Direction
 import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
@@ -17,15 +19,19 @@ class ListSortOrderServiceTest extends Specification {
 
     GuestPreferenceRepository guestPreferenceRepository
     ListPreferenceRepository listPreferenceRepository
+    ListRepository listRepository
     GuestPreferenceSortOrderManager guestPreferenceSortOrderManager
     ListPreferenceSortOrderManager listPreferenceSortOrderManager
     ListSortOrderService listSortOrderService
+    ListDataProvider listDataProvider = new ListDataProvider()
+
 
     def setup() {
         guestPreferenceRepository = Mock(GuestPreferenceRepository)
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        guestPreferenceSortOrderManager = new GuestPreferenceSortOrderManager(guestPreferenceRepository)
-        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listRepository = Mock(ListRepository)
+        guestPreferenceSortOrderManager = new GuestPreferenceSortOrderManager(guestPreferenceRepository, listRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository, listRepository)
         listSortOrderService = new ListSortOrderService(guestPreferenceSortOrderManager, listPreferenceSortOrderManager)
     }
 
@@ -156,12 +162,17 @@ class ListSortOrderServiceTest extends Specification {
         def primaryListId = Uuids.timeBased()
         def secondaryListId = Uuids.timeBased()
         GuestPreferenceEntity preGuestPreference = new GuestPreferenceEntity(guestId, primaryListId.toString() + "," + secondaryListId.toString())
+        GuestPreferenceEntity expected = new GuestPreferenceEntity(guestId, primaryListId.toString() + "," + secondaryListId.toString())
+
+        def listEntities = listDataProvider.createGuestListEntities([primaryListId,secondaryListId], guestId)
 
         when:
-        def actual = listSortOrderService.editListSortOrder(guestId, new EditListSortOrderRequestTO(primaryListId, secondaryListId, Direction.ABOVE)).block()
+        def actual = listSortOrderService.editListSortOrder(guestId, "SHOPPING", new EditListSortOrderRequestTO(primaryListId, secondaryListId, Direction.ABOVE)).block()
 
         then:
+        1 * listRepository.findGuestLists(guestId, _) >> Mono.just(listEntities)
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(preGuestPreference)
+        1 * guestPreferenceRepository.saveGuestPreference(expected) >> Mono.just(expected)
 
         actual
     }
@@ -174,10 +185,13 @@ class ListSortOrderServiceTest extends Specification {
         def preGuestPreference = new GuestPreferenceEntity(guestId, primaryListId.toString())
         def postGuestPreference = new GuestPreferenceEntity(guestId, primaryListId.toString() + "," + secondaryListId.toString())
 
+        def listEntities = listDataProvider.createGuestListEntities([primaryListId,secondaryListId], guestId)
+
         when:
-        def actual = listSortOrderService.editListSortOrder(guestId, new EditListSortOrderRequestTO(primaryListId, secondaryListId, Direction.ABOVE)).block()
+        def actual = listSortOrderService.editListSortOrder(guestId, "SHOPPING", new EditListSortOrderRequestTO(primaryListId, secondaryListId, Direction.ABOVE)).block()
 
         then:
+        1 * listRepository.findGuestLists(guestId, _) >> Mono.just(listEntities)
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(preGuestPreference)
         1 * guestPreferenceRepository.saveGuestPreference(_) >>  Mono.just(postGuestPreference)
 
@@ -192,10 +206,13 @@ class ListSortOrderServiceTest extends Specification {
         def preGuestPreference = new GuestPreferenceEntity(guestId, secondaryListId.toString())
         def postGuestPreference = new GuestPreferenceEntity(guestId, primaryListId.toString() + "," + secondaryListId.toString())
 
+        def listEntities = listDataProvider.createGuestListEntities([primaryListId,secondaryListId], guestId)
+
         when:
-        def actual = listSortOrderService.editListSortOrder(guestId, new EditListSortOrderRequestTO(primaryListId, secondaryListId, Direction.ABOVE)).block()
+        def actual = listSortOrderService.editListSortOrder(guestId, "SHOPPING", new EditListSortOrderRequestTO(primaryListId, secondaryListId, Direction.ABOVE)).block()
 
         then:
+        1 * listRepository.findGuestLists(guestId, _) >> Mono.just(listEntities)
         1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(preGuestPreference)
         1 * guestPreferenceRepository.saveGuestPreference(_) >>  Mono.just(postGuestPreference)
 

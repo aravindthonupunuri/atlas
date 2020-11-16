@@ -5,6 +5,7 @@ import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.util.ItemRefIdBuilder
 import com.tgt.lists.atlas.api.util.ItemType
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.util.LIST_STATE
 import java.time.Instant
 import java.time.LocalDateTime
@@ -70,5 +71,29 @@ class ListDataProvider {
 
     fun createGuestListEntity(guestId: String, listType: String, listId: UUID, listMarker: String?, listState: String?, listSubtype: String?): GuestListEntity {
         return GuestListEntity(guestId = guestId, type = listType, subtype = listSubtype, marker = listMarker, id = listId, state = listState)
+    }
+
+    fun createListItemExtEntities(listId: UUID, itemIds: List<UUID>, guestId: String): List<ListItemExtEntity> {
+        val listEntity = createListEntity(listId, "shoppinglist", "SHOPPING", "", guestId, null)
+        var idx = 0
+        val result = mutableListOf<ListItemExtEntity>()
+        itemIds.map {
+            val listItemEntity = createListItemEntity(listId, it, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcin$idx", "$idx", "title$idx", 1, null)
+            val listItemExtEntity = createListItemExtEntity(listEntity, listItemEntity)
+            result.add(listItemExtEntity)
+            idx++
+        }
+        return result
+    }
+
+    fun createGuestListEntities(listIds: List<UUID>, guestId: String): List<ListEntity> {
+        val result = mutableListOf<ListEntity>()
+        var idx = 0
+        listIds.map {
+            val listEntity = createListEntity(it, "shoppinglist$idx", "SHOPPING", "", guestId, null)
+            result.add(listEntity)
+            idx++
+        }
+        return result
     }
 }

@@ -39,7 +39,7 @@ class EditListSortOrderService(
                             }
                             .flatMap {
                                 if (it.primaryListId == it.secondaryListId) Mono.just(true)
-                                else listSortOrderService.editListSortOrder(guestId, editListSortOrderRequestTO)
+                                else listSortOrderService.editListSortOrder(guestId, listType, editListSortOrderRequestTO)
                             }
                 }
     }

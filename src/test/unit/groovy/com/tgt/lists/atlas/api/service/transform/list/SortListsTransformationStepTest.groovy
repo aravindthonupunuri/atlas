@@ -43,7 +43,7 @@ class SortListsTransformationStepTest extends Specification {
 
         def lists = [list1,list2,list3,list4,list5]
 
-        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager, false)
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
         listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_TITLE, ListSortOrderGroup.ASCENDING))
 
@@ -87,15 +87,18 @@ class SortListsTransformationStepTest extends Specification {
         def lists = [list1,list2,list3,list4,list5]
 
         def guestPreference = new GuestPreferenceEntity(guestId, "${list2.listId},${list1.listId},${list4.listId},${list5.listId},${list3.listId}")
-        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager, true)
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
         listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.ASCENDING))
+
+        def sortedLists = [list2,list1,list4,list5,list3]
 
         when:
         def actual = listsTransformationPipeline.executePipeline(guestId, lists, transformationContext).block()
 
         then:
         1 * guestPreferenceSortOrderManager.getGuestPreference(guestId) >> Mono.just(guestPreference)
+        1 * guestPreferenceSortOrderManager.sortListOfLists(guestPreference.listSortOrder,lists) >> sortedLists
 
         actual.size() == 5
         actual[0].listTitle == "second-list"

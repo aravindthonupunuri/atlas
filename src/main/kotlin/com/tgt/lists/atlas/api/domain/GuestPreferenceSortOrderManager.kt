@@ -2,10 +2,12 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.GuestPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
+import com.tgt.lists.atlas.api.transport.mapper.ListMapper
 import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.util.Direction
 import com.tgt.lists.common.components.exception.InternalServerException
-import io.micronaut.context.annotation.Requires
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
@@ -14,8 +16,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-@Requires(property = "list.features.sort-position", value = "true")
-class GuestPreferenceSortOrderManager(@Inject private val guestPreferenceRepository: GuestPreferenceRepository) {
+class GuestPreferenceSortOrderManager(
+    @Inject private val guestPreferenceRepository: GuestPreferenceRepository,
+    @Inject private val listRepository: ListRepository
+) {
 
     private val log = KotlinLogging.logger { GuestPreferenceSortOrderManager::class.java.name }
 
@@ -32,18 +36,32 @@ class GuestPreferenceSortOrderManager(@Inject private val guestPreferenceReposit
             }.switchIfEmpty { guestPreferenceRepository.saveGuestPreference(GuestPreferenceEntity(guestId = guestId, listSortOrder = listId.toString())) }
     }
 
-    fun updateSortOrder(guestId: String, primaryListId: UUID, secondaryListId: UUID, direction: Direction): Mono<GuestPreferenceEntity> {
+    fun updateSortOrder(guestId: String, listType: String, primaryListId: UUID, secondaryListId: UUID, direction: Direction): Mono<GuestPreferenceEntity> {
         if (primaryListId == secondaryListId) {
             return Mono.just(GuestPreferenceEntity(guestId = guestId, listSortOrder = ""))
         }
 
-        return guestPreferenceRepository.findGuestPreference(guestId)
-            .flatMap {
-                val newSortOrder = it.listSortOrder?.let { it1 -> editListIdPosSortOrder(primaryListId, secondaryListId, direction, it1) }
-                if (newSortOrder == it.listSortOrder) {
-                    Mono.just(it)
-                } else { guestPreferenceRepository.saveGuestPreference(GuestPreferenceEntity(guestId = guestId, listSortOrder = newSortOrder!!)) }
-            }
+        return listRepository.findGuestLists(guestId, listType).map { it.map { ListMapper.toListGetAllResponseTO(it, 0) } }
+                .zipWith(
+                        guestPreferenceRepository.findGuestPreference(guestId).map { it.listSortOrder!! }.switchIfEmpty { Mono.just("") }
+                )
+                .map {
+                    // sort listOfLists using db sort order, and then form current sort order string based on this sorted listOfLists
+                    val lists = it.t1
+                    val dbSortOrder: String = it.t2
+                    if (dbSortOrder.isNotBlank()) {
+                        sortListOfLists(dbSortOrder, lists).map { it.listId }.joinToString(",")
+                    } else {
+                        // no dbSortOrder available, use natural order as current sort order
+                        lists.map { it.listId }.joinToString(",")
+                    }
+                }
+                .flatMap {
+                    // apply guest initiated order change and form new sort order to save in db
+                    val currentListSortOrder = it
+                    val newSortOrder = editListIdPosSortOrder(primaryListId, secondaryListId, direction, currentListSortOrder)
+                    guestPreferenceRepository.saveGuestPreference(GuestPreferenceEntity(guestId = guestId, listSortOrder = newSortOrder))
+                }
                 .switchIfEmpty {
                     log.error("Unable to find guest $guestId in the repository")
                     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
@@ -71,6 +89,22 @@ class GuestPreferenceSortOrderManager(@Inject private val guestPreferenceReposit
                 log.error("Exception while getting sort order: ", it)
                 Mono.just(GuestPreferenceEntity(guestId = guestId, listSortOrder = ""))
             }
+    }
+
+    fun sortListOfLists(sortOrder: String, guestLists: List<ListGetAllResponseTO>): List<ListGetAllResponseTO> {
+        val listSortOrderMap = sortOrder.split(",").mapIndexed {
+            index, s -> s to index
+        }.toMap()
+
+        val wrappedList = guestLists.map {
+            var position = listSortOrderMap[it.listId.toString()]
+            if (position == null) {
+                position = Int.MAX_VALUE
+            }
+            ListGetAllResponseTOWrapper(position, it)
+        }
+
+        return wrappedList.sortedWith(compareBy { it.listPosition }).map { it.listGetAllResponseTO }
     }
 
     private fun addListIdToSortOrder(listId: UUID, sortOrder: String, position: Int): String {
@@ -103,4 +137,12 @@ class GuestPreferenceSortOrderManager(@Inject private val guestPreferenceReposit
         val newSortOrder = list.joinToString(",")
         return if (newSortOrder.endsWith(",")) newSortOrder.substring(0, newSortOrder.lastIndex) else newSortOrder
     }
+
+    /**
+     * Used to assist in sorting via standard comparator
+     */
+    data class ListGetAllResponseTOWrapper(
+        val listPosition: Int,
+        val listGetAllResponseTO: ListGetAllResponseTO
+    )
 }

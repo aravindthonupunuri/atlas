@@ -69,7 +69,7 @@ class PopulateListItemsTransformationStepTest extends Specification {
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn3333", "3333", "new item",
                 1, "newItemNote")
 
-        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository , contextContainerManager, null, false)
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository , contextContainerManager, null)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
         listsTransformationPipeline.addStep(new PopulateListItemsTransformationStep())
 

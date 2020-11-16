@@ -33,7 +33,7 @@ class GetListServiceTest extends Specification {
         dataProvider = new ListDataProvider()
         listRepository = Mock(ListRepository)
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository, listRepository)
         SortListItemsTransformationConfiguration sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(listPreferenceSortOrderManager)
         ListItemsTransformationPipelineConfiguration transformationPipelineConfiguration = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, null)
         getListService = new GetListService(listRepository, transformationPipelineConfiguration)

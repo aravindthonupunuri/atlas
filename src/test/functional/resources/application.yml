@@ -22,6 +22,7 @@ tracing:
 
 lists-cassandra:
   keyspace: backpack
+  test-mode: true
 
 cassandra:
   default:

@@ -7,12 +7,18 @@ import com.tgt.lists.micronaut.cassandra.DaoFactory
 import io.micronaut.context.annotation.Bean
 import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
-import io.micronaut.context.annotation.Value
+import mu.KotlinLogging
 
 @Factory
-class GuestPreferenceDAOFactory(@Value("\${lists-cassandra.keyspace}") val keyspace: String, val cqlSession: CqlSession) : DaoFactory<GuestPreferenceDAO>(keyspace, cqlSession) {
+class GuestPreferenceDAOFactory(
+    val cassConfig: CassConfig,
+    val cqlSession: CqlSession
+) : DaoFactory<GuestPreferenceDAO>(cassConfig.keyspace, cqlSession) {
+
+    private val logger = KotlinLogging.logger {}
 
     init {
+        logger.info("Started with cassConfig: $cassConfig")
         initSchema()
     }
 
@@ -20,12 +26,15 @@ class GuestPreferenceDAOFactory(@Value("\${lists-cassandra.keyspace}") val keysp
     @Context
     override fun instance(): GuestPreferenceDAO {
         val guestPreferenceMapperBuilder = GuestPreferenceMapperBuilder(cqlSession).build()
-        val guestPreferenceMapperDAO = guestPreferenceMapperBuilder.guestPreferenceDao(CqlIdentifier.fromCql(keyspace))
+        val guestPreferenceMapperDAO = guestPreferenceMapperBuilder.guestPreferenceDao(CqlIdentifier.fromCql(cassConfig.keyspace))
         return guestPreferenceMapperDAO
     }
 
     private fun initSchema() {
-        val cqlStmtsFileReader = CqlStmtsFileReader("db/migration/V1__init_lists.cqlstmts", this::class.java)
-        cqlStmtsFileReader.executeAllCqlStmts(cqlSession)
+        if (cassConfig.testMode) {
+            // we initialize schema only during testing, but not in production
+            val cqlStmtsFileReader = CqlStmtsFileReader("db/migration/V1__init_lists.cqlstmts", this::class.java)
+            cqlStmtsFileReader.executeAllCqlStmts(cqlSession)
+        }
     }
 }

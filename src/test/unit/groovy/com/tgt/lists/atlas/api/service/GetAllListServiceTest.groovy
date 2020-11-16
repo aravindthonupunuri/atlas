@@ -34,9 +34,9 @@ class GetAllListServiceTest extends Specification {
     def setup() {
         listRepository = Mock(ListRepository)
         guestPreferenceRepository = Mock(GuestPreferenceRepository)
-        guestPreferenceSortOrderManager = new GuestPreferenceSortOrderManager(guestPreferenceRepository)
+        guestPreferenceSortOrderManager = new GuestPreferenceSortOrderManager(guestPreferenceRepository, listRepository)
         contextContainerManager = new ContextContainerManager()
-        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager, true)
+        transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager)
         getListsService = new GetAllListService(listRepository, transformationPipelineConfiguration, "SHOPPING", 10)
         listDataProvider = new ListDataProvider()
     }
@@ -244,7 +244,7 @@ class GetAllListServiceTest extends Specification {
         lists2[3].listId == listId1
     }
 
-    def "test with ListSortFieldGroup.LIST_POSITION and ListSortOrderGroup.ASCENDING"() {
+    def "test with ListSortFieldGroup.LIST_POSITION"() {
         given:
         UUID listId1 = Uuids.timeBased()
         UUID listId2 = Uuids.timeBased()
@@ -275,39 +275,6 @@ class GetAllListServiceTest extends Specification {
         lists1[1].listId == listId2
         lists1[2].listId == listId4
         lists1[3].listId == listId1
-    }
-
-    def "test with ListSortFieldGroup.LIST_POSITION and ListSortOrderGroup.DESCENDING"() {
-        given:
-        UUID listId1 = Uuids.timeBased()
-        UUID listId2 = Uuids.timeBased()
-        UUID listId3 = Uuids.timeBased()
-        UUID listId4 = Uuids.timeBased()
-        def listType = "SHOPPING"
-        def listSubType = "s"
-
-        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
-        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
-        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
-        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
-
-        def  guestPreferenceEntity = listDataProvider.createGuestPreferenceEntity(guestId,  listId3.toString() + "," + listId2.toString() + "," + listId4.toString() + "," + listId1.toString())
-
-        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
-
-        when:
-        List<ListGetAllResponseTO> lists2 = getListsService.getAllListsForUser(
-                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LIST_POSITION, ListSortOrderGroup.DESCENDING))).block()
-
-        then:
-        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
-        1 * guestPreferenceRepository.findGuestPreference(guestId) >> Mono.just(guestPreferenceEntity)
-
-        lists2.size() == 4
-        lists2[0].listId == listId1
-        lists2[1].listId == listId4
-        lists2[2].listId == listId2
-        lists2[3].listId == listId3
     }
 
     def "test with ListSortFieldGroup.LIST_POSITION with exception"() {

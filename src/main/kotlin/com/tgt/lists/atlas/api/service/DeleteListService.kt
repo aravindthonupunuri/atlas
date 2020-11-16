@@ -16,8 +16,7 @@ import javax.inject.Singleton
 @Singleton
 class DeleteListService(
     @Inject private val listRepository: ListRepository,
-    @Inject private val eventPublisher: EventPublisher,
-    @Inject private val listSortOrderService: ListSortOrderService
+    @Inject private val eventPublisher: EventPublisher
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -36,8 +35,7 @@ class DeleteListService(
     }
 
     private fun doDelete(guestId: String, listEntity: ListEntity): Mono<ListEntity> {
-        return listSortOrderService.deleteListSortOrder(guestId, listEntity.id!!)
-                .flatMap { listRepository.deleteList(listEntity) }
+        return listRepository.deleteList(listEntity)
                 .zipWhen {
                     val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(listEntity.metadata)
                     eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(),

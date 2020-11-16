@@ -2,10 +2,13 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.transport.ListItemResponseTO
+import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.api.util.AppErrorCodes.LIST_ITEM_SORT_ORDER_ERROR_CODE
 import com.tgt.lists.atlas.api.util.Direction
+import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.common.components.exception.InternalServerException
-import io.micronaut.context.annotation.Requires
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
@@ -13,10 +16,11 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// TODO remove list.features.sort-position from config - its a redundant prop
 @Singleton
-@Requires(property = "list.features.sort-position", value = "true")
-class ListPreferenceSortOrderManager(@Inject private val listPreferenceRepository: ListPreferenceRepository) {
+class ListPreferenceSortOrderManager(
+    @Inject private val listPreferenceRepository: ListPreferenceRepository,
+    @Inject private val listRepository: ListRepository
+) {
 
     private val logger = KotlinLogging.logger { ListPreferenceSortOrderManager::class.java.name }
 
@@ -47,15 +51,30 @@ class ListPreferenceSortOrderManager(@Inject private val listPreferenceRepositor
             return Mono.just(ListPreferenceEntity(listId = listId, guestId = guestId, itemSortOrder = ""))
         }
 
-        return listPreferenceRepository.getListPreference(listId, guestId)
-            .flatMap {
-                val newSortOrder = it.itemSortOrder?.let { itemSortOrder ->
-                    editListIdPosSortOrder(primaryListItemId,
-                            secondaryListItemId, direction, itemSortOrder)
+        // sort order update in only applicable for pending items
+        return listRepository.findListAndItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value).map { ListItemMapper.toListItemResponseTO(it) }.collectList()
+                .zipWith(
+                        listPreferenceRepository.getListPreference(listId, guestId).map { it.itemSortOrder!! }.switchIfEmpty { Mono.just("") }
+                )
+                .map {
+                    // sort existing items with db sort order, and form current sort order string based on sorted existing items
+                    val items = it.t1
+                    val dbSortOrder: String = it.t2
+                    if (dbSortOrder.isNotBlank()) {
+                        sortListItemsByPosition(dbSortOrder, items).map {
+                            it.listItemId }.joinToString(",")
+                    } else {
+                        // no dbSortOrder available, use natural order as current sort order
+                        items.map { it.listItemId }.joinToString(",")
+                    }
                 }
-                listPreferenceRepository.saveListPreference(
-                        ListPreferenceEntity(guestId = guestId, listId = listId, itemSortOrder = newSortOrder!!))
-            }.switchIfEmpty {
+                .flatMap {
+                    // apply guest initiated order change and form new sort order to save in db
+                    val currentItemSortOrder = it
+                    val newSortOrder = editListIdPosSortOrder(primaryListItemId, secondaryListItemId, direction, currentItemSortOrder)
+                    listPreferenceRepository.saveListPreference(
+                            ListPreferenceEntity(guestId = guestId, listId = listId, itemSortOrder = newSortOrder!!))
+                }.switchIfEmpty {
                     logger.error("Unable to find list $listId in the repository")
                     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
                     Mono.just<ListPreferenceEntity>(null)
@@ -92,7 +111,23 @@ class ListPreferenceSortOrderManager(@Inject private val listPreferenceRepositor
                 }.switchIfEmpty { Mono.just(ListPreferenceEntity(listId = listId, guestId = guestId, itemSortOrder = "")) }
     }
 
-    fun getList(guestId: String, listId: UUID): Mono<ListPreferenceEntity> {
+    fun sortListItemsByPosition(sortOrder: String, pendingItems: List<ListItemResponseTO>): List<ListItemResponseTO> {
+        val listSortOrderMap = sortOrder.split(",").mapIndexed {
+            index, s -> s to index
+        }.toMap()
+
+        val wrappedList = pendingItems.map {
+            var position = listSortOrderMap[it.listItemId.toString()]
+            if (position == null) {
+                position = Int.MAX_VALUE
+            }
+            ListItemResponseTOWrapper(position, it)
+        }
+
+        return wrappedList.sortedWith(compareBy { it.listPosition }).map { it.listItemResponseTO }
+    }
+
+    fun getListPreference(guestId: String, listId: UUID): Mono<ListPreferenceEntity> {
         return listPreferenceRepository.getListPreference(listId, guestId)
                 .switchIfEmpty { Mono.just(ListPreferenceEntity(listId = listId, guestId = guestId, itemSortOrder = "")) }
                 .onErrorResume {
@@ -132,4 +167,12 @@ class ListPreferenceSortOrderManager(@Inject private val listPreferenceRepositor
         val newSortOrder = sortOrders.joinToString(",")
         return if (newSortOrder.endsWith(",")) newSortOrder.substring(0, newSortOrder.lastIndex) else newSortOrder
     }
+
+    /**
+     * Used to assist in sorting via standard comparator
+     */
+    data class ListItemResponseTOWrapper(
+        val listPosition: Int,
+        val listItemResponseTO: ListItemResponseTO
+    )
 }

@@ -4,7 +4,6 @@ import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.util.ListSortFieldGroup
 import com.tgt.lists.atlas.api.util.ListSortOrderGroup
-import mu.KotlinLogging
 import reactor.core.publisher.Mono
 
 /**
@@ -15,8 +14,6 @@ class SortListsTransformationStep(
     private val sortOrderBy: ListSortOrderGroup? = null
 ) : ListsTransformationStep {
 
-    private val logger = KotlinLogging.logger {}
-
     override fun execute(
         guestId: String,
         lists: List<ListGetAllResponseTO>,
@@ -24,42 +21,16 @@ class SortListsTransformationStep(
     ): Mono<List<ListGetAllResponseTO>> {
         if (lists.isNotEmpty()) {
             if (sortFieldBy == ListSortFieldGroup.LIST_POSITION) {
-                return getListSortOrder(guestId, transformationContext).map {
-                    val listSortOrderMap = it
-                    val wrappedList = lists.map {
-                        var position = listSortOrderMap[it.listId.toString()]
-                        if (position == null && (sortOrderBy == null ||
-                                        sortOrderBy == ListSortOrderGroup.ASCENDING)) {
-                            position = Int.MAX_VALUE
-                        } else if (position == null) {
-                            position = Int.MIN_VALUE
-                        }
-                        ListGetAllResponseTOWrapper(position, it)
-                    }
-
-                    wrappedList.sortedWith(sortPositionFields()).map { it.listGetAllResponseTO }
+                val listsTransformationPipelineConfiguration = transformationContext.transformationPipelineConfiguration as ListsTransformationPipelineConfiguration
+                val guestPreferenceSortOrderManager = listsTransformationPipelineConfiguration.guestPreferenceSortOrderManager!!
+                return guestPreferenceSortOrderManager.getGuestPreference(guestId).map {
+                    guestPreferenceSortOrderManager.sortListOfLists(it.listSortOrder ?: "", lists)
                 }
             } else {
                 return Mono.just(applySort(sortFieldBy, sortOrderBy, lists))
             }
         } else {
             return Mono.just(lists)
-        }
-    }
-
-    private fun getListSortOrder(guestId: String, transformationContext: TransformationContext): Mono<Map<String, Int>> {
-
-        val listsTransformationPipelineConfiguration = transformationContext.transformationPipelineConfiguration as ListsTransformationPipelineConfiguration
-
-        return if (!listsTransformationPipelineConfiguration.isPositionSortEnabled || sortFieldBy == null || sortFieldBy != ListSortFieldGroup.LIST_POSITION) {
-            Mono.just(mapOf())
-        } else {
-            listsTransformationPipelineConfiguration.guestPreferenceSortOrderManager!!.getGuestPreference(guestId)
-                    .map {
-                        it.listSortOrder?.split(",")?.mapIndexed {
-                            index, s -> s to index
-                        }?.toMap()
-                    }
         }
     }
 
@@ -90,19 +61,4 @@ class SortListsTransformationStep(
             else -> compareByDescending { it.lastModifiedTs }
         }
     }
-
-    private fun sortPositionFields(): Comparator<ListGetAllResponseTOWrapper> {
-        if (sortOrderBy == null || sortOrderBy == ListSortOrderGroup.ASCENDING)
-            return compareBy { it.listPosition }
-        else
-            return compareByDescending { it.listPosition }
-    }
-
-    /**
-     * Used for add listPosition field to assist in sorting via standard comparator
-     */
-    data class ListGetAllResponseTOWrapper(
-        val listPosition: Int,
-        val listGetAllResponseTO: ListGetAllResponseTO
-    )
 }

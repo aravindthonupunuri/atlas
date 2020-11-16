@@ -2,7 +2,6 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.service.ListItemSortOrderService
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
@@ -17,8 +16,7 @@ import javax.inject.Singleton
 @Singleton
 class DeleteListItemsManager(
     @Inject private val listRepository: ListRepository,
-    @Inject private val eventPublisher: EventPublisher,
-    @Inject private val listitemsSortOrderService: ListItemSortOrderService
+    @Inject private val eventPublisher: EventPublisher
 ) {
 
     private val logger = KotlinLogging.logger { DeleteListItemsManager::class.java.name }
@@ -34,8 +32,7 @@ class DeleteListItemsManager(
         } else {
             logger.debug("[deleteListItems] guestId: $guestId listId:$listId")
 
-            listitemsSortOrderService.deleteListItemSortOrder(guestId, listId, listItems)
-                    .flatMap { listRepository.deleteListItems(listItems) }
+            listRepository.deleteListItems(listItems)
                     .zipWhen { items ->
                         Flux.fromIterable(items.asIterable())
                                 .flatMap {

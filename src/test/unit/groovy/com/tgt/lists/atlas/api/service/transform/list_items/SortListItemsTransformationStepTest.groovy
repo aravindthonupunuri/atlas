@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.util.Constants
@@ -18,6 +19,7 @@ class SortListItemsTransformationStepTest extends Specification {
 
     SortListItemsTransformationStep sortListItemsTransformationStep
     TransformationContext transformationContext
+    ListRepository listRepository
     ListPreferenceRepository listPreferenceRepository
     ListDataProvider listDataProvider
     String guestId = "1234"
@@ -25,7 +27,8 @@ class SortListItemsTransformationStepTest extends Specification {
     def setup() {
         listDataProvider = new ListDataProvider()
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        ListPreferenceSortOrderManager listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listRepository = Mock(ListRepository)
+        ListPreferenceSortOrderManager listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository, listRepository)
         SortListItemsTransformationConfiguration sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(listPreferenceSortOrderManager)
         ListItemsTransformationPipelineConfiguration transformationPipelineContext = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, null)
         transformationContext = new TransformationContext(transformationPipelineContext)

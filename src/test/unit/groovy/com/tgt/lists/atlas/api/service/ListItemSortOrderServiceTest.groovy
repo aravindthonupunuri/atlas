@@ -4,17 +4,20 @@ import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
+import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.EditItemSortOrderRequestTO
 import com.tgt.lists.atlas.api.util.Direction
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.util.ListDataProvider
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
 class ListItemSortOrderServiceTest extends Specification {
 
     ListPreferenceRepository listPreferenceRepository
+    ListRepository listRepository
     ListPreferenceSortOrderManager listPreferenceSortOrderManager
     ListItemSortOrderService listItemSortOrderService
     ListDataProvider listDataProvider
@@ -23,7 +26,8 @@ class ListItemSortOrderServiceTest extends Specification {
     def setup() {
         listDataProvider = new ListDataProvider()
         listPreferenceRepository = Mock(ListPreferenceRepository)
-        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository)
+        listRepository = Mock(ListRepository)
+        listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository, listRepository)
         listItemSortOrderService = new ListItemSortOrderService(listPreferenceSortOrderManager)
     }
 
@@ -117,12 +121,15 @@ class ListItemSortOrderServiceTest extends Specification {
         def preList = new ListPreferenceEntity(listId, guestId, secondaryItemId.toString() + "," + primaryItemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString() + "," + secondaryItemId.toString())
 
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [primaryItemId,secondaryItemId], guestId)
+
         when:
         def actual = listItemSortOrderService.editListItemSortOrder(editItemSortOrderRequestTO).block()
 
         then:
         actual
 
+        1 * listRepository.findListAndItemsByListIdAndItemState(listId,_) >> Flux.fromIterable(listItemExtEntities)
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preList)
         1 * listPreferenceRepository.saveListPreference(postList) >> Mono.just(postList)
     }
@@ -136,12 +143,15 @@ class ListItemSortOrderServiceTest extends Specification {
         def preList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString() + "," + secondaryItemId.toString())
 
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [primaryItemId,secondaryItemId], guestId)
+
         when:
         def actual = listItemSortOrderService.editListItemSortOrder(editItemSortOrderRequestTO).block()
 
         then:
         actual
 
+        1 * listRepository.findListAndItemsByListIdAndItemState(listId,_) >> Flux.fromIterable(listItemExtEntities)
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preList)
         1 * listPreferenceRepository.saveListPreference(postList) >> Mono.just(postList)
     }
@@ -155,12 +165,15 @@ class ListItemSortOrderServiceTest extends Specification {
         def preList = new ListPreferenceEntity(listId, guestId, secondaryItemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString() + "," + secondaryItemId.toString())
 
+        def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [primaryItemId,secondaryItemId], guestId)
+
         when:
         def actual = listItemSortOrderService.editListItemSortOrder(editItemSortOrderRequestTO).block()
 
         then:
         actual
 
+        1 * listRepository.findListAndItemsByListIdAndItemState(listId,_) >> Flux.fromIterable(listItemExtEntities)
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.just(preList)
         1 * listPreferenceRepository.saveListPreference(postList) >> Mono.just(postList)
     }

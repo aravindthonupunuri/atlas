@@ -7,5 +7,4 @@ Atlas provides foundation for building various list types
 # Features
 To enable features set it to true in application yml
   - list.features.dedupe: true
-  - list.features.sort-position: true
   - list.features.fixed-default-list: false
