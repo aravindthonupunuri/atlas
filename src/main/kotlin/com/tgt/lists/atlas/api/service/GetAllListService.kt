@@ -29,14 +29,15 @@ class GetAllListService(
 
         logger.debug("[getAllListsForUser] guestId: $guestId")
 
-        return listRepository.findGuestLists(guestId, listType).flatMap {
-            if (it.isNullOrEmpty()) {
-                logger.debug("[getAllListsForUser] No lists found for guest with guestId: $guestId and listType: $listType")
-                Mono.empty()
-            } else {
-                process(guestId, it, listsTransformationPipeline)
-            }
-        }
+        return listRepository.findGuestLists(guestId, listType)
+                .flatMap {
+                    if (it.isNullOrEmpty()) {
+                        logger.debug("[getAllListsForUser] No lists found for guest with guestId: $guestId and listType: $listType")
+                        Mono.just(arrayListOf())
+                    } else {
+                        process(guestId, it, listsTransformationPipeline)
+                    }
+                }
     }
 
     private fun process(

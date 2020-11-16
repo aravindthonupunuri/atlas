@@ -81,7 +81,7 @@ class GetAllListServiceTest extends Specification {
         then:
         1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([])
 
-        lists == null
+        lists.size() == 0
     }
 
     def "test getAllListsForUser with exception from findGuestLists"() {
