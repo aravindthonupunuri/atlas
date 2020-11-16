@@ -12,12 +12,12 @@ import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
 
 /**
- * This is a fallback list permission manager which tries to find cassandra list record for given list id and compare
- * guestId on that record with incoming userId.
+ * This list permission manager authorizes listId access by finding corresponding cassandra list record and compare
+ * record's guestId with given userId.
  * @return true (userId ==  guestId) | false (userId !=  guestId)
  */
 @OpenAnnotation
-class ListFallbackPermissionManager(
+class ListCassandraPermissionManager(
     private val listRepository: ListRepository
 ) : BaseListPermissionManager() {
     override fun authorize(userId: String, listId: UUID, requestMethod: HttpMethod): Mono<Boolean> {

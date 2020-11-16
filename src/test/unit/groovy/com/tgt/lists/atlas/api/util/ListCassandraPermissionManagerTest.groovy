@@ -9,15 +9,15 @@ import io.micronaut.http.HttpMethod
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-class ListFallbackPermissionManagerTest extends Specification {
+class ListCassandraPermissionManagerTest extends Specification {
 
-    ListFallbackPermissionManager listFallbackPermissionManager
+    ListCassandraPermissionManager listFallbackPermissionManager
     ListRepository listRepository
     ListDataProvider listDataProvider = new ListDataProvider()
 
     def setup() {
         listRepository = Mock(ListRepository)
-        listFallbackPermissionManager = new ListFallbackPermissionManager(listRepository)
+        listFallbackPermissionManager = new ListCassandraPermissionManager(listRepository)
     }
 
     def "test authorize success"() {
