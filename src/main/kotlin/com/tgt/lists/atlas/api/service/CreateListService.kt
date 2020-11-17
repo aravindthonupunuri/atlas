@@ -9,6 +9,7 @@ import com.tgt.lists.atlas.api.transport.ListResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.getUserMetaDataFromMetadataMap
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toListResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toNewListEntity
+import com.tgt.lists.atlas.api.util.LIST_STATE
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
@@ -56,7 +57,17 @@ class CreateListService(
                 .zipWhen {
                     val userMetaDataTO = getUserMetaDataFromMetadataMap(listEntity.metadata)
                     eventPublisher.publishEvent(CreateListNotifyEvent.getEventType(),
-                        CreateListNotifyEvent(guestId, it.id!!, it.type!!, it.title!!, userMetaDataTO?.userMetaData), guestId) }
-                .map { it.t1 }
+                        CreateListNotifyEvent(
+                                guestId = guestId,
+                                listId = it.id!!,
+                                listType = it.type!!,
+                                listTitle = it.title!!,
+                                listState = if (it.state != null) {
+                                    LIST_STATE.values().first { listState -> listState.value == it.state!! }
+                                } else {
+                                    LIST_STATE.INACTIVE
+                                },
+                                userMetaData = userMetaDataTO?.userMetaData), guestId)
+                }.map { it.t1 }
     }
 }
