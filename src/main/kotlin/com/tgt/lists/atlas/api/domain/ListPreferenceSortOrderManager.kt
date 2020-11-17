@@ -73,7 +73,7 @@ class ListPreferenceSortOrderManager(
                     val currentItemSortOrder = it
                     val newSortOrder = editListIdPosSortOrder(primaryListItemId, secondaryListItemId, direction, currentItemSortOrder)
                     listPreferenceRepository.saveListPreference(
-                            ListPreferenceEntity(guestId = guestId, listId = listId, itemSortOrder = newSortOrder!!))
+                            ListPreferenceEntity(guestId = guestId, listId = listId, itemSortOrder = newSortOrder))
                 }.switchIfEmpty {
                     logger.error("Unable to find list $listId in the repository")
                     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
