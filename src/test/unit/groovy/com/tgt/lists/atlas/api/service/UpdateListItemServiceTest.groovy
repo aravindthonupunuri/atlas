@@ -3,6 +3,7 @@ package com.tgt.lists.atlas.api.service
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.tgt.lists.atlas.api.domain.DeduplicationManager
+import com.tgt.lists.atlas.api.domain.DeleteListItemsManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
@@ -11,10 +12,10 @@ import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
 import com.tgt.lists.atlas.api.util.ItemType
 import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.validator.RefIdValidator
+import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException
-import com.tgt.lists.common.components.exception.InternalServerException
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.jetbrains.annotations.NotNull
 import reactor.core.publisher.Flux
@@ -25,6 +26,7 @@ class UpdateListItemServiceTest extends Specification {
 
     UpdateListItemService updateListItemService
     UpdateListItemManager updateListItemManager
+    DeleteListItemsManager deleteListItemsManager
     DeduplicationManager deduplicationManager
     EventPublisher eventPublisher
     ListDataProvider listDataProvider
@@ -37,8 +39,9 @@ class UpdateListItemServiceTest extends Specification {
         eventPublisher = Mock(EventPublisher)
         listRepository = Mock(ListRepository)
         deduplicationManager = Mock(DeduplicationManager)
+        deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
-        updateListItemService = new UpdateListItemService(listRepository, updateListItemManager, deduplicationManager)
+        updateListItemService = new UpdateListItemService(listRepository, updateListItemManager, deleteListItemsManager, deduplicationManager)
         listDataProvider = new ListDataProvider()
         objectMapper = new ObjectMapper()
     }
@@ -346,5 +349,57 @@ class UpdateListItemServiceTest extends Specification {
 
         then:
         thrown(BadRequestException)
+    }
+
+    def "test updateListItem() integrity1"() {
+        given:
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, LIST_ITEM_STATE.COMPLETED, null, null, new RefIdValidator() {
+            @Override
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+                if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
+                } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
+                } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
+                } else {
+                    return null
+                }
+            }
+        }, null)
+        def listId = Uuids.timeBased()
+        def itemId = Uuids.timeBased()
+        def tcin1 = "1234"
+        def tenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note")
+
+        ListItemEntity dedupedListItemEntity = listDataProvider.createListItemEntity(listId, listItemEntity2.itemId, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemEntity1.itemReqQty + listItemEntity2.itemReqQty, listItemEntity1.itemNotes + listItemEntity2.itemNotes)
+
+        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemUpdateRequest.requestedQuantity, listItemUpdateRequest.itemNote)
+
+
+        def recordMetadata = GroovyMock(RecordMetadata)
+
+        when:
+        def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
+
+        then:
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity1, listItemEntity2)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([dedupedListItemEntity])
+        1 * listRepository.deleteListItems(_) >> { arguments ->
+            final List<ListItemEntity> item = arguments[0]
+            assert item.first().id == listId
+            assert item.first().itemId == listItemEntity1.itemId
+            Mono.just([listItemEntity1])
+        }
+        1 * eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(), _, _) >> Mono.just(recordMetadata)
+
+        actual.listItemId == dedupedListItemEntity.itemId
+        actual.tcin == dedupedListItemEntity.itemTcin
+        actual.itemTitle == dedupedListItemEntity.itemTitle
+        actual.itemNote == dedupedListItemEntity.itemNotes
+        actual.itemType.value == dedupedListItemEntity.itemType
     }
  }

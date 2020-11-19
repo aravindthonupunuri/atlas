@@ -3,6 +3,7 @@ package com.tgt.lists.atlas.api.service
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.github.dockerjava.api.exception.BadRequestException
 import com.tgt.lists.atlas.api.domain.DeduplicationManager
+import com.tgt.lists.atlas.api.domain.DeleteListItemsManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
@@ -21,6 +22,7 @@ class UpdateListItemsStateServiceTest extends Specification {
     UpdateListItemsStateService updateListItemsStateService
     DeduplicationManager deduplicationManager
     UpdateListItemManager updateListItemManager
+    DeleteListItemsManager deleteListItemsManager
     EventPublisher eventPublisher
     ListDataProvider listDataProvider
     ListRepository listRepository
@@ -31,8 +33,9 @@ class UpdateListItemsStateServiceTest extends Specification {
         eventPublisher = Mock(EventPublisher)
         listRepository = Mock(ListRepository)
         deduplicationManager = Mock(DeduplicationManager)
+        deleteListItemsManager = Mock(DeleteListItemsManager)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
-        updateListItemsStateService = new UpdateListItemsStateService(listRepository, updateListItemManager, deduplicationManager)
+        updateListItemsStateService = new UpdateListItemsStateService(listRepository, updateListItemManager, deleteListItemsManager, deduplicationManager)
         listDataProvider = new ListDataProvider()
     }
 
@@ -73,7 +76,7 @@ class UpdateListItemsStateServiceTest extends Specification {
             assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.value
             Mono.just(updatesListItemEntity2)
         }
-
+        1 * deleteListItemsManager.deleteListItems(_, _, _) >> Mono.just([])
         2 * eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(), _, _) >> Mono.just(recordMetadata)
 
         actual.successListItemIds.size() == 2
@@ -109,6 +112,7 @@ class UpdateListItemsStateServiceTest extends Specification {
             assert updatedlistItem.itemState == LIST_ITEM_STATE.COMPLETED.value
             Mono.just(updatesListItemEntity1)
         }
+        1 * deleteListItemsManager.deleteListItems(_, _, _) >> Mono.just([])
         1 * eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(), _, _) >> Mono.just(recordMetadata)
 
         actual.successListItemIds.size() == 2
@@ -161,6 +165,7 @@ class UpdateListItemsStateServiceTest extends Specification {
             Mono.just(updatesListItemEntity1)
         }
         1 * listRepository.updateListItem(_ as ListItemEntity, _) >> Mono.error(new BadRequestException("some exception"))
+        1 * deleteListItemsManager.deleteListItems(_, _, _) >> Mono.just([])
         1 * eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(), _, _) >> Mono.just(recordMetadata)
 
         thrown(BadRequestException)

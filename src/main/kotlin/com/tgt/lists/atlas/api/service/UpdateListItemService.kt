@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.service
 
 import com.tgt.lists.atlas.api.domain.DeduplicationManager
+import com.tgt.lists.atlas.api.domain.DeleteListItemsManager
 import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
@@ -22,6 +23,7 @@ import javax.inject.Singleton
 class UpdateListItemService(
     @Inject private val listRepository: ListRepository,
     @Inject private val updateListItemManager: UpdateListItemManager,
+    @Inject private val deleteListItemsManager: DeleteListItemsManager,
     @Inject private val deduplicationManager: DeduplicationManager
 ) {
 
@@ -83,7 +85,12 @@ class UpdateListItemService(
             if (updatedItems.isNullOrEmpty()) {
                 updateListItemManager.updateListItem(guestId, listId, itemToUpdate, existingItemToUpdate)
             } else {
-                Mono.just(updatedItems.first())
+                // If the item was deduped and also its state was changed, then delete the existing item in previous state.
+                if (existingItemToUpdate.itemState != itemToUpdate.itemState) {
+                    deleteListItemsManager.deleteListItems(guestId, listId, listOf(existingItemToUpdate)).map { updatedItems.first() }
+                } else {
+                    Mono.just(updatedItems.first())
+                }
             }
         }.map { toListItemResponseTO(it) }
     }

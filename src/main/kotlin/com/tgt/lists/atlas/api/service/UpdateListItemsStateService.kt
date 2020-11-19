@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.service
 
 import com.tgt.lists.atlas.api.domain.DeduplicationManager
+import com.tgt.lists.atlas.api.domain.DeleteListItemsManager
 import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
@@ -17,6 +18,7 @@ import javax.inject.Singleton
 class UpdateListItemsStateService(
     @Inject private val listRepository: ListRepository,
     @Inject private val updateListItemManager: UpdateListItemManager,
+    @Inject private val deleteListItemsManager: DeleteListItemsManager,
     @Inject private val deduplicationManager: DeduplicationManager
 ) {
 
@@ -111,10 +113,20 @@ class UpdateListItemsStateService(
                     itemState = listItemState
             ).flatMap { updatedItems ->
                 // Filtering out the items updated in the deduplication process
-                val items = itemsToUpdate.filter { item -> !(updatedItems.parallelStream().anyMatch { it.itemRefId == item.itemRefId }) }
-                Flux.fromIterable(items.asIterable()).flatMap {
+                val itemsToDelete = arrayListOf<ListItemEntity>()
+                val filteredItemsToUpdate = arrayListOf<ListItemEntity>()
+                itemsToUpdate.map { item ->
+                    if (updatedItems.parallelStream().anyMatch { it.itemRefId == item.itemRefId }) {
+                        itemsToDelete.add(item) // The item was deduped so delete the existing item in previous state.
+                    } else {
+                        filteredItemsToUpdate.add(item)
+                    }
+                }
+                Flux.fromIterable(filteredItemsToUpdate.asIterable()).flatMap {
                     updateListItemManager.updateListItem(guestId, listId, it.copy(itemState = listItemState.value), it)
-                }.collectList()
+                }.collectList().zipWith(
+                        deleteListItemsManager.deleteListItems(guestId, listId, itemsToDelete)
+                ).map { itemsToUpdate }
             }
         }
     }
