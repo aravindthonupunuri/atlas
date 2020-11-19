@@ -84,6 +84,14 @@ class ListItemMapper {
             return metadata
         }
 
+        fun getUserItemMetaDataFromMetadataMap(metadataMap: MetadataMap?): UserItemMetaDataTO? {
+            var metadata: UserItemMetaDataTO? = mapper.readValue<UserItemMetaDataTO>((metadataMap?.get(Constants.USER_ITEM_METADATA) as? String).toString())
+            if (metadata == null) {
+                metadata = UserItemMetaDataTO()
+            }
+            return metadata
+        }
+
         fun getUserItemMetaDataFromMetadataMap(userItemMetaData: String?): UserItemMetaDataTO? {
             return UserItemMetaDataTO(userItemMetaData?.let { mapper.readValue<Map<String, Any>>(it) })
         }

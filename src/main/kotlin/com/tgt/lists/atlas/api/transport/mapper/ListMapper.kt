@@ -79,6 +79,8 @@ class ListMapper {
                     metadata = mapper.writeValueAsString(setMetadataMapFromList(updatedMetaData?.userMetaData))))
         }
 
+        // TODO Revisit this - do we really need this level of node map?
+        // eg: metadata={user_metadata={"user_meta_data":{"registry-metadata": null}}}
         fun setMetadataMapFromList(tenantMetaData: Map<String, Any>? = null): MetadataMap {
             val metadata = mutableMapOf<String, Any>()
 
