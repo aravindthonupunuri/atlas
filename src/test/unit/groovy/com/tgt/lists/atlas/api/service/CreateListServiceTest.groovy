@@ -36,7 +36,25 @@ class CreateListServiceTest extends Specification {
         def title = "list1"
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
-        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
+        Map metadata = [
+                "structure": [
+                        "doors": [[
+                                          "id": "1234",
+                                          "modelURL": "test-url",
+                                          "position": ["x": 40, "y": 50, "z": 60],
+                                          "rotation": ["x": 30, "y": 20, "z": 10]
+                                  ]],
+                        "windows": [[
+                                            "id": "12345",
+                                            "modelURL": "window model url",
+                                            "position": ["x": 10, "y": 15, "z": 20],
+                                            "rotation": ["x": 25, "y": 30, "z": 35]
+                                    ]],
+                        "wallHeight": 12,
+                        "wallDepth": 12
+                ]
+        ]
+        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, metadata)
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:

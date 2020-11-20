@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.transport.mapper
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
@@ -15,7 +16,7 @@ import java.util.*
 class ListItemMapper {
     companion object {
 
-        val mapper = jacksonObjectMapper()
+        val mapper = jacksonObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE)
 
         fun toNewListItemEntity(
             listId: UUID,

@@ -11,7 +11,7 @@ class TestListEvaluator {
         const val TEST_LIST_HEADER = "x-test-list"
 
         @JvmStatic
-        fun evaluate() : Boolean {
+        fun evaluate(): Boolean {
             return ServerRequestContext.currentRequest<Any>().map {
                 val testHdr: String? = it.headers.get(TEST_LIST_HEADER)
                 testHdr?.let { true } ?: false

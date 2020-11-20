@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.transport.mapper
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
@@ -11,7 +12,7 @@ import com.tgt.lists.atlas.api.util.*
 class ListMapper {
     companion object {
 
-        val mapper = jacksonObjectMapper()
+        val mapper = jacksonObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE)
 
         fun toNewListEntity(
             guestId: String,
@@ -22,7 +23,6 @@ class ListMapper {
             testList: Boolean,
             expirationDays: Long
         ): ListEntity {
-
             // Do not set created or updated time in here, set it in the repository instead
             return ListEntity(
                     id = Uuids.timeBased(),
