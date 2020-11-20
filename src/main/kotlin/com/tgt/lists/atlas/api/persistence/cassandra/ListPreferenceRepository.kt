@@ -5,6 +5,7 @@ import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListPreferenceDAO
 import com.tgt.lists.atlas.api.util.Constants.DEFAULT_GUEST_ID
 import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
 import javax.inject.Singleton
 
@@ -22,6 +23,7 @@ class ListPreferenceRepository(
         return retryableStatementExecutor.write(className, "saveListPreference") { consistency ->
             listPreferenceDAO.saveListPreference(listPreferenceEntity.copy(guestId = DEFAULT_GUEST_ID), consistency) }
                 .map { listPreferenceEntity }
+                .switchIfEmpty { Mono.just(listPreferenceEntity) }
     }
 
     fun getListPreference(listId: UUID, guestId: String): Mono<ListPreferenceEntity> {
@@ -38,5 +40,6 @@ class ListPreferenceRepository(
         return retryableStatementExecutor.write(className, "deleteListPreferenceByListAndGuestId") { consistency ->
             listPreferenceDAO.deleteListPreferenceByListAndGuestId(listPreferenceEntity.copy(guestId = DEFAULT_GUEST_ID), consistency) }
                 .map { listPreferenceEntity }
+                .switchIfEmpty { Mono.just(listPreferenceEntity) }
     }
 }

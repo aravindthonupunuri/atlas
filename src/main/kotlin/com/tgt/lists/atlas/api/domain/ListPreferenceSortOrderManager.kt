@@ -74,10 +74,6 @@ class ListPreferenceSortOrderManager(
                     val newSortOrder = editListIdPosSortOrder(primaryListItemId, secondaryListItemId, direction, currentItemSortOrder)
                     listPreferenceRepository.saveListPreference(
                             ListPreferenceEntity(guestId = guestId, listId = listId, itemSortOrder = newSortOrder))
-                }.switchIfEmpty {
-                    logger.error("Unable to find list $listId in the repository")
-                    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-                    Mono.just<ListPreferenceEntity>(null)
                 }
     }
 

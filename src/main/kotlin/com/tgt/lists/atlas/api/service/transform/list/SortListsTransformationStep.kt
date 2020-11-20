@@ -19,18 +19,18 @@ class SortListsTransformationStep(
         lists: List<ListGetAllResponseTO>,
         transformationContext: TransformationContext
     ): Mono<List<ListGetAllResponseTO>> {
-        if (lists.isNotEmpty()) {
+        return if (lists.isNotEmpty()) {
             if (sortFieldBy == ListSortFieldGroup.LIST_POSITION) {
                 val listsTransformationPipelineConfiguration = transformationContext.transformationPipelineConfiguration as ListsTransformationPipelineConfiguration
                 val guestPreferenceSortOrderManager = listsTransformationPipelineConfiguration.guestPreferenceSortOrderManager!!
-                return guestPreferenceSortOrderManager.getGuestPreference(guestId).map {
+                guestPreferenceSortOrderManager.getGuestPreference(guestId).map {
                     guestPreferenceSortOrderManager.sortListOfLists(it.listSortOrder ?: "", lists)
                 }
             } else {
-                return Mono.just(applySort(sortFieldBy, sortOrderBy, lists))
+                Mono.just(applySort(sortFieldBy, sortOrderBy, lists))
             }
         } else {
-            return Mono.just(lists)
+            Mono.just(lists)
         }
     }
 

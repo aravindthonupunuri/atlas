@@ -64,7 +64,7 @@ class DefaultListManager(
                         updatedListEntity = guestList.copy(marker = ""), existingListEntity = guestList)
             }.then(Mono.just(true))
         } else {
-            Mono.just(true)
+            Mono.just(false)
         }
     }
 

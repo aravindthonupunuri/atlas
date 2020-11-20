@@ -62,11 +62,6 @@ class GuestPreferenceSortOrderManager(
                     val newSortOrder = editListIdPosSortOrder(primaryListId, secondaryListId, direction, currentListSortOrder)
                     guestPreferenceRepository.saveGuestPreference(GuestPreferenceEntity(guestId = guestId, listSortOrder = newSortOrder))
                 }
-                .switchIfEmpty {
-                    log.error("Unable to find guest $guestId in the repository")
-                    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-                    Mono.just<GuestPreferenceEntity>(null)
-                }
     }
 
     fun removeListIdFromSortOrder(guestId: String, listId: UUID): Mono<GuestPreferenceEntity> {

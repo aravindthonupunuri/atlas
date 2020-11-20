@@ -5,6 +5,7 @@ import com.tgt.lists.atlas.api.persistence.cassandra.internal.GuestPreferenceDAO
 import com.tgt.lists.atlas.api.util.GuestId
 import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 import javax.inject.Singleton
 
 @Singleton
@@ -18,6 +19,7 @@ class GuestPreferenceRepository(
         return retryableStatementExecutor.write(className, "saveGuestPreference") { consistency ->
             guestPreferenceDAO.saveGuestPreference(guestPreferenceEntity, consistency) }
                 .map { guestPreferenceEntity }
+                .switchIfEmpty { Mono.just(guestPreferenceEntity) }
     }
 
     fun findGuestPreference(guestId: GuestId): Mono<GuestPreferenceEntity> {

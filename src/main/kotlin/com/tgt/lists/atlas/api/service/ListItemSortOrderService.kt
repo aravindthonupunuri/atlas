@@ -64,7 +64,7 @@ class ListItemSortOrderService(
                 editItemSortOrderRequestTO.secondaryItemId, editItemSortOrderRequestTO.direction)
                 .map { true }
                 .onErrorResume {
-                    logger.error("Exception while editing list sort order", it)
+                    logger.error("Exception while editing list item sort order", it)
                     Mono.just(false)
                 }
     }
