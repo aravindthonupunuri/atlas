@@ -2,8 +2,8 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.kafka.model.MultiDeleteListItem
 import mu.KotlinLogging
@@ -38,12 +38,12 @@ class DeleteListItemsManager(
                                 .flatMap {
                                     val itemEntity = it
                                     val itemState = LIST_ITEM_STATE.values().first { it.value == itemEntity.itemState }
-                                    val userMetaDataTO = ListItemMapper.getUserItemMetaDataFromMetadataMap(itemEntity.itemMetadata)
+                                    val userMetaDataTO = toUserMetaData(itemEntity.itemMetadata)
 
                                     eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(),
                                             DeleteListItemNotifyEvent(guestId, itemEntity.id!!,
                                                     listOf(MultiDeleteListItem(itemEntity.itemId!!, itemEntity.itemTcin, itemEntity.itemTitle,
-                                                            itemEntity.itemReqQty, itemState, userMetaDataTO?.userMetaData))), listId.toString())
+                                                            itemEntity.itemReqQty, itemState, userMetaDataTO?.metadata))), listId.toString())
                                 }.collectList()
                     }
                     .map { it.t1 }

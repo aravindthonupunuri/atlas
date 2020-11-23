@@ -1,7 +1,7 @@
 package com.tgt.lists.atlas.api.validator
 
 import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
-import com.tgt.lists.atlas.api.util.ItemType
+import com.tgt.lists.atlas.api.type.ItemType
 
 // populateRefIdIfRequired is called to get the updated itemRefId in case when the attributes responsible for building the
 // item refId are being updated as part of ListItemUpdateRequestTO.

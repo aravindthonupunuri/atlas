@@ -3,7 +3,7 @@ package com.tgt.lists.atlas.api.domain
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging

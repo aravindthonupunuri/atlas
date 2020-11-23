@@ -3,8 +3,8 @@ package com.tgt.lists.atlas.api.service
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Mono
 import spock.lang.Specification

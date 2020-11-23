@@ -6,7 +6,7 @@ import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemsStateUpdateResponseTO
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono

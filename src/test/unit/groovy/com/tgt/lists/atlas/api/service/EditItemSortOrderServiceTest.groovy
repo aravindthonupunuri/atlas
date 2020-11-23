@@ -4,9 +4,9 @@ import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.EditItemSortOrderRequestTO
-import com.tgt.lists.atlas.api.util.Direction
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.Direction
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException
 import reactor.core.publisher.Flux

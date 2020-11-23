@@ -3,9 +3,9 @@ package com.tgt.lists.atlas.api.service.transform.list_items
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.util.Constants.LIST_ITEM_STATE_KEY
-import com.tgt.lists.atlas.api.util.ItemSortFieldGroup
-import com.tgt.lists.atlas.api.util.ItemSortOrderGroup
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.ItemSortFieldGroup
+import com.tgt.lists.atlas.api.type.ItemSortOrderGroup
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import reactor.core.publisher.Mono
 import java.util.*
 

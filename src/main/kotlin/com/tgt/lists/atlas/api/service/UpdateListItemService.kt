@@ -7,11 +7,11 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
-import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.getUserItemMetaDataFromMetadataMap
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListItemResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toUpdateListItemEntity
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -50,10 +50,10 @@ class UpdateListItemService(
             if (existingItemToUpdate == null) {
                 throw BadRequestException(AppErrorCodes.BAD_REQUEST_ERROR_CODE(listOf("Item: $listItemId not found in listId: $listId")))
             } else {
-                val existingUserItemMetadata = getUserItemMetaDataFromMetadataMap(existingItemToUpdate.itemMetadata)
+                val existingUserItemMetadata = toUserMetaData(existingItemToUpdate.itemMetadata)
                 if (existingUserItemMetadata != null && listItemUpdateRequest.userItemMetaDataTransformationStep != null) {
                     listItemUpdateRequest.userItemMetaDataTransformationStep.execute(existingUserItemMetadata)
-                            .map { listItemUpdateRequest.copy(metadata = it.userMetaData) }
+                            .map { listItemUpdateRequest.copy(metadata = it) }
                 } else {
                     Mono.just(listItemUpdateRequest)
                 }.flatMap { listItemUpdateRequest ->

@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.transport
 
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import java.util.*
 
 data class ListGetAllResponseTO(
@@ -14,7 +15,7 @@ data class ListGetAllResponseTO(
     val defaultList: Boolean = false,
     val shortDescription: String?,
     val agentId: String? = null,
-    val metadata: Map<String, Any>?,
+    val metadata: UserMetaData?,
     val addedTs: String? = null,
     val lastModifiedTs: String? = null,
     val maxListsCount: Int = -1,

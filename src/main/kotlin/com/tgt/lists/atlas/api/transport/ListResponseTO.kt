@@ -1,7 +1,8 @@
 package com.tgt.lists.atlas.api.transport
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import java.util.*
 import javax.validation.constraints.*
 
@@ -17,7 +18,7 @@ data class ListResponseTO(
     val shortDescription: String?,
     val agentId: String?,
     val defaultList: Boolean? = false,
-    val metadata: Map<String, Any>?,
+    val metadata: UserMetaData?,
     val pendingListItems: List<ListItemResponseTO>? = null,
     val completedListItems: List<ListItemResponseTO>? = null,
     val addedTs: String?,

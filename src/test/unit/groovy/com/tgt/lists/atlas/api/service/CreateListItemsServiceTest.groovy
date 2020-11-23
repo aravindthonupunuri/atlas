@@ -6,9 +6,9 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.util.UnitOfMeasure
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.UnitOfMeasure
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.atlas.util.TestListChannel
 import com.tgt.lists.common.components.exception.BadRequestException

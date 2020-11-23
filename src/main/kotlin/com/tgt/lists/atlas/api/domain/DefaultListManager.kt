@@ -3,8 +3,8 @@ package com.tgt.lists.atlas.api.domain
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.LIST_MARKER
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.LIST_MARKER
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.common.components.exception.BaseErrorCodes
 import com.tgt.lists.common.components.exception.ForbiddenException

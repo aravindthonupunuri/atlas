@@ -3,14 +3,12 @@ package com.tgt.lists.atlas.api.service
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.DeleteListItemsManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
-import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
-import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.util.ItemIncludeFields
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.ItemIncludeFields
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException

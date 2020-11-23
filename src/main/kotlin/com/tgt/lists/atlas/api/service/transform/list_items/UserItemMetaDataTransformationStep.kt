@@ -1,9 +1,8 @@
 package com.tgt.lists.atlas.api.service.transform.list_items
 
-import com.tgt.lists.atlas.api.transport.UserItemMetaDataTO
+import com.tgt.lists.atlas.api.type.UserMetaData
 import reactor.core.publisher.Mono
 
 interface UserItemMetaDataTransformationStep {
-
-    fun execute(userItemMetaDataTO: UserItemMetaDataTO): Mono<UserItemMetaDataTO>
+    fun execute(userItemMetaDataTO: UserMetaData): Mono<UserMetaData>
 }

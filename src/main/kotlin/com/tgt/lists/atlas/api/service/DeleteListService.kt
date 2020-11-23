@@ -4,7 +4,7 @@ import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListDeleteResponseTO
-import com.tgt.lists.atlas.api.transport.mapper.ListMapper
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.kafka.model.DeleteListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -37,10 +37,10 @@ class DeleteListService(
     private fun doDelete(listEntity: ListEntity): Mono<ListEntity> {
         return listRepository.deleteList(listEntity)
                 .zipWhen {
-                    val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(listEntity.metadata)
+                    val userMetaDataTO = toUserMetaData(listEntity.metadata)
                     eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(),
                             DeleteListNotifyEvent(listEntity.guestId!!, listEntity.id!!, listEntity.type!!,
-                                    listEntity.title!!, userMetaDataTO?.userMetaData), listEntity.guestId!!)
+                                    listEntity.title!!, userMetaDataTO?.metadata), listEntity.guestId!!)
                 }
                 .map { it.t1 }
     }

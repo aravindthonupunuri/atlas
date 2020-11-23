@@ -9,8 +9,8 @@ import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.EditListSortOrderRequestTO
-import com.tgt.lists.atlas.api.util.Direction
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.Direction
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Mono
 import spock.lang.Specification

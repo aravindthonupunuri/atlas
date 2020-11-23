@@ -5,12 +5,11 @@ import com.tgt.lists.atlas.api.domain.DefaultListManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.UpdateListManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
-import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.list.UserMetaDataTransformationStep
 import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
-import com.tgt.lists.atlas.api.transport.UserMetaDataTO
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import com.tgt.lists.atlas.util.TestListChannel
 import com.tgt.lists.common.components.exception.BadRequestException
@@ -82,7 +81,7 @@ class   UpdateListServiceTest extends Specification {
 
         UserMetaDataTransformationStep transformationStep = new UserMetaDataTransformationStep() {
             @Override
-            Mono<UserMetaDataTO> execute(@NotNull UserMetaDataTO userMetaDataTO) {
+            Mono<UserMetaData> execute(@NotNull UserMetaData userMetaDataTO) {
                 return Mono.just(userMetaDataTO)
             }
         }

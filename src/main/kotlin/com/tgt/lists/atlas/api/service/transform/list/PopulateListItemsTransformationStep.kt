@@ -4,7 +4,7 @@ import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListItemResponseTO
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toFlux

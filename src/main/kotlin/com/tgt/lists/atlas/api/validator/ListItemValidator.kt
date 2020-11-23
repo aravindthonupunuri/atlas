@@ -1,7 +1,7 @@
 package com.tgt.lists.atlas.api.validator
 
 import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.ItemType
+import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.common.components.exception.BadRequestException
 
 fun validateItemType(itemType: ItemType, tcin: String?, itemTitle: String?) {

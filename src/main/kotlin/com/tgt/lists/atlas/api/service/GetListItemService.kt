@@ -3,7 +3,7 @@ package com.tgt.lists.atlas.api.service
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListItemResponseTO
-import com.tgt.lists.atlas.api.util.GuestId
+import com.tgt.lists.atlas.api.type.GuestId
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*

@@ -4,9 +4,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.util.Direction
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.Direction
 import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono

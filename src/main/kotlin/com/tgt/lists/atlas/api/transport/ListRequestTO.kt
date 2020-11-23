@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.transport
 
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import javax.validation.constraints.NotEmpty
 
 data class ListRequestTO(
@@ -13,5 +14,5 @@ data class ListRequestTO(
     val shortDescription: String? = null,
     val defaultList: Boolean = false,
     val agentId: String? = null,
-    val metadata: Map<String, Any>? = null
+    val metadata: UserMetaData? = null
 )

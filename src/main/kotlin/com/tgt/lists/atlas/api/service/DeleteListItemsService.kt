@@ -6,8 +6,8 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemsDeleteResponseTO
 import com.tgt.lists.atlas.api.util.AppErrorCodes.DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE
 import com.tgt.lists.atlas.api.util.AppErrorCodes.DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE
-import com.tgt.lists.atlas.api.util.ItemIncludeFields
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.ItemIncludeFields
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono

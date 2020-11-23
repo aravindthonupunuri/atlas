@@ -2,8 +2,8 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.transport.mapper.ListMapper
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.LIST_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -28,7 +28,7 @@ class UpdateListManager(
         logger.debug("[updateListItem] Updating list")
         return listRepository.updateList(existingListEntity, updatedListEntity)
                 .zipWhen {
-                    val userMetaDataTO = ListMapper.getUserMetaDataFromMetadataMap(it.metadata)
+                    val userMetaDataTO = toUserMetaData(it.metadata)
                     eventPublisher.publishEvent(UpdateListNotifyEvent.getEventType(),
                             UpdateListNotifyEvent(
                                     guestId = it.guestId!!,
@@ -38,7 +38,7 @@ class UpdateListManager(
                                     listState = if (it.state != null)
                                         LIST_STATE.values().first { listState -> listState.value == it.state!! }
                                     else LIST_STATE.INACTIVE,
-                                    userMetaData = userMetaDataTO?.userMetaData
+                                    userMetaData = userMetaDataTO?.metadata
                             ), it.guestId!!)
                 }
                 .map { it.t1 }

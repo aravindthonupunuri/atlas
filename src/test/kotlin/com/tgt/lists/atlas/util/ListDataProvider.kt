@@ -4,9 +4,9 @@ import com.tgt.lists.atlas.api.domain.model.entity.*
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.util.ItemRefIdBuilder
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset

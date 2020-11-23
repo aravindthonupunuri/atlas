@@ -5,7 +5,7 @@ import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.EditListSortOrderRequestTO
-import com.tgt.lists.atlas.api.util.Direction
+import com.tgt.lists.atlas.api.type.Direction
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException
 import reactor.core.publisher.Flux

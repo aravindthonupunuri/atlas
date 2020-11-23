@@ -1,23 +1,20 @@
 package com.tgt.lists.atlas.api.transport.mapper
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
-import com.tgt.lists.atlas.api.transport.UserItemMetaDataTO
-import com.tgt.lists.atlas.api.util.*
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toEntityMetadata
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.UnitOfMeasure
 import java.util.*
 
 class ListItemMapper {
     companion object {
-
-        val mapper = jacksonObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE)
-
         fun toNewListItemEntity(
             listId: UUID,
             listItemRequestTO: ListItemRequestTO
@@ -38,7 +35,7 @@ class ListItemMapper {
                     itemChannel = listItemRequestTO.channel,
                     itemSubchannel = listItemRequestTO.subChannel,
                     itemAgentId = listItemRequestTO.agentId,
-                    itemMetadata = mapper.writeValueAsString(setItemMetadataMapFromList(listItemRequestTO.metadata)),
+                    itemMetadata = toEntityMetadata(listItemRequestTO.metadata),
                     itemNotes = listItemRequestTO.itemNote,
                     itemQty = listItemRequestTO.fulfilledQuantity,
                     itemQtyUom = null,
@@ -63,38 +60,13 @@ class ListItemMapper {
                     itemDesc = existingListItemEntity.itemDesc,
                     itemChannel = existingListItemEntity.itemChannel,
                     itemSubchannel = existingListItemEntity.itemSubchannel,
-                    itemMetadata = listItemUpdateRequestTO.metadata.let {
-                        mapper.writeValueAsString(setItemMetadataMapFromList(listItemUpdateRequestTO.metadata))
-                    } ?: existingListItemEntity.itemMetadata,
+                    itemMetadata = listItemUpdateRequestTO.metadata.let { toEntityMetadata(listItemUpdateRequestTO.metadata) } ?: existingListItemEntity.itemMetadata,
                     itemNotes = listItemUpdateRequestTO.itemNote ?: existingListItemEntity.itemNotes,
                     itemQty = listItemUpdateRequestTO.fulfilledQuantity ?: existingListItemEntity.itemQty,
                     itemQtyUom = existingListItemEntity.itemQtyUom,
                     itemReqQty = listItemUpdateRequestTO.requestedQuantity ?: existingListItemEntity.itemReqQty,
                     itemCreatedAt = existingListItemEntity.itemCreatedAt,
                     itemUpdatedAt = existingListItemEntity.itemUpdatedAt)
-        }
-
-        fun setItemMetadataMapFromList(tenantItemMetaData: Map<String, Any>? = null): MetadataMap {
-            val metadata = mutableMapOf<String, Any>()
-
-            val tenantItemUserMetaData = UserItemMetaDataTO(
-                    userMetaData = tenantItemMetaData
-            )
-
-            metadata[Constants.USER_ITEM_METADATA] = ListMapper.mapper.writeValueAsString(tenantItemUserMetaData)
-            return metadata
-        }
-
-        fun getUserItemMetaDataFromMetadataMap(metadataMap: MetadataMap?): UserItemMetaDataTO? {
-            var metadata: UserItemMetaDataTO? = mapper.readValue<UserItemMetaDataTO>((metadataMap?.get(Constants.USER_ITEM_METADATA) as? String).toString())
-            if (metadata == null) {
-                metadata = UserItemMetaDataTO()
-            }
-            return metadata
-        }
-
-        fun getUserItemMetaDataFromMetadataMap(userItemMetaData: String?): UserItemMetaDataTO? {
-            return UserItemMetaDataTO(userItemMetaData?.let { mapper.readValue<Map<String, Any>>(it) })
         }
 
         fun toListItemResponseTO(
@@ -115,7 +87,7 @@ class ListItemMapper {
                     price = null,
                     listPrice = null,
                     offerCount = 0,
-                    metadata = getUserItemMetaDataFromMetadataMap(listItemEntity.itemMetadata)?.userMetaData,
+                    metadata = toUserMetaData(listItemEntity.itemMetadata),
                     itemType =
                     if (listItemEntity.itemType != null)
                         ItemType.values().first { it.value == listItemEntity.itemType!! }
@@ -149,7 +121,7 @@ class ListItemMapper {
                     price = null,
                     listPrice = null,
                     offerCount = 0,
-                    metadata = getUserItemMetaDataFromMetadataMap(listItemExtEntity.itemMetadata)?.userMetaData,
+                    metadata = toUserMetaData(listItemExtEntity.itemMetadata),
                     itemType =
                     if (listItemExtEntity.itemType != null)
                         ItemType.values().first { it.value == listItemExtEntity.itemType!! }

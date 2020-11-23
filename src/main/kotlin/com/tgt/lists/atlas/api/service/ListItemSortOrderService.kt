@@ -3,7 +3,7 @@ package com.tgt.lists.atlas.api.service
 import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.transport.EditItemSortOrderRequestTO
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*

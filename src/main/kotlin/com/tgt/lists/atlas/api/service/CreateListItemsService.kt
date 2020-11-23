@@ -4,7 +4,7 @@ import com.tgt.lists.atlas.api.domain.CreateListItemsManager
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.transport.ListItemsResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListItemResponseTO
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*

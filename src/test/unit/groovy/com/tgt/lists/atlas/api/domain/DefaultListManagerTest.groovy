@@ -3,7 +3,7 @@ package com.tgt.lists.atlas.api.domain
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.util.LIST_MARKER
+import com.tgt.lists.atlas.api.type.LIST_MARKER
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException

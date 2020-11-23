@@ -4,9 +4,8 @@ import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.GuestPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.util.Direction
+import com.tgt.lists.atlas.api.type.Direction
 import com.tgt.lists.atlas.util.ListDataProvider
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 

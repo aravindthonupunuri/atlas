@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.util
 
+import com.tgt.lists.atlas.api.type.ItemType
 import java.lang.RuntimeException
 
 /**

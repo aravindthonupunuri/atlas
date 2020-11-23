@@ -6,10 +6,10 @@ import com.tgt.lists.atlas.api.domain.GuestPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.util.ListSortFieldGroup
-import com.tgt.lists.atlas.api.util.ListSortOrderGroup
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.ListSortFieldGroup
+import com.tgt.lists.atlas.api.type.ListSortOrderGroup
 import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Flux
 import spock.lang.Specification

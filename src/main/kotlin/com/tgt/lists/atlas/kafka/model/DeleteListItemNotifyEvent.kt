@@ -3,8 +3,8 @@ package com.tgt.lists.atlas.kafka.model
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.tgt.lists.atlas.api.util.EventType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.EventType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import java.util.*
 
 data class DeleteListItemNotifyEvent(
@@ -38,20 +38,20 @@ data class DeleteListItemNotifyEvent(
 
 data class MultiDeleteListItem(
     @JsonProperty("item_id")
-    val itemId: UUID,
+val itemId: UUID,
 
     @JsonProperty("tcin")
-    val tcin: String?,
+val tcin: String?,
 
     @JsonProperty("item_title")
-    val itemTitle: String?,
+val itemTitle: String?,
 
     @JsonProperty("item_requested_quantity")
-    val itemRequestedQuantity: Int?,
+val itemRequestedQuantity: Int?,
 
     @JsonProperty("item_state")
-    val itemState: LIST_ITEM_STATE?,
+val itemState: LIST_ITEM_STATE?,
 
     @JsonProperty("user_meta_data")
-    val userItemMetaDataTO: Map<String, Any>? = null
+val userItemMetaDataTO: Map<String, Any>? = null
 )

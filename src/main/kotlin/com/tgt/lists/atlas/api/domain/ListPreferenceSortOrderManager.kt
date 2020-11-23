@@ -6,8 +6,8 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.api.util.AppErrorCodes.LIST_ITEM_SORT_ORDER_ERROR_CODE
-import com.tgt.lists.atlas.api.util.Direction
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.Direction
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.common.components.exception.InternalServerException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono

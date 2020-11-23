@@ -1,6 +1,6 @@
 package com.tgt.lists.atlas.api.domain
 
-import com.tgt.lists.atlas.api.util.EventType
+import com.tgt.lists.atlas.api.type.EventType
 import com.tgt.lists.msgbus.ListsDlqProducer
 import com.tgt.lists.msgbus.ListsMessageBusProducer
 import com.tgt.lists.msgbus.event.EventHeaderFactory

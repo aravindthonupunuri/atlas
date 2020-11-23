@@ -1,9 +1,10 @@
 package com.tgt.lists.atlas.api.transport
 
 import com.tgt.lists.atlas.api.service.transform.list_items.UserItemMetaDataTransformationStep
+import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.util.isNullOrEmpty
 import com.tgt.lists.atlas.api.validator.RefIdValidator
 import com.tgt.lists.atlas.api.validator.validateItemType
@@ -17,7 +18,7 @@ data class ListItemUpdateRequestTO(
     val itemTitle: String? = null,
     val itemNote: String? = null,
     val itemType: ItemType? = null,
-    val metadata: Map<String, Any>? = null,
+    val metadata: UserMetaData? = null,
     val itemState: LIST_ITEM_STATE? = null,
     val requestedQuantity: Int? = null,
     val fulfilledQuantity: Int? = null,

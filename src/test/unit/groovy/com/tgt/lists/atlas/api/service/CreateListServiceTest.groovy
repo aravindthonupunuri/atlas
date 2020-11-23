@@ -5,8 +5,9 @@ import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListRequestTO
+import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.util.Constants
-import com.tgt.lists.atlas.api.util.LIST_STATE
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
 import com.tgt.lists.atlas.util.TestListChannel
 import org.apache.kafka.clients.producer.RecordMetadata
@@ -54,7 +55,7 @@ class CreateListServiceTest extends Specification {
                         "wallDepth": 12
                 ]
         ]
-        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, metadata)
+        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, new UserMetaData(metadata))
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:

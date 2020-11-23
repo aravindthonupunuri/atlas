@@ -3,7 +3,7 @@ package com.tgt.lists.atlas.kafka.model
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.tgt.lists.atlas.api.util.EventType
+import com.tgt.lists.atlas.api.type.EventType
 import java.util.*
 
 data class DeleteListNotifyEvent(

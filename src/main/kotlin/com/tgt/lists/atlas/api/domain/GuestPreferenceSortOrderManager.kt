@@ -6,7 +6,7 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper
 import com.tgt.lists.atlas.api.util.AppErrorCodes
-import com.tgt.lists.atlas.api.util.Direction
+import com.tgt.lists.atlas.api.type.Direction
 import com.tgt.lists.common.components.exception.InternalServerException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono

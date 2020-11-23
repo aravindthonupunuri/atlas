@@ -3,7 +3,7 @@ package com.tgt.lists.atlas.api.domain.model.entity
 import com.datastax.oss.driver.api.mapper.annotations.*
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention
 import com.tgt.lists.atlas.api.util.AppErrorCodes.LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE
-import com.tgt.lists.atlas.api.util.ItemType
+import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.common.components.exception.InternalServerException
 import java.time.Instant
 import java.util.*

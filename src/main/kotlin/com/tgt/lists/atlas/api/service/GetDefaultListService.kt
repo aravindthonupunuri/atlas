@@ -3,8 +3,8 @@ package com.tgt.lists.atlas.api.service
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformationPipeline
 import com.tgt.lists.atlas.api.transport.ListResponseTO
-import com.tgt.lists.atlas.api.util.ItemIncludeFields
-import com.tgt.lists.atlas.api.util.LIST_MARKER
+import com.tgt.lists.atlas.api.type.ItemIncludeFields
+import com.tgt.lists.atlas.api.type.LIST_MARKER
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono

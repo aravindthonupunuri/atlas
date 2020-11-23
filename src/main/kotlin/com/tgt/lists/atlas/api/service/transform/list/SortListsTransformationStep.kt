@@ -2,8 +2,8 @@ package com.tgt.lists.atlas.api.service.transform.list
 
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
-import com.tgt.lists.atlas.api.util.ListSortFieldGroup
-import com.tgt.lists.atlas.api.util.ListSortOrderGroup
+import com.tgt.lists.atlas.api.type.ListSortFieldGroup
+import com.tgt.lists.atlas.api.type.ListSortOrderGroup
 import reactor.core.publisher.Mono
 
 /**

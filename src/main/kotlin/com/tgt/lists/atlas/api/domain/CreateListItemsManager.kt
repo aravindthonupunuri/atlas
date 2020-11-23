@@ -4,7 +4,8 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.kafka.model.CreateListItemNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
@@ -71,11 +72,11 @@ class CreateListItemsManager(
 
         return listRepository.saveListItems(listItems).zipWhen { items ->
             Flux.fromIterable(items.asIterable()).flatMap {
-                val userMetaDataTO = ListItemMapper.getUserItemMetaDataFromMetadataMap(it.itemMetadata)
+                val userMetaDataTO = toUserMetaData(it.itemMetadata)
                 eventPublisher.publishEvent(CreateListItemNotifyEvent.getEventType(),
                         CreateListItemNotifyEvent(guestId, it.id!!, it.itemId!!,
                                 LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
-                                it.itemTcin, it.itemTitle, it.itemChannel, it.itemReqQty, userMetaDataTO?.userMetaData),
+                                it.itemTcin, it.itemTitle, it.itemChannel, it.itemReqQty, userMetaDataTO?.metadata),
                             listId.toString()) }.collectList() }.map { it.t1 }
         }
 }

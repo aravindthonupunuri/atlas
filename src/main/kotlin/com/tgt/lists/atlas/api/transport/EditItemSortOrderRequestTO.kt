@@ -1,6 +1,6 @@
 package com.tgt.lists.atlas.api.transport
 
-import com.tgt.lists.atlas.api.util.Direction
+import com.tgt.lists.atlas.api.type.Direction
 import java.util.*
 import javax.validation.constraints.NotNull
 

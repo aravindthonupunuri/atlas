@@ -1,8 +1,9 @@
 package com.tgt.lists.atlas.api.transport
 
-import com.tgt.lists.atlas.api.util.ItemType
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.util.UnitOfMeasure
+import com.tgt.lists.atlas.api.type.UserMetaData
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.UnitOfMeasure
 import java.util.*
 import javax.validation.constraints.NotNull
 
@@ -18,7 +19,7 @@ data class ListItemResponseTO(
     val requestedQuantity: Int? = 1,
     val fulfilledQuantity: Int? = null,
     val unitOfMeasure: UnitOfMeasure? = null,
-    val metadata: Map<String, Any>? = null,
+    val metadata: UserMetaData? = null,
     val price: Float? = null,
     val listPrice: Float? = null,
     val offerCount: Int = 0,

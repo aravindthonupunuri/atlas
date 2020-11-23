@@ -12,8 +12,8 @@ import com.tgt.lists.atlas.api.transport.ListResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper
 import com.tgt.lists.atlas.api.util.Constants.LIST_ITEM_STATE_KEY
-import com.tgt.lists.atlas.api.util.ItemIncludeFields
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.ItemIncludeFields
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono

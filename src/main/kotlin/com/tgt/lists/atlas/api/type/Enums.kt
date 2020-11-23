@@ -1,4 +1,4 @@
-package com.tgt.lists.atlas.api.util
+package com.tgt.lists.atlas.api.type
 
 enum class ItemIncludeFields {
     ALL, PENDING, COMPLETED

@@ -8,7 +8,7 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.DataContextContainerManager
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.GuestListDAO
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListDAO
-import com.tgt.lists.atlas.api.util.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.micronaut.cassandra.BatchExecutor
 import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
