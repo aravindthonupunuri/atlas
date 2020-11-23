@@ -170,6 +170,27 @@ task sourcesJar(type: Jar) {
     archiveClassifier = 'sources'
 }
 
+def clientJarName = 'atlas-client'
+task clientJar(type: Jar, dependsOn: classes) {
+    archiveBaseName = clientJarName
+    version =  System.properties["VERSION"]
+    includeEmptyDirs = false
+    from (sourceSets.main.output)
+
+    // META-INF/services should be included when any of the included classes use micronaut annotations e.g. @Client, @Filter etc.
+    // Include Enum classes with <Classname>* rather than <Classname>.* because Enums with companion objects have <Classname>.class and <Classname>$Companion.class
+    // Include micronaut's $ prefixed and suffixed classes for compiled time injection to work
+    include ("**\\api\\type\\**\\*", "**\\kafka\\model\\**\\*")
+}
+task clientSourcesJar(type: Jar, dependsOn: classes) {
+    archiveBaseName = clientJarName
+    version =  System.properties["VERSION"]
+    archiveClassifier = 'sources'
+    includeEmptyDirs = false
+    from (sourceSets.main.kotlin)
+    include ("**\\api\\type\\**\\*", "**\\kafka\\model\\**\\*")
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -177,6 +198,14 @@ publishing {
             artifactId = 'atlas'
             version = System.properties["VERSION"]
             artifact sourcesJar
+        }
+    }
+    publications {
+        client(MavenPublication) {
+            artifactId = 'atlas-client'
+            version = System.properties["VERSION"]
+            artifact tasks.clientJar
+            artifact tasks.clientSourcesJar
         }
     }
     repositories {
