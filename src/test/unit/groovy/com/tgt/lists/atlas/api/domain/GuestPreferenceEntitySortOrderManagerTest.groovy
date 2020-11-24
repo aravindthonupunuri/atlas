@@ -340,4 +340,29 @@ class GuestPreferenceEntitySortOrderManagerTest extends Specification {
         1 * guestListRepository.findGuestPreference(guestId) >> Mono.empty()
         actual == expected
     }
+
+    def "test sortListOfLists"() {
+        given:
+        def listId1 = listDataProvider.getTimeBasedUUID(5)
+        def listId2 = listDataProvider.getTimeBasedUUID(5)
+        def listId3 = listDataProvider.getTimeBasedUUID(5)
+        def listId4 = listDataProvider.getTimeBasedUUID(5)
+        def listId5 = listDataProvider.getTimeBasedUUID(5)
+        def listId6 = listDataProvider.getTimeBasedUUID(5)
+
+        def listGetAllResponseTO1 = listDataProvider.getList(listId1, "1")
+        def listGetAllResponseTO2 = listDataProvider.getList(listId2, "2")
+        def listGetAllResponseTO3 = listDataProvider.getList(listId3, "3")
+        def listGetAllResponseTO4 = listDataProvider.getList(listId4, "4")
+        def listGetAllResponseTO5 = listDataProvider.getList(listId5, "5")
+        def listGetAllResponseTO6 = listDataProvider.getList(listId6, "6")
+        def guestLists = [listGetAllResponseTO6,listGetAllResponseTO4,listGetAllResponseTO1,listGetAllResponseTO5,listGetAllResponseTO3,listGetAllResponseTO2]
+        def expectedSortedLists = [listGetAllResponseTO1,listGetAllResponseTO3,listGetAllResponseTO2,listGetAllResponseTO4,listGetAllResponseTO5,listGetAllResponseTO6]
+
+        when:
+        def sortedLists = guestListOrderManager.sortListOfLists("${listId1},${listId3},${listId2}", guestLists)
+
+        then:
+        sortedLists == expectedSortedLists
+    }
 }

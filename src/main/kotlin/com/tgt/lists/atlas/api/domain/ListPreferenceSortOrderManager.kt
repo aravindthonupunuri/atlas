@@ -109,13 +109,14 @@ class ListPreferenceSortOrderManager(
 
     fun sortListItemsByPosition(sortOrder: String, pendingItems: List<ListItemResponseTO>): List<ListItemResponseTO> {
         val listSortOrderMap = sortOrder.split(",").mapIndexed {
-            index, s -> s to index
+            index, s -> s to index.toLong()
         }.toMap()
 
         val wrappedList = pendingItems.map {
             var position = listSortOrderMap[it.listItemId.toString()]
             if (position == null) {
-                position = Int.MAX_VALUE
+                // we are dealing with timeUUID here which can be converted to timestamp
+                position = it.listItemId!!.timestamp()
             }
             ListItemResponseTOWrapper(position, it)
         }
@@ -168,7 +169,7 @@ class ListPreferenceSortOrderManager(
      * Used to assist in sorting via standard comparator
      */
     data class ListItemResponseTOWrapper(
-        val listPosition: Int,
+        val listPosition: Long,
         val listItemResponseTO: ListItemResponseTO
     )
 }

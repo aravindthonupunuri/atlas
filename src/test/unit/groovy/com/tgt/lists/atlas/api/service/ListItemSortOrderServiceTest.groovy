@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
@@ -136,9 +137,9 @@ class ListItemSortOrderServiceTest extends Specification {
 
     def "Test editListItemSortOrder() when secondary item id does not exist"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID primaryItemId = UUID.randomUUID()
-        UUID secondaryItemId = UUID.randomUUID()
+        UUID listId = listDataProvider.getTimeBasedUUID(5)
+        UUID primaryItemId = listDataProvider.getTimeBasedUUID(5)
+        UUID secondaryItemId = listDataProvider.getTimeBasedUUID(5)
         def editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, Direction.ABOVE)
         def preList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString() + "," + secondaryItemId.toString())
@@ -158,9 +159,9 @@ class ListItemSortOrderServiceTest extends Specification {
 
     def "Test editListItemSortOrder() when primary item id does not exist"() {
         given:
-        UUID listId = UUID.randomUUID()
-        UUID primaryItemId = UUID.randomUUID()
-        UUID secondaryItemId = UUID.randomUUID()
+        UUID listId = listDataProvider.getTimeBasedUUID(5)
+        UUID primaryItemId = listDataProvider.getTimeBasedUUID(5)
+        UUID secondaryItemId = listDataProvider.getTimeBasedUUID(5)
         def editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, Direction.ABOVE)
         def preList = new ListPreferenceEntity(listId, guestId, secondaryItemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString() + "," + secondaryItemId.toString())

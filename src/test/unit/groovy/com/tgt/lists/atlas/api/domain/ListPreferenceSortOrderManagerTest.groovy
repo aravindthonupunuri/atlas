@@ -448,4 +448,30 @@ class ListPreferenceSortOrderManagerTest extends Specification {
         1 * listPreferenceRepository.getListPreference(listId, guestId) >> Mono.error(new RuntimeException("some exception"))
         actual == expected
     }
+
+    def "test sortListItemsByPosition"() {
+        given:
+        def listItemId1 = listDataProvider.getTimeBasedUUID(5)
+        def listItemId2 = listDataProvider.getTimeBasedUUID(5)
+        def listItemId3 = listDataProvider.getTimeBasedUUID(5)
+        def listItemId4 = listDataProvider.getTimeBasedUUID(5)
+        def listItemId5 = listDataProvider.getTimeBasedUUID(5)
+        def listItemId6 = listDataProvider.getTimeBasedUUID(5)
+
+        def itemResponseTO1 = listDataProvider.getListItem(listItemId1, "1")
+        def itemResponseTO2 = listDataProvider.getListItem(listItemId2, "2")
+        def itemResponseTO3 = listDataProvider.getListItem(listItemId3, "3")
+        def itemResponseTO4 = listDataProvider.getListItem(listItemId4, "4")
+        def itemResponseTO5 = listDataProvider.getListItem(listItemId5, "5")
+        def itemResponseTO6 = listDataProvider.getListItem(listItemId6, "6")
+
+        def pendingItems = [itemResponseTO6,itemResponseTO1,itemResponseTO5,itemResponseTO3,itemResponseTO2,itemResponseTO4]
+        def expectedSortedItems = [itemResponseTO3,itemResponseTO1,itemResponseTO2,itemResponseTO4,itemResponseTO5,itemResponseTO6]
+
+        when:
+        def sortedItems = listPreferenceSortOrderManager.sortListItemsByPosition("${itemResponseTO3.listItemId},${itemResponseTO1.listItemId},${itemResponseTO2.listItemId}", pendingItems)
+
+        then:
+        sortedItems == expectedSortedItems
+    }
 }

@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.util
 
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.model.entity.*
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
@@ -7,6 +8,7 @@ import com.tgt.lists.atlas.api.util.ItemRefIdBuilder
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.LIST_STATE
+import java.lang.Thread.sleep
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -95,5 +97,11 @@ class ListDataProvider {
             idx++
         }
         return result
+    }
+
+    fun getTimeBasedUUID(sleepTimeMs: Long): UUID {
+        val uuid = Uuids.timeBased()
+        if (sleepTimeMs > 0) sleep(sleepTimeMs)
+        return uuid
     }
 }

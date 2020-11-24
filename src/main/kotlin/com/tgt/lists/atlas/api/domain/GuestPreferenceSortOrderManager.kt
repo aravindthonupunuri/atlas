@@ -88,13 +88,14 @@ class GuestPreferenceSortOrderManager(
 
     fun sortListOfLists(sortOrder: String, guestLists: List<ListGetAllResponseTO>): List<ListGetAllResponseTO> {
         val listSortOrderMap = sortOrder.split(",").mapIndexed {
-            index, s -> s to index
+            index, s -> s to index.toLong()
         }.toMap()
 
         val wrappedList = guestLists.map {
             var position = listSortOrderMap[it.listId.toString()]
             if (position == null) {
-                position = Int.MAX_VALUE
+                // we are dealing with timeUUID here which can be converted to timestamp
+                position = it.listId!!.timestamp()
             }
             ListGetAllResponseTOWrapper(position, it)
         }
@@ -137,7 +138,7 @@ class GuestPreferenceSortOrderManager(
      * Used to assist in sorting via standard comparator
      */
     data class ListGetAllResponseTOWrapper(
-        val listPosition: Int,
+        val listPosition: Long,
         val listGetAllResponseTO: ListGetAllResponseTO
     )
 }
