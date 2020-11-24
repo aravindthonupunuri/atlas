@@ -152,6 +152,8 @@ class ListRepository(
     }
 
     fun updateList(existingListEntity: ListEntity, updatedListEntity: ListEntity): Mono<ListEntity> {
+        var guestListAdded = false
+
         // existing list update
         updatedListEntity.updatedAt = getLocalInstant()
 
@@ -164,11 +166,15 @@ class ListRepository(
                 state = updatedListEntity.state
         )
 
-        val batchStmts = mutableListOf<BatchableStatement<*>>(
-                listDAO.saveList(updatedListEntity)
-        )
+        val batchStmts = mutableListOf<BatchableStatement<*>>(listDAO.saveList(updatedListEntity))
 
-        // add saveGuestList statement if either marker OR state has changed against existing value
+        // add saveGuestList statement if state is updated
+        if (existingListEntity.state != updatedListEntity.state) {
+            batchStmts.add(guestListDAO.saveGuestList(updatedGuestListEntity))
+            guestListAdded = true
+        }
+
+        // marker is a ClusteringColumn; drop the row and add it back again with updated marker
         return retryableStatementExecutor.read(className, "findGuestListById") { consistency ->
             guestListDAO.findGuestListById(
                     existingListEntity.guestId!!,
@@ -176,20 +182,21 @@ class ListRepository(
                     existingListEntity.subtype!!,
                     existingListEntity.marker!!,
                     existingListEntity.id!!,
-                    consistency)
-        }
+                    consistency
+            ) }
                 .flatMap {
                     val existingGuestListEntity = it
-                    if (existingGuestListEntity.state != updatedGuestListEntity.state ||
-                            existingGuestListEntity.marker != updatedGuestListEntity.marker) {
-                        // marker is a ClusteringColumn and update statement isn't supported so delete and save are added to batch execution
-                        batchStmts.add(guestListDAO.deleteByIdForId(
-                                existingGuestListEntity.guestId,
-                                existingGuestListEntity.type,
-                                existingGuestListEntity.subtype,
-                                existingGuestListEntity.marker,
-                                existingGuestListEntity.id))
-                        batchStmts.add(guestListDAO.saveGuestList(updatedGuestListEntity))
+
+                    if (existingGuestListEntity.marker != updatedGuestListEntity.marker) {
+                        batchStmts.add(
+                                guestListDAO.deleteByIdForId(existingGuestListEntity.guestId,
+                                        existingGuestListEntity.type,
+                                        existingGuestListEntity.subtype,
+                                        existingGuestListEntity.marker,
+                                        existingGuestListEntity.id)
+                        )
+                        // if guestList is already added don't duplicate
+                        if (!guestListAdded) batchStmts.add(guestListDAO.saveGuestList(updatedGuestListEntity))
                     }
                     batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "updateList")
                             .map { updatedListEntity }
