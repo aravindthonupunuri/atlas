@@ -75,7 +75,7 @@ class ListMapper {
                     state = if (listUpdateRequestTO.listState != null) listUpdateRequestTO.listState.value
                     else existingEntity.state,
                     updatedAt = getLocalInstant(),
-                    metadata = toEntityMetadata(updatedMetaData)))
+                    metadata = toEntityMetadata(updatedMetaData ?: listUpdateRequestTO.metadata)))
         }
 
         fun toListResponseTO(

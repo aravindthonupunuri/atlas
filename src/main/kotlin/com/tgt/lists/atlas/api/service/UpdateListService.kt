@@ -54,7 +54,7 @@ class UpdateListService(
 
         existingUserMetadata?.let {
             listUpdateRequestTO.userMetaDataTransformationStep?.let {
-                it.execute(existingUserMetadata)
+                return it.execute(existingUserMetadata)
                         .map {
                             val updatedMetaData = it
                             toUpdateListEntity(existingListEntity, updatedMetaData, listUpdateRequestTO)
