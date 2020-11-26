@@ -31,7 +31,7 @@ class ListMapper {
                     title = listRequestTO.listTitle,
                     channel = listRequestTO.channel,
                     subchannel = listRequestTO.subChannel,
-                    marker = if (defaultList) LIST_MARKER.DEFAULT.value else null,
+                    marker = if (defaultList) LIST_MARKER.DEFAULT.value else "",
                     description = listRequestTO.shortDescription,
                     location = listRequestTO.locationId.toString(),
                     agentId = listRequestTO.agentId,
