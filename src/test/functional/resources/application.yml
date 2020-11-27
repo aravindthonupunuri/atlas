@@ -44,3 +44,62 @@ cassandra:
       request:
         timeout: 1000 # request timeout in ms
         consistency: ONE
+
+purge:
+  execution-time:
+    hour-of-day: 2
+    minute-block-of-hour:  1
+
+beacon:
+  client:
+    enabled: true
+    source: purge-consumer
+    dlq-source: purge-consumer-dlq
+    kafka:
+      consumer:
+        client-id: purge-cron-beacon-consumer
+        topic: cronbeacon
+        metrics-name: purge-beacon-metrics
+        consumer-group: purge-cron-beacon-consumer
+        consumer-batch-size: 1
+        max-count-down-latch-wait-time: 240 # in secondsConsumerRecord
+
+# kafka consumer properties
+kafka:
+  consumers:
+    purge-cron-beacon-consumer:
+      key:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value:
+        deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+
+
+msgbus:
+  source: atlas
+  dlq-source: atlas-dlq
+  kafka:
+    consumer:
+      enabled: true
+    producer:
+      enabled: true
+    dlqconsumer:
+      enabled: true
+    dlqproducer:
+      enabled: true
+    topic: lists-msg-bus
+    consumer-group: atlas-msg-bus-consumer
+    consumer-batch-size: 10
+    dlq-topic: lists-dlq
+    dlq-consumer-group: atlas-dlq-consumer
+    dlq-event-retry-interval-secs: 1
+    dlq-max-event-retry-count: 3
+    dlq-consumer-batch-size: 10
+
+kafka-sources:
+  allow:
+    - atlas
+    - atlas-dlq
+    - purge-consumer
+    - purge-consumer-dlq
+    - cronbeacon
+    - cronbeacon-dlq

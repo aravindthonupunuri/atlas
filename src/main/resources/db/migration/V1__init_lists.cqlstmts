@@ -80,3 +80,12 @@ CREATE TABLE IF NOT EXISTS backpack.list_preference (
       AND comment = ''
       AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'};
 
+CREATE TABLE IF NOT EXISTS backpack.purge_expiration (
+  expiration DATE,
+  bucket INT,
+  list_id timeuuid,
+  PRIMARY KEY ((expiration, bucket), list_id)
+) WITH CLUSTERING ORDER BY (list_id ASC)
+      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+      AND comment = ''
+      AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'};

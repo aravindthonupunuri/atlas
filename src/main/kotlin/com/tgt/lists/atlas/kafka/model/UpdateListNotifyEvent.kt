@@ -5,29 +5,33 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.tgt.lists.atlas.api.type.EventType
 import com.tgt.lists.atlas.api.type.LIST_STATE
+import java.time.LocalDate
 import java.util.*
 
 data class UpdateListNotifyEvent(
     @JsonProperty("guest_id")
-val guestId: String,
+    val guestId: String,
 
     @JsonProperty("list_id")
-val listId: UUID,
+    val listId: UUID,
 
     @JsonProperty("list_type")
-val listType: String,
+    val listType: String,
 
     @JsonProperty("list_title")
-val listTitle: String?,
+    val listTitle: String?,
 
     @JsonProperty("list_state")
-val listState: LIST_STATE?,
+    val listState: LIST_STATE?,
 
     @JsonProperty("user_meta_data")
-val userMetaData: Map<String, Any>? = null,
+    val userMetaData: Map<String, Any>? = null,
+
+    @JsonProperty("expiration")
+    val expiration: LocalDate? = null,
 
     @JsonProperty("retry_state")
-var retryState: String? = null
+    var retryState: String? = null
 ) {
 
     companion object {

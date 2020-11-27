@@ -8,8 +8,11 @@ import com.tgt.lists.atlas.api.util.ItemRefIdBuilder
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.LIST_STATE
+
+import com.tgt.lists.atlas.api.purge.persistence.entity.PurgeEntity
 import java.lang.Thread.sleep
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -97,6 +100,10 @@ class ListDataProvider {
             idx++
         }
         return result
+    }
+
+    fun createPurgeEntity(listId: UUID, bucket: Int, expiration: LocalDate): PurgeEntity {
+        return PurgeEntity(listId = listId, bucket = bucket, expiration = expiration)
     }
 
     fun getTimeBasedUUID(sleepTimeMs: Long): UUID {
