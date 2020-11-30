@@ -82,7 +82,7 @@ class ListMapper {
             listEntity: ListEntity,
             pendingListItems: List<ListItemResponseTO>? = null,
             completedListItems: List<ListItemResponseTO>? = null,
-            maxPendingItemCount: Int? = 0,
+            maxPendingItemsCount: Int? = 0,
             maxCompletedItemsCount: Int? = 0,
             maxPendingPageCount: Int? = 0,
             maxCompletedPageCount: Int? = 0
@@ -107,7 +107,7 @@ class ListMapper {
                     metadata = toUserMetaData(listEntity.metadata),
                     pendingListItems = pendingListItems,
                     completedListItems = completedListItems,
-                    maxPendingItemsCount = maxPendingItemCount,
+                    maxPendingItemsCount = maxPendingItemsCount,
                     maxCompletedItemsCount = maxCompletedItemsCount,
                     maxPendingPageCount = maxPendingPageCount,
                     maxCompletedPageCount = maxCompletedPageCount

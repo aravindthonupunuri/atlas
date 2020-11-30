@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.service.transform.list_items
 
-import io.micronaut.context.annotation.Value
+import com.tgt.lists.atlas.api.domain.Configuration
+import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
@@ -8,5 +9,5 @@ import javax.inject.Singleton
  */
 @Singleton
 data class PaginateListItemsTransformationConfiguration(
-    @Value("\${list.page-size}") val pageSize: Int? = 0
+    @Inject val configuration: Configuration
 )

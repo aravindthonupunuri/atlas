@@ -1,4 +1,4 @@
-package com.tgt.lists.atlas.api.purge.persistence.cassandra.internal
+package com.tgt.lists.atlas.purge.persistence.cassandra.internal
 
 import com.tgt.lists.micronaut.cassandra.InstrumentedDao
 import io.micronaut.context.annotation.Primary

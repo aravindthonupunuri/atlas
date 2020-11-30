@@ -1,7 +1,7 @@
-package com.tgt.lists.atlas.api.purge.event.handler
+package com.tgt.lists.atlas.purge.event.handler
 
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
-import com.tgt.lists.atlas.api.purge.service.PurgeUpdateListService
+import com.tgt.lists.atlas.purge.service.PurgeUpdateListService
 import com.tgt.lists.msgbus.event.EventHeaderFactory
 import com.tgt.lists.msgbus.event.EventHeaders
 import com.tgt.lists.msgbus.event.EventProcessingResult
@@ -31,7 +31,7 @@ class PurgeUpdateListNotifyEventHandler(
         }
 
         return purgeUpdateListService.updateListExpirationDate(updateListNotifyEvent.guestId,
-            updateListNotifyEvent.listId, updateListNotifyEvent.expiration!!, processingState)
+            updateListNotifyEvent.listId, updateListNotifyEvent.expiration, processingState)
             .map {
                 if (it.completeState()) {
                     logger.debug("updateListNotifyEvent processing is complete")

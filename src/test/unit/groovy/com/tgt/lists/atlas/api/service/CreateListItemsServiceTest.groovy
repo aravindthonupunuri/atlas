@@ -33,13 +33,13 @@ class CreateListItemsServiceTest extends Specification {
     def setup() {
         eventPublisher = Mock(EventPublisher)
         listRepository = Mock(ListRepository)
+        listDataProvider = new ListDataProvider()
         deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
-        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
-                true, 10, 10, false)
+        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 10, 10, true, true, false))
         createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher)
         createListItemsService = new CreateListItemsService(createListItemsManager)
-        listDataProvider = new ListDataProvider()
+
     }
 
     def "test createListItem() integrity"() {

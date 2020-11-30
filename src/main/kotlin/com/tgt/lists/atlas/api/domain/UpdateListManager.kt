@@ -4,6 +4,7 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.util.TestListEvaluator
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -16,7 +17,6 @@ class UpdateListManager(
     @Inject private val listRepository: ListRepository,
     @Inject private val eventPublisher: EventPublisher
 ) {
-
     private val logger = KotlinLogging.logger { UpdateListManager::class.java.name }
 
     fun updateList(
@@ -42,7 +42,11 @@ class UpdateListManager(
                                     listState = if (it.state != null)
                                         LIST_STATE.values().first { listState -> listState.value == it.state!! }
                                     else LIST_STATE.INACTIVE,
-                                    expiration = it.expiration,
+                                    expiration = if (TestListEvaluator.evaluate()) {
+                                        existingListEntity.expiration!! // If its test mode do not update the expiration
+                                    } else {
+                                        it.expiration!!
+                                    },
                                     userMetaData = userMetaDataTO?.metadata),
                             guestId)
                 }.map { it.t1 }

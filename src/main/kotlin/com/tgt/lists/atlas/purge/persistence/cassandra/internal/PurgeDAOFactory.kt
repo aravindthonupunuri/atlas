@@ -1,4 +1,4 @@
-package com.tgt.lists.atlas.api.purge.persistence.cassandra.internal
+package com.tgt.lists.atlas.purge.persistence.cassandra.internal
 
 import com.datastax.oss.driver.api.core.CqlIdentifier
 import com.datastax.oss.driver.api.core.CqlSession

@@ -110,6 +110,7 @@ dependencies {
     testImplementation 'org.apache.kafka:kafka-clients:2.3.0:test'
     testImplementation 'org.apache.kafka:kafka_2.12:2.3.0'
     testImplementation 'org.apache.kafka:kafka_2.12:2.3.0:test'
+    testImplementation "org.testcontainers:kafka:1.14.3"
 }
 
 configurations.all { exclude group: "ch.qos.logback" }

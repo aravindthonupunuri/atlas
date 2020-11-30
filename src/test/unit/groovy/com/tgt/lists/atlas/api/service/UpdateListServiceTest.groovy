@@ -18,7 +18,9 @@ import org.jetbrains.annotations.NotNull
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-class   UpdateListServiceTest extends Specification {
+import java.time.LocalDate
+
+class UpdateListServiceTest extends Specification {
 
     ListRepository listRepository
     EventPublisher eventPublisher
@@ -47,8 +49,8 @@ class   UpdateListServiceTest extends Specification {
 
         UUID listId = Uuids.timeBased()
 
-        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, null, null, null, null )
-        ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, null, null, null, null )
+        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, LocalDate.of(2100, 05, 02), null, null, null )
+        ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, LocalDate.of(2100, 05, 02), null, null, null )
 
         when:
         def actual = updateListService.updateList(guestId, listId, listUpdateRequestTO).block()
@@ -90,8 +92,8 @@ class   UpdateListServiceTest extends Specification {
 
         UUID listId = Uuids.timeBased()
 
-        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, null, null, null, null )
-        ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, null, null, null, null )
+        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, LocalDate.of(2100, 05, 02), null, null, null )
+        ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, LocalDate.of(2100, 05, 02), null, null, null )
 
         when:
         def actual = updateListService.updateList(guestId, listId, listUpdateRequestTO).block()

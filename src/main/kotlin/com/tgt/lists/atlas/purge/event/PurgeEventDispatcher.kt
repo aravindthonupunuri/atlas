@@ -1,11 +1,11 @@
-package com.tgt.lists.atlas.api.purge.event
+package com.tgt.lists.atlas.purge.event
 
 import com.tgt.cronbeacon.kafka.model.CronEvent
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
-import com.tgt.lists.atlas.api.purge.event.handler.PurgeCreateListNotifyEventHandler
-import com.tgt.lists.atlas.api.purge.event.handler.PurgeCronEventHandler
-import com.tgt.lists.atlas.api.purge.event.handler.PurgeUpdateListNotifyEventHandler
+import com.tgt.lists.atlas.purge.event.handler.PurgeCreateListNotifyEventHandler
+import com.tgt.lists.atlas.purge.event.handler.PurgeCronEventHandler
+import com.tgt.lists.atlas.purge.event.handler.PurgeUpdateListNotifyEventHandler
 import com.tgt.lists.msgbus.EventDispatcher
 import com.tgt.lists.msgbus.event.DeadEventTransformedValue
 import com.tgt.lists.msgbus.event.EventHeaders

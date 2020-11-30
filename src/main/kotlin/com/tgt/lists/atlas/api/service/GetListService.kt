@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.tgt.lists.atlas.api.domain.Configuration
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
@@ -14,7 +15,6 @@ import com.tgt.lists.atlas.api.transport.mapper.ListMapper
 import com.tgt.lists.atlas.api.util.Constants.LIST_ITEM_STATE_KEY
 import com.tgt.lists.atlas.api.type.ItemIncludeFields
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
-import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -24,15 +24,13 @@ import javax.inject.Singleton
 @Singleton
 class GetListService(
     @Inject private val listRepository: ListRepository,
-    @Inject private val listItemsTransformationPipelineConfiguration: ListItemsTransformationPipelineConfiguration
+    @Inject private val listItemsTransformationPipelineConfiguration: ListItemsTransformationPipelineConfiguration,
+    @Inject private val configuration: Configuration
 ) {
     private val logger = KotlinLogging.logger {}
 
-    @Value("\${list.max-pending-item-count}")
-    private var maxPendingItemCount: Int = 100 // default max item count
-
-    @Value("\${list.max-completed-items-count}")
-    private var maxCompletedItemsCount: Int = 100 // default max item count
+    private val maxPendingItemsCount: Int = configuration.maxPendingItemsCount
+    private val maxCompletedItemsCount: Int = configuration.maxCompletedItemsCount
 
     fun getList(
         guestId: String, // this is NOT the ownerId of list, it represents operation executor who could be different than list owner
@@ -138,7 +136,7 @@ class GetListService(
     ): ListResponseTO {
         return ListMapper.toListResponseTO(listEntity,
                 pendingListItems = pendingItems, completedListItems = completedItems,
-                maxPendingItemCount = maxPendingItemCount, maxCompletedItemsCount = maxCompletedItemsCount,
+                maxPendingItemsCount = maxPendingItemsCount, maxCompletedItemsCount = maxCompletedItemsCount,
                 maxPendingPageCount = maxPendingPageCount, maxCompletedPageCount = maxCompletedPageCount)
     }
 

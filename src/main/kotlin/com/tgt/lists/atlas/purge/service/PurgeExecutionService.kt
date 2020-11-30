@@ -1,11 +1,11 @@
-package com.tgt.lists.atlas.api.purge.service
+package com.tgt.lists.atlas.purge.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.DeleteListService
-import com.tgt.lists.atlas.api.purge.persistence.cassandra.PurgeRepository
+import com.tgt.lists.atlas.purge.persistence.cassandra.PurgeRepository
 import io.micronaut.context.annotation.Requires
 import mu.KotlinLogging
 import reactor.core.publisher.Flux

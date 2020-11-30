@@ -1,7 +1,7 @@
-package com.tgt.lists.atlas.api.purge.event.handler
+package com.tgt.lists.atlas.purge.event.handler
 
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
-import com.tgt.lists.atlas.api.purge.service.PurgeCreateListService
+import com.tgt.lists.atlas.purge.service.PurgeCreateListService
 import com.tgt.lists.msgbus.event.EventHeaderFactory
 import com.tgt.lists.msgbus.event.EventHeaders
 import com.tgt.lists.msgbus.event.EventProcessingResult
@@ -31,7 +31,7 @@ class PurgeCreateListNotifyEventHandler(
         }
 
         return purgeCreateListService.saveListExpirationDate(createListNotifyEvent.guestId,
-            createListNotifyEvent.listId, createListNotifyEvent.expiration!!, processingState)
+            createListNotifyEvent.listId, createListNotifyEvent.expiration, processingState)
             .map {
                 if (it.completeState()) {
                     logger.debug("createListNotifyEventService processing is complete")

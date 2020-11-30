@@ -1,10 +1,11 @@
-package com.tgt.lists.atlas.api.purge.service
+package com.tgt.lists.atlas.purge.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.tgt.lists.atlas.api.purge.persistence.cassandra.PurgeRepository
-import com.tgt.lists.atlas.api.purge.persistence.entity.PurgeEntity
+import com.tgt.lists.atlas.purge.persistence.cassandra.PurgeRepository
+import com.tgt.lists.atlas.purge.persistence.entity.PurgeEntity
+import com.tgt.lists.atlas.purge.util.Buckets
 import io.micronaut.context.annotation.Requires
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -37,7 +38,7 @@ class PurgeUpdateListService(
                         Mono.just(retryState)
                     }
                     .switchIfEmpty {
-                        val bucket = LocalDateTime.now().hour % Buckets.getBuckets().size
+                        val bucket = Buckets.getBucket(LocalDateTime.now())
                         purgeRepository.savePurgeExpiration(PurgeEntity(expiration, bucket, listId)).map {
                             logger.debug("From updateListExpirationDate(), Updated list: ${it.listId} with expiration date: ${it.expiration} and bucket: ${it.bucket}")
                             retryState.updateListExpiration = true

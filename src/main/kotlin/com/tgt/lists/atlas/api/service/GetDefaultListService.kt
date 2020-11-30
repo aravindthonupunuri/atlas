@@ -1,11 +1,11 @@
 package com.tgt.lists.atlas.api.service
 
+import com.tgt.lists.atlas.api.domain.Configuration
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformationPipeline
 import com.tgt.lists.atlas.api.transport.ListResponseTO
 import com.tgt.lists.atlas.api.type.ItemIncludeFields
 import com.tgt.lists.atlas.api.type.LIST_MARKER
-import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import javax.inject.Inject
@@ -15,9 +15,11 @@ import javax.inject.Singleton
 class GetDefaultListService(
     @Inject private val listRepository: ListRepository,
     @Inject private val getListService: GetListService,
-    @Value("\${list.list-type}") private val listType: String
+    @Inject private val configuration: Configuration
 ) {
     private val logger = KotlinLogging.logger {}
+
+    private val listType: String = configuration.listType
 
     fun getDefaultList(
         guestId: String, // this is NOT the ownerId of list, it represents operation executor who could be different than list owner

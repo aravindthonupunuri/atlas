@@ -17,8 +17,8 @@ class PaginateListItemsTransformationStep(
     }
 
     override fun execute(guestId: String, listId: UUID, items: List<ListItemResponseTO>, transformationContext: TransformationContext): Mono<List<ListItemResponseTO>> {
-        if (!items.isEmpty()) {
-            val pageSize: Int = (transformationContext.transformationPipelineConfiguration as ListItemsTransformationPipelineConfiguration).paginateListItemsTransformationConfiguration?.pageSize ?: 0
+        if (items.isNotEmpty()) {
+            val pageSize: Int = (transformationContext.transformationPipelineConfiguration as ListItemsTransformationPipelineConfiguration).paginateListItemsTransformationConfiguration?.configuration?.pageSize ?: 0
             if (pageSize > 0 && page > 0) {
                 var maxPageCount = items.size / pageSize
                 if (maxPageCount * pageSize < items.size) maxPageCount++

@@ -1,5 +1,6 @@
 package com.tgt.lists.atlas.api.service
 
+import com.tgt.lists.atlas.api.domain.Configuration
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.TransformationContext
@@ -7,7 +8,6 @@ import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipelin
 import com.tgt.lists.atlas.api.service.transform.list.ListsTransformationPipelineConfiguration
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toListGetAllResponseTO
-import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import javax.inject.Inject
@@ -17,10 +17,12 @@ import javax.inject.Singleton
 class GetAllListService(
     @Inject private val listRepository: ListRepository,
     @Inject private val listsTransformationPipelineConfiguration: ListsTransformationPipelineConfiguration,
-    @Value("\${list.list-type}") private val listType: String,
-    @Value("\${list.max-count}") private val maxListsCount: Int
+    @Inject private val configuration: Configuration
 ) {
     private val logger = KotlinLogging.logger {}
+
+    private val listType: String = configuration.listType
+    private val maxListsCount: Int = configuration.maxListsCount
 
     fun getAllListsForUser(
         guestId: String, // this is NOT the ownerId of list, it represents operation executor who could be different than list owner

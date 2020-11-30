@@ -41,7 +41,7 @@ class GetListServiceTest extends Specification {
         listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository, listRepository)
         SortListItemsTransformationConfiguration sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(listPreferenceSortOrderManager)
         ListItemsTransformationPipelineConfiguration transformationPipelineConfiguration = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, null)
-        getListService = new GetListService(listRepository, transformationPipelineConfiguration)
+        getListService = new GetListService(listRepository, transformationPipelineConfiguration, dataProvider.getConfiguration(3, 5, 5, true, false, false))
     }
 
     def "Test getListService() integrity ItemIncludeFields = ALL with 1 of each pending and completed"() {

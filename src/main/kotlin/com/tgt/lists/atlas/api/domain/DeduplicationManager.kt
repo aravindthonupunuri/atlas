@@ -1,11 +1,9 @@
 package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
-import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
-import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -16,18 +14,16 @@ import javax.inject.Singleton
 
 @Singleton
 class DeduplicationManager(
-    @Inject private val listRepository: ListRepository,
     @Inject private val updateListItemManager: UpdateListItemManager,
     @Inject private val deleteListItemsManager: DeleteListItemsManager,
-    @Value("\${list.features.dedupe}") private val isDedupeEnabled: Boolean,
-    @Value("\${list.max-pending-item-count}")
-    private var maxPendingItemCount: Int = 100, // default max pending item count
-    @Value("\${list.max-completed-items-count}")
-    private var maxCompletedItemsCount: Int = 100, // default max completed item count
-    @Value("\${list.pending-list-rolling-update}")
-    private var rollingUpdate: Boolean = false // default max completed item count
+    @Inject private val configuration: Configuration
 ) {
     private val logger = KotlinLogging.logger { DeduplicationManager::class.java.name }
+
+    private val listItemsDedupe = configuration.listItemsDedupe
+    private val pendingListRollingUpdate = configuration.pendingListRollingUpdate
+    private val maxCompletedItemsCount = configuration.maxCompletedItemsCount
+    private val maxPendingItemsCount = configuration.maxPendingItemsCount
 
     /**
      * Implements logic to find all the duplicate items found in the given bulk item list.
@@ -59,7 +55,7 @@ class DeduplicationManager(
         existingItems: List<ListItemEntity>,
         items: List<ListItemEntity>
     ): MutableMap<String, List<ListItemEntity>> {
-        if (!isDedupeEnabled) {
+        if (!listItemsDedupe) {
             logger.debug("[getDuplicateItemsMap] Deduplication is turned off")
             return mutableMapOf()
         } else {
@@ -165,13 +161,13 @@ class DeduplicationManager(
         val newItemsCount = itemsToDedup.count() // new items to be added
 
         val finalItemsCount = (existingItemsCount - duplicateItemsCount) + newItemsCount // final items count after dedupe
-        if (itemState == LIST_ITEM_STATE.PENDING && !rollingUpdate && finalItemsCount > maxPendingItemCount) {
+        if (itemState == LIST_ITEM_STATE.PENDING && !pendingListRollingUpdate && finalItemsCount > maxPendingItemsCount) {
             throw BadRequestException(AppErrorCodes.BAD_REQUEST_ERROR_CODE(listOf("Exceeding max items count")))
-        } else if ((itemState == LIST_ITEM_STATE.PENDING && rollingUpdate && finalItemsCount > maxPendingItemCount) ||
+        } else if ((itemState == LIST_ITEM_STATE.PENDING && pendingListRollingUpdate && finalItemsCount > maxPendingItemsCount) ||
                 (itemState == LIST_ITEM_STATE.COMPLETED && finalItemsCount > maxCompletedItemsCount)) {
             logger.error("Exceeding max items count in list, so deleting stale items")
             val maxItemCount = if (itemState == LIST_ITEM_STATE.PENDING) {
-                maxPendingItemCount
+                maxPendingItemsCount
             } else {
                 maxCompletedItemsCount
             }

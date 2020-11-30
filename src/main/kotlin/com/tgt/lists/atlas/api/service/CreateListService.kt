@@ -1,6 +1,7 @@
 package com.tgt.lists.atlas.api.service
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.tgt.lists.atlas.api.domain.Configuration
 import com.tgt.lists.atlas.api.domain.DefaultListManager
 import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
@@ -11,8 +12,8 @@ import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toListRespo
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toNewListEntity
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.util.TestListEvaluator
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
-import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import javax.inject.Inject
@@ -23,13 +24,14 @@ class CreateListService(
     @Inject private val listRepository: ListRepository,
     @Inject private val defaultListManager: DefaultListManager,
     @Inject private val eventPublisher: EventPublisher,
-    @Value("\${list.expiration-days}") private val expirationDays: Long = 0, // default value of 0 days
-    @Value("\${list.test-mode:false}") private val testMode: Boolean = false
+    @Inject private val configuration: Configuration
+
 ) {
     private val logger = KotlinLogging.logger {}
 
-    @Value("\${list.list-type}")
-    private var listType: String = ""
+    private val listType: String = configuration.listType
+    private val expirationDays: Long = configuration.expirationDays
+    private val testModeExpiration: Long = configuration.testModeExpiration
 
     companion object {
         val mapper = jacksonObjectMapper()
@@ -48,8 +50,12 @@ class CreateListService(
                             listSubtype = listRequestTO.listSubType,
                             listRequestTO = listRequestTO,
                             defaultList = it,
-                            expirationDays = expirationDays,
-                            testList = testMode)
+                            expirationDays = if (TestListEvaluator.evaluate()) {
+                                testModeExpiration // expiration should always be 24 hrs for test lists
+                            } else {
+                                expirationDays
+                            },
+                            testList = TestListEvaluator.evaluate())
 
                     persistNewList(guestId, listEntity)
                 }.map { toListResponseTO(it) }
@@ -74,7 +80,7 @@ class CreateListService(
                                         LIST_STATE.values().first { listState -> listState.value == it.state!! }
                                     } else {
                                         LIST_STATE.INACTIVE },
-                                    expiration = it.expiration,
+                                    expiration = it.expiration!!,
                                     userMetaData = userMetaDataTO?.metadata),
                             guestId)
                 }.map { it.t1 }

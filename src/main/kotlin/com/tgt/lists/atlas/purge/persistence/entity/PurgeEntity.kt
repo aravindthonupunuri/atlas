@@ -1,4 +1,4 @@
-package com.tgt.lists.atlas.api.purge.persistence.entity
+package com.tgt.lists.atlas.purge.persistence.entity
 
 import com.datastax.oss.driver.api.mapper.annotations.*
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention

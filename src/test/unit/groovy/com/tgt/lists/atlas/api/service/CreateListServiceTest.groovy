@@ -9,6 +9,7 @@ import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.util.Constants
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
+import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.atlas.util.TestListChannel
 import org.apache.kafka.clients.producer.RecordMetadata
 import reactor.core.publisher.Mono
@@ -20,16 +21,16 @@ class CreateListServiceTest extends Specification {
     EventPublisher eventPublisher
     CreateListService createListService
     DefaultListManager defaultListManager
+    ListDataProvider listDataProvider
     String guestId = "1234"
-    Long abandonAfterDurationInDays = 730
     String listType = "SHOPPING"
 
     def setup() {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
         defaultListManager = Mock(DefaultListManager)
-        createListService = new CreateListService(listRepository, defaultListManager, eventPublisher, abandonAfterDurationInDays, false)
-        createListService.listType = listType
+        listDataProvider = new ListDataProvider()
+        createListService = new CreateListService(listRepository, defaultListManager, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
     }
 
     def "Test createList() integrity"() {

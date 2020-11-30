@@ -1,7 +1,7 @@
-package com.tgt.lists.atlas.api.purge.event.handler
+package com.tgt.lists.atlas.purge.event.handler
 
 import com.tgt.cronbeacon.kafka.model.CronEvent
-import com.tgt.lists.atlas.api.purge.service.PurgeExecutionService
+import com.tgt.lists.atlas.purge.service.PurgeExecutionService
 import com.tgt.lists.msgbus.event.EventHeaderFactory
 import com.tgt.lists.msgbus.event.EventHeaders
 import com.tgt.lists.msgbus.event.EventProcessingResult

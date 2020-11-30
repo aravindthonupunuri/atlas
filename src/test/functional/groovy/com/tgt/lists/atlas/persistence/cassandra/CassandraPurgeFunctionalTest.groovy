@@ -9,8 +9,8 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.purge.persistence.cassandra.PurgeRepository
-import com.tgt.lists.atlas.api.purge.persistence.entity.PurgeEntity
+import com.tgt.lists.atlas.purge.persistence.cassandra.PurgeRepository
+import com.tgt.lists.atlas.purge.persistence.entity.PurgeEntity
 import com.tgt.lists.atlas.util.ListDataProvider
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
@@ -34,6 +34,8 @@ class CassandraPurgeFunctionalTest extends BaseFunctionalTest {
     @Shared
     List<UUID> listIds = [Uuids.timeBased(), Uuids.timeBased(), Uuids.timeBased(), Uuids.timeBased(), Uuids.timeBased(), Uuids.timeBased()]
 
+    @Shared List<LocalDate> localDateList = [LocalDate.of(2300, 03, 01), LocalDate.of(2300, 05, 02)]
+
     def setup() {
     }
 
@@ -50,17 +52,17 @@ class CassandraPurgeFunctionalTest extends BaseFunctionalTest {
 
         where:
         listId       | bucket  | expiration
-        listIds[0]   | 0       | LocalDate.of(2100, 03, 01)
-        listIds[1]   | 1       | LocalDate.of(2100, 03, 01)
-        listIds[2]   | 2       | LocalDate.of(2100, 03, 01)
-        listIds[3]   | 1       | LocalDate.of(2100, 05, 02)
-        listIds[4]   | 0       | LocalDate.of(2100, 05, 02)
-        listIds[5]   | 2       | LocalDate.of(2100, 05, 02)
+        listIds[0]   | 0       | localDateList[0]
+        listIds[1]   | 1       | localDateList[0]
+        listIds[2]   | 2       | localDateList[0]
+        listIds[3]   | 1       | localDateList[1]
+        listIds[4]   | 0       | localDateList[1]
+        listIds[5]   | 2       | localDateList[1]
     }
 
     def "test findPurgeExpirationByListId"() {
         when:
-        PurgeEntity purgeEntity  = purgeRepository.findPurgeExpirationByListId(LocalDate.of(2100, 03, 01), listIds[0]).block()
+        PurgeEntity purgeEntity  = purgeRepository.findPurgeExpirationByListId(localDateList[0], listIds[0]).block()
 
         then:
         purgeEntity.listId == listIds[0]
@@ -69,7 +71,7 @@ class CassandraPurgeFunctionalTest extends BaseFunctionalTest {
     def "test savePurgeExpiration"() {
         given:
         UUID listId = Uuids.timeBased()
-        PurgeEntity purgeEntity = dataProvider.createPurgeEntity(listId, 1, LocalDate.of(2100, 05, 02))
+        PurgeEntity purgeEntity = dataProvider.createPurgeEntity(listId, 1, localDateList[1])
 
         when:
         purgeRepository.savePurgeExpiration(purgeEntity).block()
@@ -78,9 +80,9 @@ class CassandraPurgeFunctionalTest extends BaseFunctionalTest {
         notThrown(Throwable)
     }
 
-    def "test findPurgeExpiration with expiration 2100-05-02 after adding a new purge entity"() {
+    def "test findPurgeExpiration with expiration 2300-05-02 after adding a new purge entity"() {
         when:
-        List<PurgeEntity> purgeEntityList = purgeRepository.findPurgeExpiration(LocalDate.of(2100, 05, 02)).collectList().block()
+        List<PurgeEntity> purgeEntityList = purgeRepository.findPurgeExpiration(localDateList[1]).collectList().block()
 
         then:
         !purgeEntityList.isEmpty()

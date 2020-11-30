@@ -41,8 +41,9 @@ class GetAllListServiceTest extends Specification {
         guestPreferenceSortOrderManager = new GuestPreferenceSortOrderManager(guestPreferenceRepository, listRepository)
         contextContainerManager = new ContextContainerManager()
         transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager)
-        getListsService = new GetAllListService(listRepository, transformationPipelineConfiguration, "SHOPPING", 10)
         listDataProvider = new ListDataProvider()
+        getListsService = new GetAllListService(listRepository, transformationPipelineConfiguration, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+
     }
 
     def "test getAllListsForUser with one guest list and no list items"() {

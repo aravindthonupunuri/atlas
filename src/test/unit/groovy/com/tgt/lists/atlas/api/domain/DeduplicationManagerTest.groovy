@@ -19,16 +19,18 @@ class DeduplicationManagerTest extends Specification {
     DeduplicationManager deduplicationManager
     DeleteListItemsManager deleteListItemsManager
     UpdateListItemManager updateListItemManager
+    Configuration configuration
     ListDataProvider listDataProvider
     String guestId = "1234"
 
     def setup() {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
+        listDataProvider = new ListDataProvider()
         deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
-        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager, true, 5, 5, false)
-        listDataProvider = new ListDataProvider()
+        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+
     }
 
     def "Test checkIfItemPreExist() for list with no preexisting items, so skipping dedup process"() {
@@ -107,8 +109,8 @@ class DeduplicationManagerTest extends Specification {
 
        def recordMetadata = GroovyMock(RecordMetadata)
 
-        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
-                true, 5, 5, true) // turning on rolling update
+        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 5, 5, true, true, false))
+        // turning on rolling update
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
@@ -138,8 +140,7 @@ class DeduplicationManagerTest extends Specification {
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
-        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
-                true, 5, 5, true) // turning on rolling update
+        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 5, 5, true, true, false))  // turning on rolling update
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
@@ -168,8 +169,7 @@ class DeduplicationManagerTest extends Specification {
 
         def recordMetadata = GroovyMock(RecordMetadata)
 
-        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
-                false, 5, 5, true) // turning on rolling update and dedupe turned off
+        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 5, 5, false, true, false))  // turning on rolling update and dedupe turned off
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
@@ -191,8 +191,8 @@ class DeduplicationManagerTest extends Specification {
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1111", "1111", "new item", 1, "newItemNote")
 
-        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
-                true, 10, 5, true) // turning on rolling update
+        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 5, 10, true, true, false))// turning on rolling update
+
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 
@@ -215,8 +215,7 @@ class DeduplicationManagerTest extends Specification {
 
         ListItemEntity updatedListItemEntity = listDataProvider.createListItemEntity(listId, listItemEntity.itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listItemEntity.itemRefId, listItemEntity.itemTcin, "new item", listItemEntity1.itemReqQty + listItemEntity.itemReqQty, "newItemNote\nitemNote")
 
-        deduplicationManager = new DeduplicationManager(listRepository, updateListItemManager, deleteListItemsManager,
-                true, 5, 5, true) // turning on rolling update
+        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 5, 5, true, true, false))// turning on rolling update
         when:
         def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1 ,listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5], [listItemEntity], LIST_ITEM_STATE.PENDING).block()
 

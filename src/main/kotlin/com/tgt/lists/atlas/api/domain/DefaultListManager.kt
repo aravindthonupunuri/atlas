@@ -8,7 +8,6 @@ import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.common.components.exception.BaseErrorCodes
 import com.tgt.lists.common.components.exception.ForbiddenException
-import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -20,12 +19,15 @@ import javax.inject.Singleton
 class DefaultListManager(
     @Inject private val listRepository: ListRepository,
     @Inject private val updateListManager: UpdateListManager,
-    @Value("\${list.max-count}") private val maxListsCount: Int = 50,
-    @Value("\${list.list-type}") private val listType: String,
-    @Value("\${list.features.fixed-default-list}") private val isFixedDefaultListEnabled: Boolean
+    @Inject val configuration: Configuration
 ) {
 
     private val logger = KotlinLogging.logger { DefaultListManager::class.java.name }
+
+    private val fixedDefaultList = configuration.fixedDefaultList
+    private val listType = configuration.listType
+    private val maxListsCount = configuration.maxListsCount
+
     //  1. Check if the new list being created exceeds the max allowed lists for a user
     //  2. Update defaultListIndicator
     fun processDefaultListInd(guestId: String, defaultListIndicator: Boolean, listId: UUID? = null): Mono<Boolean> {
@@ -56,7 +58,7 @@ class DefaultListManager(
             if (listId != null && guestLists.firstOrNull { it.id == listId } == null) {
                 throw ForbiddenException(BaseErrorCodes.FORBIDDEN_ERROR_CODE(listOf("guestId not authorized to update default list indicator, guestId: $guestId is not the owner of the list")))
             }
-            if (isFixedDefaultListEnabled) {
+            if (fixedDefaultList) {
                 throw BadRequestException(AppErrorCodes.BAD_REQUEST_ERROR_CODE(arrayListOf("FixedDefaultListEnabled, cannot update default list")))
             }
             Flux.fromIterable(getDefaultLists(guestLists, listId).asIterable()).flatMap { guestList ->

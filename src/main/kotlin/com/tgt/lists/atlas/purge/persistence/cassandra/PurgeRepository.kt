@@ -1,8 +1,8 @@
-package com.tgt.lists.atlas.api.purge.persistence.cassandra
+package com.tgt.lists.atlas.purge.persistence.cassandra
 
-import com.tgt.lists.atlas.api.purge.persistence.entity.PurgeEntity
-import com.tgt.lists.atlas.api.purge.persistence.cassandra.internal.PurgeDAO
-import com.tgt.lists.atlas.api.purge.service.Buckets
+import com.tgt.lists.atlas.purge.persistence.entity.PurgeEntity
+import com.tgt.lists.atlas.purge.persistence.cassandra.internal.PurgeDAO
+import com.tgt.lists.atlas.purge.util.Buckets
 import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
 import io.micronaut.context.annotation.Requires
 import reactor.core.publisher.Flux

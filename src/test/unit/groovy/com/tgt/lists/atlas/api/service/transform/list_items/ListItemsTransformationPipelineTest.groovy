@@ -33,7 +33,7 @@ class ListItemsTransformationPipelineTest extends Specification {
         listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository, listRepository)
         listDataProvider = new ListDataProvider()
         def sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(listPreferenceSortOrderManager)
-        def paginateListItemsTransformationConfiguration = new PaginateListItemsTransformationConfiguration(2)
+        def paginateListItemsTransformationConfiguration = new PaginateListItemsTransformationConfiguration(listDataProvider.getConfiguration(3, 5, 5, true, false, false))
         def transformationPipelineConfiguration = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, paginateListItemsTransformationConfiguration)
         transformationContext = new TransformationContext(transformationPipelineConfiguration)
     }
