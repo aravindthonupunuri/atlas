@@ -42,16 +42,17 @@ class CreateListService(
         logger.debug("[createList] guestId: $guestId, listRequestTO: $listRequestTO")
         return defaultListManager.processDefaultListInd(guestId, listRequestTO.defaultList)
                 .flatMap {
-                    val listEntity = toNewListEntity(guestId = guestId,
+                    val listEntity = toNewListEntity(
+                            guestId = guestId,
                             listType = listType,
                             listSubtype = listRequestTO.listSubType,
                             listRequestTO = listRequestTO,
                             defaultList = it,
                             expirationDays = expirationDays,
                             testList = testMode)
+
                     persistNewList(guestId, listEntity)
-                }
-                .map { toListResponseTO(it) }
+                }.map { toListResponseTO(it) }
     }
 
     private fun persistNewList(guestId: String, listEntity: ListEntity): Mono<ListEntity> {
@@ -59,18 +60,23 @@ class CreateListService(
         return listRepository.saveList(listEntity)
                 .zipWhen {
                     val userMetaDataTO = toUserMetaData(listEntity.metadata)
-                    eventPublisher.publishEvent(CreateListNotifyEvent.getEventType(),
-                        CreateListNotifyEvent(
-                                guestId = guestId,
-                                listId = it.id!!,
-                                listType = it.type!!,
-                                listTitle = it.title!!,
-                                listState = if (it.state != null) {
-                                    LIST_STATE.values().first { listState -> listState.value == it.state!! }
-                                } else {
-                                    LIST_STATE.INACTIVE
-                                },
-                                userMetaData = userMetaDataTO?.metadata), guestId)
+                    eventPublisher.publishEvent(
+                            CreateListNotifyEvent.getEventType(),
+                            CreateListNotifyEvent(
+                                    guestId = guestId,
+                                    listId = it.id!!,
+                                    listType = it.type!!,
+                                    listSubType = it.subtype,
+                                    listTitle = it.title!!,
+                                    channel = it.channel,
+                                    subChannel = it.subchannel,
+                                    listState = if (it.state != null) {
+                                        LIST_STATE.values().first { listState -> listState.value == it.state!! }
+                                    } else {
+                                        LIST_STATE.INACTIVE },
+                                    expiration = it.expiration,
+                                    userMetaData = userMetaDataTO?.metadata),
+                            guestId)
                 }.map { it.t1 }
     }
 }

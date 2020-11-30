@@ -2,6 +2,8 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
 import mu.KotlinLogging
@@ -25,11 +27,23 @@ class UpdateListItemManager(
         existingItem: ListItemEntity? = null // existingItem entity not passed when its called from Deduplication Manager
     ): Mono<ListItemEntity> {
         logger.debug("[updateListItem] Updating list item")
-        return listRepository.updateListItem(updatedItem, existingItem).zipWhen {
-            val userMetaDataTO = toUserMetaData(it.itemMetadata)
-            eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(),
-                    UpdateListItemNotifyEvent(guestId, it.id!!, it.itemId!!, it.itemTcin, it.itemTitle, it.itemReqQty,
-                            userMetaDataTO?.metadata), listId.toString())
+        return listRepository.updateListItem(updatedItem, existingItem)
+                .zipWhen {
+                    val userMetaDataTO = toUserMetaData(it.itemMetadata)
+                    eventPublisher.publishEvent(
+                            UpdateListItemNotifyEvent.getEventType(),
+                            UpdateListItemNotifyEvent(guestId = guestId,
+                                    listId = it.id!!,
+                                    itemId = it.itemId!!,
+                                    itemState = LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
+                                    itemType = ItemType.values().first { itemType -> itemType.value == it.itemType!! },
+                                    tcin = it.itemTcin,
+                                    itemTitle = it.itemTitle,
+                                    channel = it.itemChannel,
+                                    subChannel = it.itemSubchannel,
+                                    itemRequestedQuantity = it.itemReqQty,
+                                    userItemMetaDataTO = userMetaDataTO?.metadata),
+                            listId.toString())
         }.map { it.t1 }
     }
 }

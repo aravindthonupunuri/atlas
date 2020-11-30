@@ -4,39 +4,46 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.tgt.lists.atlas.api.type.EventType
+import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import java.util.*
 
 data class CreateListItemNotifyEvent(
     @JsonProperty("guest_id")
-val guestId: String,
+    val guestId: String,
 
     @JsonProperty("list_id")
-val listId: UUID,
+    val listId: UUID,
 
     @JsonProperty("item_id")
-val itemId: UUID,
+    val itemId: UUID,
 
     @JsonProperty("item_state")
-val itemState: LIST_ITEM_STATE,
+    val itemState: LIST_ITEM_STATE,
+
+    @JsonProperty("item_type")
+    val itemType: ItemType,
 
     @JsonProperty("tcin")
-val tcin: String?,
+    val tcin: String?,
 
     @JsonProperty("item_title")
-val itemTitle: String?,
+    val itemTitle: String?,
 
     @JsonProperty("channel")
-val channel: String?,
+    val channel: String? = null,
+
+    @JsonProperty("sub_channel")
+    val subChannel: String? = null,
 
     @JsonProperty("item_requested_quantity")
-val itemRequestedQuantity: Int?,
+    val itemRequestedQuantity: Int?,
 
     @JsonProperty("user_meta_data")
-val userItemMetaDataTO: Map<String, Any>? = null,
+    val userItemMetaDataTO: Map<String, Any>? = null,
 
     @JsonProperty("retry_state")
-var retryState: String? = null
+    var retryState: String? = null
 ) {
     companion object {
         // jacksonObjectMapper() returns a normal ObjectMapper with the KotlinModule registered

@@ -4,6 +4,7 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
+import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.kafka.model.CreateListItemNotifyEvent
@@ -36,31 +37,31 @@ class CreateListItemsManager(
         newItems: List<ListItemRequestTO>
     ): Mono<List<ListItemEntity>> {
 
-        return listRepository.findListItemsByListIdAndItemState(listId, listItemState.value).collectList().flatMap {
-            val itemsToAdd = newItems.map { it.itemRefId to ListItemMapper.toNewListItemEntity(listId, it) }.toMap().values.toList() // Filtering out duplicate items in the request
+        return listRepository.findListItemsByListIdAndItemState(listId, listItemState.value).collectList()
+                .flatMap {
+                    val itemsToAdd = newItems.map { it.itemRefId to
+                            ListItemMapper.toNewListItemEntity(listId, it) }.toMap().values.toList() // Filtering out duplicate items in the request
 
-            deduplicationManager.updateDuplicateItems(guestId = guestId, listId = listId, items = itemsToAdd,
-                    existingItems = it, itemState = listItemState).flatMap { updatedItems ->
+                    deduplicationManager.updateDuplicateItems(guestId = guestId, listId = listId, items = itemsToAdd,
+                            existingItems = it, itemState = listItemState)
+                            .flatMap { updatedItems ->
+                                val itemsToCreate = itemsToAdd.filter { item ->
+                                    !updatedItems.parallelStream().anyMatch { it.itemRefId == item.itemRefId } }
+                                val finalItems = arrayListOf<ListItemEntity>()
 
-                val itemsToCreate = itemsToAdd.filter { item ->
-                    !updatedItems.parallelStream().anyMatch { it.itemRefId == item.itemRefId }
-                }
-
-                val finalItems = arrayListOf<ListItemEntity>()
-
-                if (itemsToCreate.isNullOrEmpty()) {
-                    logger.debug("[createListItems] guestId: $guestId listId:$listId, No list items to create")
-                    finalItems.addAll(updatedItems)
-                    Mono.just(finalItems)
-                } else {
-                    createListItems(guestId, listId, itemsToCreate).map {
-                        finalItems.addAll(it)
-                        finalItems.addAll(updatedItems)
-                        finalItems
-                    }
-                }
-            }
-        }
+                                if (itemsToCreate.isNullOrEmpty()) {
+                                    logger.debug("[createListItems] guestId: $guestId listId:$listId, No list items to create")
+                                    finalItems.addAll(updatedItems)
+                                    Mono.just(finalItems)
+                                } else {
+                                    createListItems(guestId, listId, itemsToCreate)
+                                            .map {
+                                                finalItems.addAll(it)
+                                                finalItems.addAll(updatedItems)
+                                                finalItems
+                                            }
+                                }
+                            } }
     }
 
     fun createListItems(
@@ -70,13 +71,25 @@ class CreateListItemsManager(
     ): Mono<List<ListItemEntity>> {
         logger.debug("[createListItems] guestId: $guestId listId:$listId")
 
-        return listRepository.saveListItems(listItems).zipWhen { items ->
-            Flux.fromIterable(items.asIterable()).flatMap {
-                val userMetaDataTO = toUserMetaData(it.itemMetadata)
-                eventPublisher.publishEvent(CreateListItemNotifyEvent.getEventType(),
-                        CreateListItemNotifyEvent(guestId, it.id!!, it.itemId!!,
-                                LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
-                                it.itemTcin, it.itemTitle, it.itemChannel, it.itemReqQty, userMetaDataTO?.metadata),
-                            listId.toString()) }.collectList() }.map { it.t1 }
-        }
+        return listRepository.saveListItems(listItems)
+                .zipWhen { items -> Flux.fromIterable(items.asIterable())
+                        .flatMap {
+                            val userMetaDataTO = toUserMetaData(it.itemMetadata)
+                            eventPublisher.publishEvent(
+                                    CreateListItemNotifyEvent.getEventType(),
+                                    CreateListItemNotifyEvent(
+                                            guestId = guestId,
+                                            listId = it.id!!,
+                                            itemId = it.itemId!!,
+                                            itemState = LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
+                                            itemType = ItemType.values().first { itemType -> itemType.value == it.itemType!! },
+                                            tcin = it.itemTcin,
+                                            itemTitle = it.itemTitle,
+                                            channel = it.itemChannel,
+                                            subChannel = it.itemSubchannel,
+                                            itemRequestedQuantity = it.itemReqQty,
+                                            userItemMetaDataTO = userMetaDataTO?.metadata),
+                                    listId.toString()) }.collectList()
+                }.map { it.t1 }
+    }
 }

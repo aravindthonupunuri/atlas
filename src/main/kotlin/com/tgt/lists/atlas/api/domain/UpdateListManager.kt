@@ -29,18 +29,22 @@ class UpdateListManager(
         return listRepository.updateList(existingListEntity, updatedListEntity)
                 .zipWhen {
                     val userMetaDataTO = toUserMetaData(it.metadata)
-                    eventPublisher.publishEvent(UpdateListNotifyEvent.getEventType(),
+                    eventPublisher.publishEvent(
+                            UpdateListNotifyEvent.getEventType(),
                             UpdateListNotifyEvent(
                                     guestId = it.guestId!!,
                                     listId = it.id!!,
                                     listType = it.type!!,
+                                    listSubType = it.subtype,
+                                    channel = it.channel,
+                                    subChannel = it.subchannel,
                                     listTitle = it.title,
                                     listState = if (it.state != null)
                                         LIST_STATE.values().first { listState -> listState.value == it.state!! }
                                     else LIST_STATE.INACTIVE,
-                                    userMetaData = userMetaDataTO?.metadata
-                            ), it.guestId!!)
-                }
-                .map { it.t1 }
+                                    expiration = it.expiration,
+                                    userMetaData = userMetaDataTO?.metadata),
+                            guestId)
+                }.map { it.t1 }
     }
 }

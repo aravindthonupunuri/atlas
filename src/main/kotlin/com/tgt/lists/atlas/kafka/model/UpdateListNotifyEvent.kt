@@ -18,8 +18,17 @@ data class UpdateListNotifyEvent(
     @JsonProperty("list_type")
     val listType: String,
 
+    @JsonProperty("list_sub_type")
+    val listSubType: String? = null,
+
     @JsonProperty("list_title")
     val listTitle: String?,
+
+    @JsonProperty("channel")
+    val channel: String? = null,
+
+    @JsonProperty("sub_channel")
+    val subChannel: String? = null,
 
     @JsonProperty("list_state")
     val listState: LIST_STATE?,
