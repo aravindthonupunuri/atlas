@@ -5,6 +5,7 @@ import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.util.AppErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.common.components.exception.BadRequestException
+import java.time.LocalDate
 
 data class ListUpdateRequestTO(
     val listTitle: String? = null,
@@ -12,6 +13,7 @@ data class ListUpdateRequestTO(
     val defaultList: Boolean? = null,
     val listState: LIST_STATE? = null, // app can always change the state of the list depending on its business case
     val metadata: UserMetaData? = null,
+    val expiration: LocalDate? = null,
     val userMetaDataTransformationStep: UserMetaDataTransformationStep? = null
 ) {
     fun validate(): ListUpdateRequestTO {

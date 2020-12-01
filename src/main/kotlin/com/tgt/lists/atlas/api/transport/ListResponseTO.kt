@@ -3,6 +3,7 @@ package com.tgt.lists.atlas.api.transport
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.type.LIST_STATE
+import java.time.LocalDate
 import java.util.*
 import javax.validation.constraints.*
 
@@ -26,5 +27,6 @@ data class ListResponseTO(
     val maxPendingItemsCount: Int? = 0,
     val maxCompletedItemsCount: Int? = 0,
     val maxPendingPageCount: Int? = null,
-    val maxCompletedPageCount: Int? = null
+    val maxCompletedPageCount: Int? = null,
+    val expiration: LocalDate? = null
 )

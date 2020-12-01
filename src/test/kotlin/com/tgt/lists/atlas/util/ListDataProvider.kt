@@ -136,8 +136,6 @@ class ListDataProvider {
                 get() = maxCompletedItemsCount
             override val maxPendingItemsCount: Int
                 get() = maxPendingItemsCount
-            override val expirationDays: Long
-                get() = 720
             override val listItemsDedupe: Boolean
                 get() = listItemsDedupe
             override val pendingListRollingUpdate: Boolean
@@ -146,6 +144,10 @@ class ListDataProvider {
                 get() = fixedDefaultList
             override val pageSize: Int?
                 get() = 2
+            override val purgeExecutionHourOfDay: Int?
+                get() = 2
+            override val purgeExecutionMinuteBlockOfHour: Long
+                get() = 1L
             override val testModeExpiration: Long
                 get() = 1L
         }

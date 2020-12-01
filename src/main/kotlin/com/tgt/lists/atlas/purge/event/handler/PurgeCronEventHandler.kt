@@ -1,12 +1,12 @@
 package com.tgt.lists.atlas.purge.event.handler
 
 import com.tgt.cronbeacon.kafka.model.CronEvent
+import com.tgt.lists.atlas.api.domain.Configuration
 import com.tgt.lists.atlas.purge.service.PurgeExecutionService
 import com.tgt.lists.msgbus.event.EventHeaderFactory
 import com.tgt.lists.msgbus.event.EventHeaders
 import com.tgt.lists.msgbus.event.EventProcessingResult
 import io.micronaut.context.annotation.Requires
-import io.micronaut.context.annotation.Value
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import javax.inject.Inject
@@ -17,11 +17,12 @@ import javax.inject.Singleton
 class PurgeCronEventHandler(
     @Inject private val purgeExecutionService: PurgeExecutionService,
     @Inject private val eventHeaderFactory: EventHeaderFactory,
-    @Value("\${purge.execution-time.hour-of-day}") private val hourOfDay: Int,
-    @Value("\${purge.execution-time.minute-block-of-hour}") private val minuteBlockOfHour: Long
-
+    @Inject private val configuration: Configuration
 ) {
     private val logger = KotlinLogging.logger {}
+
+    private val hourOfDay = configuration.purgeExecutionHourOfDay
+    private val minuteBlockOfHour = configuration.purgeExecutionMinuteBlockOfHour
 
     fun handlePurgeCronEvent(
         cronEvent: CronEvent,

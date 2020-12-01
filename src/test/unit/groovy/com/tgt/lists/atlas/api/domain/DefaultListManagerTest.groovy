@@ -27,7 +27,7 @@ class DefaultListManagerTest extends Specification {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
         listDataProvider = new ListDataProvider()
-        updateListManager = new UpdateListManager(listRepository, eventPublisher)
+        updateListManager = new UpdateListManager(listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
         defaultListManager = new DefaultListManager(listRepository, updateListManager, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
     }
 

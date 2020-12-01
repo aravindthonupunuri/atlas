@@ -10,6 +10,7 @@ import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toEntityMetadata
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.*
+import java.time.LocalDate
 
 class ListMapper {
     companion object {
@@ -20,7 +21,7 @@ class ListMapper {
             listSubtype: String,
             defaultList: Boolean,
             testList: Boolean,
-            expirationDays: Long
+            expiration: LocalDate
         ): ListEntity {
             // Do not set created or updated time in here, set it in the repository instead
             return ListEntity(
@@ -37,7 +38,7 @@ class ListMapper {
                     agentId = listRequestTO.agentId,
                     metadata = toEntityMetadata(listRequestTO.metadata),
                     state = listRequestTO.listState.value, // Should be set by the app layer
-                    expiration = getExpirationDate(getLocalInstant(), expirationDays),
+                    expiration = expiration,
                     testList = testList)
         }
 
@@ -75,7 +76,9 @@ class ListMapper {
                     state = if (listUpdateRequestTO.listState != null) listUpdateRequestTO.listState.value
                     else existingEntity.state,
                     updatedAt = getLocalInstant(),
-                    metadata = toEntityMetadata(updatedMetaData ?: listUpdateRequestTO.metadata)))
+                    metadata = toEntityMetadata(updatedMetaData ?: listUpdateRequestTO.metadata),
+                    expiration = listUpdateRequestTO.expiration ?: existingEntity.expiration)
+            )
         }
 
         fun toListResponseTO(
@@ -110,7 +113,8 @@ class ListMapper {
                     maxPendingItemsCount = maxPendingItemsCount,
                     maxCompletedItemsCount = maxCompletedItemsCount,
                     maxPendingPageCount = maxPendingPageCount,
-                    maxCompletedPageCount = maxCompletedPageCount
+                    maxCompletedPageCount = maxCompletedPageCount,
+                    expiration = listEntity.expiration
             )
         }
 

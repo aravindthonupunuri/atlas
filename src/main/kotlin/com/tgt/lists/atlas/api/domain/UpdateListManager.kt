@@ -5,6 +5,8 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.TestListEvaluator
+import com.tgt.lists.atlas.api.util.getExpirationDate
+import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -15,9 +17,11 @@ import javax.inject.Singleton
 @Singleton
 class UpdateListManager(
     @Inject private val listRepository: ListRepository,
-    @Inject private val eventPublisher: EventPublisher
+    @Inject private val eventPublisher: EventPublisher,
+    @Inject private val configuration: Configuration
 ) {
     private val logger = KotlinLogging.logger { UpdateListManager::class.java.name }
+    private val testModeExpiration: Long = configuration.testModeExpiration
 
     fun updateList(
         guestId: String,
@@ -43,7 +47,7 @@ class UpdateListManager(
                                         LIST_STATE.values().first { listState -> listState.value == it.state!! }
                                     else LIST_STATE.INACTIVE,
                                     expiration = if (TestListEvaluator.evaluate()) {
-                                        existingListEntity.expiration!! // If its test mode do not update the expiration
+                                        getExpirationDate(getLocalInstant(), testModeExpiration) // expiration should always be 24 hrs for test lists
                                     } else {
                                         it.expiration!!
                                     },

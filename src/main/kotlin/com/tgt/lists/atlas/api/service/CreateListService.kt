@@ -13,6 +13,8 @@ import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toNewListEn
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.TestListEvaluator
+import com.tgt.lists.atlas.api.util.getExpirationDate
+import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -30,7 +32,6 @@ class CreateListService(
     private val logger = KotlinLogging.logger {}
 
     private val listType: String = configuration.listType
-    private val expirationDays: Long = configuration.expirationDays
     private val testModeExpiration: Long = configuration.testModeExpiration
 
     companion object {
@@ -50,10 +51,10 @@ class CreateListService(
                             listSubtype = listRequestTO.listSubType,
                             listRequestTO = listRequestTO,
                             defaultList = it,
-                            expirationDays = if (TestListEvaluator.evaluate()) {
-                                testModeExpiration // expiration should always be 24 hrs for test lists
+                            expiration = if (TestListEvaluator.evaluate()) {
+                                getExpirationDate(getLocalInstant(), testModeExpiration) // expiration should always be 24 hrs for test lists
                             } else {
-                                expirationDays
+                                listRequestTO.expiration
                             },
                             testList = TestListEvaluator.evaluate())
 

@@ -62,7 +62,7 @@ dependencies {
 
     implementation "com.tgt.lists:lists-oauth:2.201.0"
     implementation "com.tgt.lists.micronaut:micronaut-zipkin:2.201.0"
-    implementation "com.tgt.lists:lists-message-bus:2.201.0"
+    implementation "com.tgt.lists:lists-message-bus:2.201.1"
     implementation "com.tgt.lists:lists-logging:2.201.0"
     implementation "com.tgt.lists:platform-connector-micronaut:2.0.8.1"
     implementation "io.swagger.core.v3:swagger-annotations"

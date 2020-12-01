@@ -15,6 +15,8 @@ import org.apache.kafka.clients.producer.RecordMetadata
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
+import java.time.LocalDate
+
 class CreateListServiceTest extends Specification {
 
     ListRepository listRepository
@@ -56,7 +58,7 @@ class CreateListServiceTest extends Specification {
                         "wallDepth": 12
                 ]
         ]
-        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, new UserMetaData(metadata))
+        def listRequest = new ListRequestTO(channel, title,"fav", LIST_STATE.ACTIVE, LocalDate.of(2100,9,12), null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, new UserMetaData(metadata))
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:
@@ -72,6 +74,7 @@ class CreateListServiceTest extends Specification {
         actual.listTitle == title
         actual.shortDescription == desc
         actual.listType == listType
+        actual.expiration == listRequest.expiration
         actual.defaultList
     }
 
@@ -79,7 +82,7 @@ class CreateListServiceTest extends Specification {
         def title = "list1"
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
-        def listRequest = new ListRequestTO(channel, title, "fav", LIST_STATE.ACTIVE, null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
+        def listRequest = new ListRequestTO(channel, title, "fav", LIST_STATE.ACTIVE, LocalDate.now(), null, Long.valueOf(Constants.LIST_DEFAULT_LOCATION_ID), desc, true, null, null)
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:

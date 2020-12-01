@@ -2,6 +2,7 @@ package com.tgt.lists.atlas.api.transport
 
 import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.type.LIST_STATE
+import java.time.LocalDate
 import javax.validation.constraints.NotEmpty
 
 data class ListRequestTO(
@@ -9,6 +10,7 @@ data class ListRequestTO(
     @field:NotEmpty(message = "List title must not be empty") val listTitle: String,
     @field:NotEmpty(message = "List sub type must not be empty") val listSubType: String,
     @field:NotEmpty(message = "List state must not be empty") val listState: LIST_STATE,
+    @field:NotEmpty(message = "List expiration must not be empty") val expiration: LocalDate,
     val subChannel: String? = null,
     val locationId: Long? = null,
     val shortDescription: String? = null,

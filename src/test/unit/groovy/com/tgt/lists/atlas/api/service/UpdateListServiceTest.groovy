@@ -11,6 +11,7 @@ import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
 import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
+import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.atlas.util.TestListChannel
 import com.tgt.lists.common.components.exception.BadRequestException
 import org.apache.kafka.clients.producer.RecordMetadata
@@ -27,6 +28,7 @@ class UpdateListServiceTest extends Specification {
     UpdateListManager updateListManager
     UpdateListService updateListService
     DefaultListManager defaultListManager
+    ListDataProvider listDataProvider
     String guestId = "1234"
     String listType = "SHOPPING"
 
@@ -34,7 +36,8 @@ class UpdateListServiceTest extends Specification {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
         defaultListManager = Mock(DefaultListManager)
-        updateListManager = new UpdateListManager(listRepository, eventPublisher)
+        listDataProvider = new ListDataProvider()
+        updateListManager = new UpdateListManager(listRepository, eventPublisher,listDataProvider.getConfiguration(3, 5, 5, true, false, false))
         updateListService = new UpdateListService(listRepository, defaultListManager, updateListManager)
     }
 
@@ -45,12 +48,12 @@ class UpdateListServiceTest extends Specification {
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
         def updateDesc = "description updated"
-        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null, null)
+        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null, LocalDate.of(2100,9,02), null)
 
         UUID listId = Uuids.timeBased()
 
-        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, LocalDate.of(2100, 05, 02), null, null, null )
-        ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, LocalDate.of(2100, 05, 02), null, null, null )
+        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, LocalDate.of(2100, 5, 02), null, null, null )
+        ListEntity updated = new ListEntity(listId, updateTitle, listType, null, guestId, updateDesc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, null, null, LocalDate.of(2100,9,02), null, null, null )
 
         when:
         def actual = updateListService.updateList(guestId, listId, listUpdateRequestTO).block()
@@ -70,6 +73,7 @@ class UpdateListServiceTest extends Specification {
         actual.channel == channel
         actual.listTitle == listUpdateRequestTO.listTitle
         actual.shortDescription == listUpdateRequestTO.shortDescription
+        actual.expiration == listUpdateRequestTO.expiration
         actual.defaultList
     }
 
@@ -88,7 +92,7 @@ class UpdateListServiceTest extends Specification {
             }
         }
 
-        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null, transformationStep)
+        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null, LocalDate.of(2100,03,02), transformationStep)
 
         UUID listId = Uuids.timeBased()
 
@@ -118,7 +122,7 @@ class UpdateListServiceTest extends Specification {
 
     def "Test updateList() with false default List value"() {
         given:
-        def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", null, false, null, null, null)
+        def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", null, false, null, null, LocalDate.of(2100,03,02), null)
         UUID listId = Uuids.timeBased()
 
         when:

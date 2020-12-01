@@ -48,10 +48,17 @@ cassandra:
         timeout: 1000 # request timeout in ms
         consistency: ONE
 
-purge:
-  execution-time:
-    hour-of-day: 2
-    minute-block-of-hour:  1
+list:
+  list-type: SHOPPING
+  max-count: 50
+  max-pending-item-count: 3
+  max-completed-items-count: 3
+  list-items-dedupe: true
+  fixed-default-list: false
+  purge-execution-hour-of-day: 2
+  purge-execution-minute-block-of-hour: 1
+
+
 
 beacon:
   client:

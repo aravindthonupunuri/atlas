@@ -22,10 +22,6 @@ interface Configuration {
     @get:NotNull
     val maxPendingItemsCount: Int
 
-    @get:Bindable(defaultValue = "720")
-    @get:NotNull
-    val expirationDays: Long
-
     @get:Bindable(defaultValue = "false")
     @get:NotNull
     val listItemsDedupe: Boolean
@@ -40,6 +36,12 @@ interface Configuration {
 
     @get:Bindable(defaultValue = "0")
     val pageSize: Int?
+
+    @get:Bindable(defaultValue = "2")
+    val purgeExecutionHourOfDay: Int?
+
+    @get:Bindable(defaultValue = "1L")
+    val purgeExecutionMinuteBlockOfHour: Long
 
     @get:Bindable(defaultValue = "1L")
     val testModeExpiration: Long
