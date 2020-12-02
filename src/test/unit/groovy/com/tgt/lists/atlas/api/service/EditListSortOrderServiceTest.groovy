@@ -39,7 +39,7 @@ class EditListSortOrderServiceTest extends Specification {
 
 
         when:
-        def actual = editListSortOrderService.editListPosition(guestId, editSortOrderRequest).block()
+        def actual = editListSortOrderService.editListPosition(guestId, listId1, editSortOrderRequest).block()
 
         then:
         1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
@@ -60,7 +60,7 @@ class EditListSortOrderServiceTest extends Specification {
         GuestListEntity guestListEntity2 = listDataProvider.createGuestListEntity(guestId, listType, listId2, null, null, null)
 
         when:
-        def actual = editListSortOrderService.editListPosition(guestId, editSortOrderRequest).block()
+        def actual = editListSortOrderService.editListPosition(guestId, listId1, editSortOrderRequest).block()
 
         then:
         1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
@@ -81,12 +81,26 @@ class EditListSortOrderServiceTest extends Specification {
         GuestListEntity guestListEntity1 = listDataProvider.createGuestListEntity(guestId, listType, listId1, listMarker, null, null)
 
         when:
-        editListSortOrderService.editListPosition(guestId, editSortOrderRequest).block()
+        editListSortOrderService.editListPosition(guestId, listId1, editSortOrderRequest).block()
 
         then:
         1 * listRepository.findListById(listId1) >> Mono.just(listEntity1)
         1 * listRepository.findGuestListsByGuestId(_, _) >> Flux.just(guestListEntity1)
 
+        thrown BadRequestException
+    }
+
+    def "test editListPosition() when authorizedListId does not match with  primaryListId or secondaryListId"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+
+        def editSortOrderRequest = new EditListSortOrderRequestTO(listId1, listId2, Direction.BELOW)
+
+        when:
+        editListSortOrderService.editListPosition(guestId, Uuids.timeBased(), editSortOrderRequest).block()
+
+        then:
         thrown BadRequestException
     }
 }

@@ -37,7 +37,7 @@ class EditItemSortOrderServiceTest extends Specification {
         Direction direction = Direction.ABOVE
         def item1Tcin = "1234"
 
-        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
+        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, primaryItemId, secondaryItemId, direction)
 
         ListItemEntity itemEntity1 = listDataProvider.createListItemEntity(listId, primaryItemId, LIST_ITEM_STATE.PENDING.value,
         ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, item1Tcin), item1Tcin, null, null, null)
@@ -46,7 +46,7 @@ class EditItemSortOrderServiceTest extends Specification {
                 ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, item1Tcin), item1Tcin, null, null, null)
 
         when:
-        def actual = editItemSortOrderService.editItemPosition(editItemSortOrderRequestTO).block()
+        def actual = editItemSortOrderService.editItemPosition(listId, editItemSortOrderRequestTO).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(itemEntity1, itemEntity2)
@@ -63,7 +63,7 @@ class EditItemSortOrderServiceTest extends Specification {
         def item1Tcin = "1234"
         def item2Tcin = "5431"
 
-        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
+        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, primaryItemId, secondaryItemId, direction)
 
         ListItemEntity itemEntity1 = listDataProvider.createListItemEntity(listId, primaryItemId, LIST_ITEM_STATE.PENDING.value,
                 ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, item1Tcin), item1Tcin, null, null, null)
@@ -72,11 +72,11 @@ class EditItemSortOrderServiceTest extends Specification {
                 ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, item2Tcin), item2Tcin, null, null, null)
 
         when:
-        def actual = editItemSortOrderService.editItemPosition(editItemSortOrderRequestTO).block()
+        def actual = editItemSortOrderService.editItemPosition(listId, editItemSortOrderRequestTO).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(itemEntity1, itemEntity2)
-        1 * listItemSortOrderService.editListItemSortOrder(editItemSortOrderRequestTO) >> Mono.just(true)
+        1 * listItemSortOrderService.editListItemSortOrder(listId, editItemSortOrderRequestTO) >> Mono.just(true)
 
         actual
     }
@@ -89,13 +89,13 @@ class EditItemSortOrderServiceTest extends Specification {
         Direction direction = Direction.ABOVE
         def item1Tcin = "1234"
 
-        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, direction)
+        EditItemSortOrderRequestTO editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, primaryItemId, secondaryItemId, direction)
 
         ListItemEntity itemEntity1 = listDataProvider.createListItemEntity(listId, primaryItemId, LIST_ITEM_STATE.PENDING.value,
                 ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, item1Tcin), item1Tcin, null, null, null)
 
         when:
-        editItemSortOrderService.editItemPosition(editItemSortOrderRequestTO).block()
+        editItemSortOrderService.editItemPosition(listId, editItemSortOrderRequestTO).block()
 
         then:
         1 * listRepository.findListItemsByListId(listId) >> Flux.just(itemEntity1)

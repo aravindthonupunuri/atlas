@@ -1,6 +1,5 @@
 package com.tgt.lists.atlas.api.service
 
-import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.tgt.lists.atlas.api.domain.ListPreferenceSortOrderManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
@@ -118,14 +117,14 @@ class ListItemSortOrderServiceTest extends Specification {
         UUID listId = UUID.randomUUID()
         UUID primaryItemId = UUID.randomUUID()
         UUID secondaryItemId = UUID.randomUUID()
-        def editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, Direction.ABOVE)
+        def editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, primaryItemId, secondaryItemId, Direction.ABOVE)
         def preList = new ListPreferenceEntity(listId, guestId, secondaryItemId.toString() + "," + primaryItemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString() + "," + secondaryItemId.toString())
 
         def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [primaryItemId,secondaryItemId], guestId)
 
         when:
-        def actual = listItemSortOrderService.editListItemSortOrder(editItemSortOrderRequestTO).block()
+        def actual = listItemSortOrderService.editListItemSortOrder(listId, editItemSortOrderRequestTO).block()
 
         then:
         actual
@@ -140,14 +139,14 @@ class ListItemSortOrderServiceTest extends Specification {
         UUID listId = listDataProvider.getTimeBasedUUID(5)
         UUID primaryItemId = listDataProvider.getTimeBasedUUID(5)
         UUID secondaryItemId = listDataProvider.getTimeBasedUUID(5)
-        def editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, Direction.ABOVE)
+        def editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, primaryItemId, secondaryItemId, Direction.ABOVE)
         def preList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString() + "," + secondaryItemId.toString())
 
         def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [primaryItemId,secondaryItemId], guestId)
 
         when:
-        def actual = listItemSortOrderService.editListItemSortOrder(editItemSortOrderRequestTO).block()
+        def actual = listItemSortOrderService.editListItemSortOrder(listId, editItemSortOrderRequestTO).block()
 
         then:
         actual
@@ -162,14 +161,14 @@ class ListItemSortOrderServiceTest extends Specification {
         UUID listId = listDataProvider.getTimeBasedUUID(5)
         UUID primaryItemId = listDataProvider.getTimeBasedUUID(5)
         UUID secondaryItemId = listDataProvider.getTimeBasedUUID(5)
-        def editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, listId, primaryItemId, secondaryItemId, Direction.ABOVE)
+        def editItemSortOrderRequestTO = new EditItemSortOrderRequestTO(guestId, primaryItemId, secondaryItemId, Direction.ABOVE)
         def preList = new ListPreferenceEntity(listId, guestId, secondaryItemId.toString())
         def postList = new ListPreferenceEntity(listId, guestId, primaryItemId.toString() + "," + secondaryItemId.toString())
 
         def listItemExtEntities = listDataProvider.createListItemExtEntities(listId, [primaryItemId,secondaryItemId], guestId)
 
         when:
-        def actual = listItemSortOrderService.editListItemSortOrder(editItemSortOrderRequestTO).block()
+        def actual = listItemSortOrderService.editListItemSortOrder(listId, editItemSortOrderRequestTO).block()
 
         then:
         actual

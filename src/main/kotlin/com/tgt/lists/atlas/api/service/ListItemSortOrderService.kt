@@ -54,14 +54,15 @@ class ListItemSortOrderService(
     }
 
     fun editListItemSortOrder(
+        listId: UUID,
         editItemSortOrderRequestTO: EditItemSortOrderRequestTO
     ): Mono<Boolean> {
 
         logger.debug("[editListItemSortOrder] editItemSortOrderRequestTO: $editItemSortOrderRequestTO")
 
-        return listPreferenceSortOrderManager.updateListItemSortOrder(editItemSortOrderRequestTO.guestId,
-                editItemSortOrderRequestTO.listId, editItemSortOrderRequestTO.primaryItemId,
-                editItemSortOrderRequestTO.secondaryItemId, editItemSortOrderRequestTO.direction)
+        return listPreferenceSortOrderManager.updateListItemSortOrder(editItemSortOrderRequestTO.guestId, listId,
+                editItemSortOrderRequestTO.primaryItemId, editItemSortOrderRequestTO.secondaryItemId,
+                editItemSortOrderRequestTO.direction)
                 .map { true }
                 .onErrorResume {
                     logger.error("Exception while editing list item sort order", it)

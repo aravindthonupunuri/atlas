@@ -18,4 +18,5 @@ object AppErrorCodes {
     val LIST_MAX_COUNT_VIOLATION_ERROR_CODE = { fieldErrors: List<String>? -> ErrorCode(9, "Exceeding max allowed pending item count", fieldErrors) }
     val DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE = ErrorCode(10, "Both itemIds and itemIncludeFields given, select either one of them")
     val LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE = { fieldErrors: List<String>? -> ErrorCode(13, "Invalid List Item Entity", fieldErrors) }
+    val NOT_AUTHORIZED_LIST_ERROR_CODE = ErrorCode(14, "Authorized list Id from Url does not match primary or secondary listId")
 }

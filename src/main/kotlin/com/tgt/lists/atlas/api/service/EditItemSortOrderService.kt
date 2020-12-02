@@ -6,6 +6,7 @@ import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.common.components.exception.BadRequestException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,11 +17,11 @@ class EditItemSortOrderService(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    fun editItemPosition(editItemSortOrderRequestTO: EditItemSortOrderRequestTO): Mono<Boolean> {
+    fun editItemPosition(listId: UUID, editItemSortOrderRequestTO: EditItemSortOrderRequestTO): Mono<Boolean> {
 
-        logger.debug("[editItemPosition] listId: ${editItemSortOrderRequestTO.listId}, primaryItemId: ${editItemSortOrderRequestTO.primaryItemId}, secondaryItemId: ${editItemSortOrderRequestTO.secondaryItemId}")
+        logger.debug("[editItemPosition] listId: $listId, primaryItemId: ${editItemSortOrderRequestTO.primaryItemId}, secondaryItemId: ${editItemSortOrderRequestTO.secondaryItemId}")
 
-        return listRepository.findListItemsByListId(editItemSortOrderRequestTO.listId)
+        return listRepository.findListItemsByListId(listId)
                 .collectList()
                 .map {
                     val isAuthorisedPrimaryItem = it.find { it.itemId == editItemSortOrderRequestTO.primaryItemId }
@@ -32,7 +33,7 @@ class EditItemSortOrderService(
                 }
                 .flatMap {
                     if (it.primaryItemId == it.secondaryItemId) Mono.just(true)
-                    else listItemSortOrderService.editListItemSortOrder(editItemSortOrderRequestTO)
+                    else listItemSortOrderService.editListItemSortOrder(listId, editItemSortOrderRequestTO)
                 }
     }
 }
