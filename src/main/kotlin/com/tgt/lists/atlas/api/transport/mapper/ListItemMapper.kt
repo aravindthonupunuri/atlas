@@ -6,11 +6,12 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.transport.ListItemRequestTO
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
-import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toEntityMetadata
-import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UnitOfMeasure
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toEntityMetadata
+import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.util.getLocalDateTimeFromInstant
 import java.util.*
 
 class ListItemMapper {
@@ -98,8 +99,8 @@ class ListItemMapper {
                         LIST_ITEM_STATE.values().first { it.value == listItemEntity.itemState!! }
                     else null,
                     agentId = listItemEntity.itemAgentId,
-                    addedTs = listItemEntity.itemCreatedAt.toString(),
-                    lastModifiedTs = listItemEntity.itemUpdatedAt.toString()
+                    addedTs = getLocalDateTimeFromInstant(listItemEntity.itemCreatedAt),
+                    lastModifiedTs = getLocalDateTimeFromInstant(listItemEntity.itemUpdatedAt)
             )
         }
 
@@ -132,8 +133,8 @@ class ListItemMapper {
                         LIST_ITEM_STATE.values().first { it.value == listItemExtEntity.itemState!! }
                     else null,
                     agentId = listItemExtEntity.itemAgentId,
-                    addedTs = listItemExtEntity.itemCreatedAt.toString(),
-                    lastModifiedTs = listItemExtEntity.itemUpdatedAt.toString()
+                    addedTs = getLocalDateTimeFromInstant(listItemExtEntity.itemCreatedAt),
+                    lastModifiedTs = getLocalDateTimeFromInstant(listItemExtEntity.itemUpdatedAt)
             )
         }
     }
