@@ -40,9 +40,9 @@ interface Configuration {
     @get:Bindable(defaultValue = "2")
     val purgeExecutionHourOfDay: Int?
 
-    @get:Bindable(defaultValue = "1L")
+    @get:Bindable(defaultValue = "1")
     val purgeExecutionMinuteBlockOfHour: Long
 
-    @get:Bindable(defaultValue = "1L")
+    @get:Bindable(defaultValue = "1")
     val testModeExpiration: Long
 }

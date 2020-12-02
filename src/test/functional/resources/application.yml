@@ -51,7 +51,7 @@ cassandra:
 list:
   list-type: SHOPPING
   max-count: 50
-  max-pending-item-count: 3
+  max-pending-items-count: 3
   max-completed-items-count: 3
   list-items-dedupe: true
   fixed-default-list: false
