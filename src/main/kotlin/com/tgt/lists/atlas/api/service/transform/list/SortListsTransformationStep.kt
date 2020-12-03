@@ -50,6 +50,7 @@ class SortListsTransformationStep(
         return when (sortFieldBy) {
             ListSortFieldGroup.LIST_TITLE -> compareBy { it.listTitle?.toLowerCase() }
             ListSortFieldGroup.LAST_MODIFIED_DATE -> compareBy { it.lastModifiedTs }
+            ListSortFieldGroup.ADDED_DATE -> compareBy { it.addedTs }
             else -> compareBy { it.lastModifiedTs }
         }
     }
@@ -58,6 +59,7 @@ class SortListsTransformationStep(
         return when (sortFieldBy) {
             ListSortFieldGroup.LIST_TITLE -> compareByDescending { it.listTitle?.toLowerCase() }
             ListSortFieldGroup.LAST_MODIFIED_DATE -> compareByDescending { it.lastModifiedTs }
+            ListSortFieldGroup.ADDED_DATE -> compareByDescending { it.addedTs }
             else -> compareByDescending { it.lastModifiedTs }
         }
     }

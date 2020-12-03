@@ -173,9 +173,9 @@ class GetAllListServiceTest extends Specification {
         def listSubType = "s"
 
         def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
-        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now(), Instant.now())
-        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now(), Instant.now())
-        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now().plusSeconds(1), Instant.now().plusSeconds(1))
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now().plusSeconds(2), Instant.now().plusSeconds(2))
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now().plusSeconds(3), Instant.now().plusSeconds(3))
 
         ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
 
@@ -195,6 +195,49 @@ class GetAllListServiceTest extends Specification {
         when:
         List<ListGetAllResponseTO> lists2 = getListsService.getAllListsForUser(
                 guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.ADDED_DATE, ListSortOrderGroup.DESCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
+
+        lists2.size() == 4
+        lists2[0].listId == listId4
+        lists2[1].listId == listId3
+        lists2[2].listId == listId2
+        lists2[3].listId == listId1
+    }
+
+    def "test with (ListSortFieldGroup.LAST_MODIFIED_DATE and ListSortOrderGroup.ASCENDING) and (ListSortFieldGroup.LAST_MODIFIED_DATE and ListSortOrderGroup.DESCENDING)"() {
+        given:
+        UUID listId1 = Uuids.timeBased()
+        UUID listId2 = Uuids.timeBased()
+        UUID listId3 = Uuids.timeBased()
+        UUID listId4 = Uuids.timeBased()
+        def listType = "SHOPPING"
+        def listSubType = "s"
+
+        def listEntity1 = listDataProvider.createListEntity(listId1, "title1", listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(listId2, "title2", listType, listSubType, guestId, "", Instant.now().plusSeconds(1), Instant.now().plusSeconds(1))
+        def listEntity3 = listDataProvider.createListEntity(listId3, "title3", listType, listSubType, guestId, "", Instant.now().plusSeconds(2), Instant.now().plusSeconds(2))
+        def listEntity4 = listDataProvider.createListEntity(listId4, "title4", listType, listSubType, guestId, "", Instant.now().plusSeconds(3), Instant.now().plusSeconds(3))
+
+        ListsTransformationPipeline listsTransformationPipeline = new ListsTransformationPipeline()
+
+        when:
+        List<ListGetAllResponseTO> lists1 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LAST_MODIFIED_DATE, ListSortOrderGroup.ASCENDING))).block()
+
+        then:
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
+
+        lists1.size() == 4
+        lists1[0].listId == listId1
+        lists1[1].listId == listId2
+        lists1[2].listId == listId3
+        lists1[3].listId == listId4
+
+        when:
+        List<ListGetAllResponseTO> lists2 = getListsService.getAllListsForUser(
+                guestId, listsTransformationPipeline.addStep(new SortListsTransformationStep(ListSortFieldGroup.LAST_MODIFIED_DATE, ListSortOrderGroup.DESCENDING))).block()
 
         then:
         1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3, listEntity4])
