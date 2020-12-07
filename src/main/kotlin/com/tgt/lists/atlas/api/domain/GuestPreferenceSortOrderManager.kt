@@ -5,8 +5,9 @@ import com.tgt.lists.atlas.api.persistence.cassandra.GuestPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListGetAllResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper
-import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.type.Direction
+import com.tgt.lists.atlas.api.util.ErrorCodes.LIST_SORT_ORDER_ERROR_CODE
+import com.tgt.lists.common.components.exception.ErrorCode
 import com.tgt.lists.common.components.exception.InternalServerException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -69,7 +70,7 @@ class GuestPreferenceSortOrderManager(
             .flatMap {
                 val sortOrders = it.listSortOrder?.split(",")?.toMutableSet()
                 if (!sortOrders!!.contains(listId.toString())) {
-                    throw InternalServerException(AppErrorCodes.LIST_SORT_ORDER_ERROR_CODE(listOf("The primary list id to move is not present $listId"))) // this is not a bad request b'cose of order of events
+                    throw InternalServerException(ErrorCode(LIST_SORT_ORDER_ERROR_CODE.first, LIST_SORT_ORDER_ERROR_CODE.second, listOf("The primary list id to move is not present $listId"))) // this is not a bad request b'cose of order of events
                 } else {
                     val newSortOrder = removeListIdFromSortOrder(listId, it.listSortOrder!!)
                     guestPreferenceRepository.saveGuestPreference(GuestPreferenceEntity(guestId = guestId, listSortOrder = newSortOrder))

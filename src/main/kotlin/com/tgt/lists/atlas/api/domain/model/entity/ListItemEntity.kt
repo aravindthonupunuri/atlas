@@ -2,8 +2,9 @@ package com.tgt.lists.atlas.api.domain.model.entity
 
 import com.datastax.oss.driver.api.mapper.annotations.*
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention
-import com.tgt.lists.atlas.api.util.AppErrorCodes.LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE
 import com.tgt.lists.atlas.api.type.ItemType
+import com.tgt.lists.atlas.api.util.ErrorCodes.LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE
+import com.tgt.lists.common.components.exception.ErrorCode
 import com.tgt.lists.common.components.exception.InternalServerException
 import java.time.Instant
 import java.util.*
@@ -45,13 +46,13 @@ data class ListItemEntity(
             ItemType.GENERIC_ITEM.value -> validateGenericItem(this)
             ItemType.TCIN.value -> validateTcinItem(this)
             ItemType.OFFER.value -> validateOfferItem(this)
-            else -> throw InternalServerException(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE(arrayListOf("Invalid Item Type")))
+            else -> throw InternalServerException(ErrorCode(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE.first, LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE.second, arrayListOf("Invalid Item Type")))
         }
     }
 
     private fun validateTcinItem(listItemEntity: ListItemEntity): ListItemEntity {
         var item = listItemEntity
-        if (item.itemTcin == null || item.itemTcin?.toIntOrNull() == null) throw InternalServerException(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE(arrayListOf("Required field tcin is missing")))
+        if (item.itemTcin == null || item.itemTcin?.toIntOrNull() == null) throw InternalServerException(ErrorCode(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE.first, LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE.second, arrayListOf("Required field tcin is missing")))
         if (item.itemTitle != null) {
             item = item.copy(itemTitle = "") // Updating the item title to empty since TCIN item type cannot have a title. We use NullSavingStrategy.DO_NOT_SET so passing an empty String instead of NULL
         }
@@ -60,8 +61,8 @@ data class ListItemEntity(
 
     private fun validateGenericItem(listItemEntity: ListItemEntity): ListItemEntity {
         var item = listItemEntity
-        val itemTitle: String = item.itemTitle ?: throw InternalServerException(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE(arrayListOf("Required field item title is missing")))
-        if (itemTitle.trim().toIntOrNull() != null) throw InternalServerException(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE(arrayListOf("Invalid item title")))
+        val itemTitle: String = item.itemTitle ?: throw InternalServerException(ErrorCode(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE.first, LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE.second, arrayListOf("Required field item title is missing")))
+        if (itemTitle.trim().toIntOrNull() != null) throw InternalServerException(ErrorCode(LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE.first, LIST_ITEM_ENTITY_VIOLATION_ERROR_CODE.second, arrayListOf("Invalid item title")))
         if (item.itemTcin != null) {
             item = item.copy(itemTcin = "") // Updating tcin to empty since GENERIC item type cannot have a tcin value. We use NullSavingStrategy.DO_NOT_SET so passing an empty String instead of NULL
         }

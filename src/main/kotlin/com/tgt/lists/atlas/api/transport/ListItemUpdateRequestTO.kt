@@ -1,14 +1,15 @@
 package com.tgt.lists.atlas.api.transport
 
 import com.tgt.lists.atlas.api.service.transform.list_items.UserItemMetaDataTransformationStep
-import com.tgt.lists.atlas.api.type.UserMetaData
-import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData
+import com.tgt.lists.atlas.api.util.ErrorCodes
 import com.tgt.lists.atlas.api.util.isNullOrEmpty
 import com.tgt.lists.atlas.api.validator.RefIdValidator
 import com.tgt.lists.atlas.api.validator.validateItemType
 import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.common.components.exception.ErrorCode
 import io.micronaut.core.annotation.Introspected
 
 // TODO is agentid to be updated at all?
@@ -39,17 +40,17 @@ data class ListItemUpdateRequestTO(
                 this.requestedQuantity == null &&
                 this.fulfilledQuantity == null &&
                 this.userItemMetaDataTransformationStep == null) {
-            throw BadRequestException(AppErrorCodes.ITEM_TYPE_REQUEST_BODY_VIOLATION_ERROR_CODE(arrayListOf("Empty request body")))
+            throw BadRequestException(ErrorCode(ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE.first, ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Empty request body")))
         }
         if ((itemTitle != null && itemTitle.trim().isBlank())) {
-            throw BadRequestException(AppErrorCodes.ITEM_TYPE_REQUEST_BODY_VIOLATION_ERROR_CODE(arrayListOf("Empty itemTitle")))
+            throw BadRequestException(ErrorCode(ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE.first, ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Empty itemTitle")))
         }
 
         // Item Type can only be updated from a GENERIC to TCIN type, so the update request can only have ItemType.TCIN as part
         // of the request, implying change in type to TCIN. If the existing item that is being updated is not of type GENERIC
         // we throw an exception.
         if (itemType != null && itemType != ItemType.TCIN) {
-            throw BadRequestException(AppErrorCodes.ITEM_TYPE_REQUEST_BODY_VIOLATION_ERROR_CODE(arrayListOf("Invalid Item type, Item can only be updated from GENERIC to TCIN type ")))
+            throw BadRequestException(ErrorCode(ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE.first, ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Invalid Item type, Item can only be updated from GENERIC to TCIN type ")))
         }
 
         // If updating item type from GENERIC to TCIN, we are validating if the required attributes like tcin is passed,

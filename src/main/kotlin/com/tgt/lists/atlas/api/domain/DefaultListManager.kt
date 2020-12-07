@@ -2,11 +2,13 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
-import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.type.LIST_MARKER
 import com.tgt.lists.atlas.api.type.LIST_STATE
+import com.tgt.lists.atlas.api.util.ErrorCodes.MAX_LISTS_COUNT_VIOLATION_ERROR_CODE
+import com.tgt.lists.atlas.api.util.ErrorCodes.UPDATE_DEFAULT_LIST_VIOLATION_ERROR_CODE
 import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.common.components.exception.BaseErrorCodes
+import com.tgt.lists.common.components.exception.ErrorCode
 import com.tgt.lists.common.components.exception.ForbiddenException
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
@@ -59,7 +61,7 @@ class DefaultListManager(
                 throw ForbiddenException(BaseErrorCodes.FORBIDDEN_ERROR_CODE(listOf("guestId not authorized to update default list indicator, guestId: $guestId is not the owner of the list")))
             }
             if (fixedDefaultList) {
-                throw BadRequestException(AppErrorCodes.BAD_REQUEST_ERROR_CODE(arrayListOf("FixedDefaultListEnabled, cannot update default list")))
+                throw BadRequestException(ErrorCode(UPDATE_DEFAULT_LIST_VIOLATION_ERROR_CODE.first, UPDATE_DEFAULT_LIST_VIOLATION_ERROR_CODE.second))
             }
             Flux.fromIterable(getDefaultLists(guestLists, listId).asIterable()).flatMap { guestList ->
                 updateListManager.updateList(guestId = guestId, listId = guestList.id!!,
@@ -73,7 +75,7 @@ class DefaultListManager(
     fun checkGuestListsCount(guestLists: List<ListEntity>, listId: UUID?) {
         // Skipping the check if listId is null as it implies its from update list
         if (listId == null && guestLists.filter { it.state == LIST_STATE.ACTIVE.value }.count() >= maxListsCount) {
-            throw BadRequestException(AppErrorCodes.LIST_MAX_COUNT_VIOLATION_ERROR_CODE(arrayListOf("Max guests lists reached")))
+            throw BadRequestException(ErrorCode(MAX_LISTS_COUNT_VIOLATION_ERROR_CODE.first, MAX_LISTS_COUNT_VIOLATION_ERROR_CODE.second))
         }
     }
 

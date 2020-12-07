@@ -1,10 +1,11 @@
 package com.tgt.lists.atlas.api.transport
 
 import com.tgt.lists.atlas.api.service.transform.list.UserMetaDataTransformationStep
-import com.tgt.lists.atlas.api.type.UserMetaData
-import com.tgt.lists.atlas.api.util.AppErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE
 import com.tgt.lists.atlas.api.type.LIST_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData
+import com.tgt.lists.atlas.api.util.ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE
 import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.common.components.exception.ErrorCode
 import java.time.LocalDate
 
 data class ListUpdateRequestTO(
@@ -17,7 +18,7 @@ data class ListUpdateRequestTO(
     val userMetaDataTransformationStep: UserMetaDataTransformationStep? = null
 ) {
     fun validate(): ListUpdateRequestTO {
-        if (defaultList == false) throw BadRequestException(REQUEST_BODY_VIOLATION_ERROR_CODE(arrayListOf("Default List cannot be updated to false")))
+        if (defaultList == false) throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Default List cannot be updated to false")))
         return this
     }
 }

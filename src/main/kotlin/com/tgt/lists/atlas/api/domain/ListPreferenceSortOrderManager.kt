@@ -5,9 +5,10 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
-import com.tgt.lists.atlas.api.util.AppErrorCodes.LIST_ITEM_SORT_ORDER_ERROR_CODE
 import com.tgt.lists.atlas.api.type.Direction
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.util.ErrorCodes.LIST_ITEM_SORT_ORDER_ERROR_CODE
+import com.tgt.lists.common.components.exception.ErrorCode
 import com.tgt.lists.common.components.exception.InternalServerException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -101,8 +102,8 @@ class ListPreferenceSortOrderManager(
                         listPreferenceRepository.saveListPreference(
                                 ListPreferenceEntity(guestId = guestId, listId = listId, itemSortOrder = newSortOrder))
                     } else {
-                        throw InternalServerException(LIST_ITEM_SORT_ORDER_ERROR_CODE(
-                                listOf("The list item id to remove is not present" + listItemIds.joinToString(",")))) // this is not a bad request bcose of order of events
+                        throw InternalServerException(ErrorCode(LIST_ITEM_SORT_ORDER_ERROR_CODE.first, LIST_ITEM_SORT_ORDER_ERROR_CODE.second,
+                                listOf("The list item id to remove is not present" + listItemIds.joinToString(",")))) // this is not a bad request because of order of events
                     }
                 }.switchIfEmpty { Mono.just(ListPreferenceEntity(listId = listId, guestId = guestId, itemSortOrder = "")) }
     }

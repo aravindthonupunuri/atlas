@@ -1,9 +1,10 @@
 package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
-import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.util.ErrorCodes.MAX_LIST_ITEMS_COUNT_VIOLATION_ERROR_CODE
 import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.common.components.exception.ErrorCode
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -162,7 +163,7 @@ class DeduplicationManager(
 
         val finalItemsCount = (existingItemsCount - duplicateItemsCount) + newItemsCount // final items count after dedupe
         if (itemState == LIST_ITEM_STATE.PENDING && !pendingListRollingUpdate && finalItemsCount > maxPendingItemsCount) {
-            throw BadRequestException(AppErrorCodes.BAD_REQUEST_ERROR_CODE(listOf("Exceeding max items count")))
+            throw BadRequestException(ErrorCode(MAX_LIST_ITEMS_COUNT_VIOLATION_ERROR_CODE.first, MAX_LIST_ITEMS_COUNT_VIOLATION_ERROR_CODE.second, listOf("Exceeding max items count in pending list")))
         } else if ((itemState == LIST_ITEM_STATE.PENDING && pendingListRollingUpdate && finalItemsCount > maxPendingItemsCount) ||
                 (itemState == LIST_ITEM_STATE.COMPLETED && finalItemsCount > maxCompletedItemsCount)) {
             logger.error("Exceeding max items count in list, so deleting stale items")

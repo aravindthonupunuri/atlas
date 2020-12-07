@@ -1,11 +1,12 @@
 package com.tgt.lists.atlas.api.transport
 
 import com.tgt.lists.atlas.api.type.UserMetaData
-import com.tgt.lists.atlas.api.util.AppErrorCodes
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.UnitOfMeasure
+import com.tgt.lists.atlas.api.util.ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE
 import com.tgt.lists.atlas.api.validator.validateItemType
 import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.common.components.exception.ErrorCode
 import javax.validation.constraints.NotNull
 
 data class ListItemRequestTO(
@@ -28,7 +29,7 @@ data class ListItemRequestTO(
     }
 
     fun validate(): ListItemRequestTO {
-        if (requestedQuantity != null && requestedQuantity < 1) throw BadRequestException(AppErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE(arrayListOf("Invalid Requested quantity, must be 1 or greater")))
+        if (requestedQuantity != null && requestedQuantity < 1) throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Invalid Requested quantity, must be 1 or greater")))
         validateItemType(itemType, tcin, itemTitle)
         return this
     }

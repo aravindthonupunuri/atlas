@@ -11,8 +11,9 @@ import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListI
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toUpdateListItemEntity
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
-import com.tgt.lists.atlas.api.util.AppErrorCodes
+import com.tgt.lists.atlas.api.util.ErrorCodes.LIST_ITEM_NOT_FOUND_ERROR_CODE
 import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.common.components.exception.ErrorCode
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -48,7 +49,7 @@ class UpdateListItemService(
             val existingItemToUpdate = existingListItems.firstOrNull { it.itemId == listItemId }
 
             if (existingItemToUpdate == null) {
-                throw BadRequestException(AppErrorCodes.BAD_REQUEST_ERROR_CODE(listOf("Item: $listItemId not found in listId: $listId")))
+                throw BadRequestException(ErrorCode(LIST_ITEM_NOT_FOUND_ERROR_CODE.first, LIST_ITEM_NOT_FOUND_ERROR_CODE.second, listOf("Item: $listItemId not found in listId: $listId")))
             } else {
                 val existingUserItemMetadata = toUserMetaData(existingItemToUpdate.itemMetadata)
                 if (existingUserItemMetadata != null && listItemUpdateRequest.userItemMetaDataTransformationStep != null) {

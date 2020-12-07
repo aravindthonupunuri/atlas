@@ -4,11 +4,12 @@ import com.tgt.lists.atlas.api.domain.DeleteListItemsManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListItemsDeleteResponseTO
-import com.tgt.lists.atlas.api.util.AppErrorCodes.DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE
-import com.tgt.lists.atlas.api.util.AppErrorCodes.DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE
 import com.tgt.lists.atlas.api.type.ItemIncludeFields
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.util.ErrorCodes.DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE
+import com.tgt.lists.atlas.api.util.ErrorCodes.DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE
 import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.common.components.exception.ErrorCode
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -35,7 +36,7 @@ class DeleteListItemsService(
     ): Mono<ListItemsDeleteResponseTO> {
         logger.debug("[deleteMultipleListItem] guestId: $guestId, listId: $listId")
         if (!itemIdList.isNullOrEmpty() && itemIncludeFields != null) {
-            throw BadRequestException(DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE)
+            throw BadRequestException(ErrorCode(DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE.first, DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE.second))
         } else {
             return if (itemIdList.isNullOrEmpty()) {
                 // delete items according to ItemIncludeFields
@@ -43,7 +44,7 @@ class DeleteListItemsService(
                     ItemIncludeFields.ALL -> deleteItemsByState(guestId, listId)
                     ItemIncludeFields.COMPLETED -> deleteItemsByState(guestId, listId, LIST_ITEM_STATE.COMPLETED)
                     ItemIncludeFields.PENDING -> deleteItemsByState(guestId, listId, LIST_ITEM_STATE.PENDING)
-                    else -> throw BadRequestException(DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE)
+                    else -> throw BadRequestException(ErrorCode(DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE.first, DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE.second))
                 }
             } else {
                 deleteItemsByItemIds(guestId, listId, itemIdList)
