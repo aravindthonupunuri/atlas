@@ -16,6 +16,7 @@ import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.common.components.exception.InternalServerException
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.jetbrains.annotations.NotNull
 import reactor.core.publisher.Flux
@@ -31,9 +32,9 @@ class UpdateListItemServiceTest extends Specification {
     EventPublisher eventPublisher
     ListDataProvider listDataProvider
     ListRepository listRepository
-    ObjectMapper objectMapper
     String guestId = "1234"
     Long locationId = 1375L
+    def mapper = new ObjectMapper()
 
     def setup() {
         eventPublisher = Mock(EventPublisher)
@@ -43,7 +44,6 @@ class UpdateListItemServiceTest extends Specification {
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         updateListItemService = new UpdateListItemService(listRepository, updateListItemManager, deleteListItemsManager, deduplicationManager)
         listDataProvider = new ListDataProvider()
-        objectMapper = new ObjectMapper()
     }
 
     def "test updateListItem() integrity"() {
@@ -377,9 +377,6 @@ class UpdateListItemServiceTest extends Specification {
 
         ListItemEntity dedupedListItemEntity = listDataProvider.createListItemEntity(listId, listItemEntity2.itemId, LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemEntity1.itemReqQty + listItemEntity2.itemReqQty, listItemEntity1.itemNotes + listItemEntity2.itemNotes)
 
-        ListItemEntity updatesListItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, listItemUpdateRequest.itemTitle, listItemUpdateRequest.requestedQuantity, listItemUpdateRequest.itemNote)
-
-
         def recordMetadata = GroovyMock(RecordMetadata)
 
         when:
@@ -401,5 +398,44 @@ class UpdateListItemServiceTest extends Specification {
         actual.itemTitle == dedupedListItemEntity.itemTitle
         actual.itemNote == dedupedListItemEntity.itemNotes
         actual.itemType.value == dedupedListItemEntity.itemType
+    }
+
+    def "test updateListItem() with existing metadata and missing metadata transformation step"() {
+        given:
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, null, null, new RefIdValidator() {
+            @Override
+            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
+                if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
+                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
+                } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
+                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
+                } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
+                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
+                } else {
+                    return null
+                }
+            }
+        }, null)
+        def listId = Uuids.timeBased()
+        def itemId = Uuids.timeBased()
+        def tcin1 = "1234"
+        def tenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+
+        Map metadata = [
+                "structure": [
+                        "wallHeight": 12,
+                        "wallDepth": 12
+                ]
+        ]
+
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note", mapper.writeValueAsString(metadata), null, null )
+
+        when:
+        updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
+
+        then:
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+
+        thrown(InternalServerException)
     }
  }

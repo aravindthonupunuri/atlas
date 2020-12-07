@@ -450,8 +450,8 @@ class GetListServiceTest extends Specification {
         def listItemEntity2CreatedDate = currentLocalInstant
 
         def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
-        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, listItemEntity1CreatedDate, null )
-        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null, listItemEntity2CreatedDate, null )
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, null, listItemEntity1CreatedDate, null )
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null, null, listItemEntity2CreatedDate, null )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
         def pendingListEntity2 = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 
@@ -506,8 +506,8 @@ class GetListServiceTest extends Specification {
         def listItemEntity2UpdateDate = currentLocalInstant
 
         def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
-        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, null, listItemEntity2UpdateDate )
-        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null, null, listItemEntity1UpdateDate )
+        def listItemEntity1 = dataProvider.createListItemEntity(listId, listItemId1, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId1, tcin1, "item Title 1", null, null, null, null, listItemEntity2UpdateDate )
+        def listItemEntity2 = dataProvider.createListItemEntity(listId, listItemId2, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantrefId2, tcin2, "item Title 2", null, null, null, null, listItemEntity1UpdateDate )
         def pendingListEntity = dataProvider.createListItemExtEntity(listEntity, listItemEntity1)
         def pendingListEntity2 = dataProvider.createListItemExtEntity(listEntity, listItemEntity2)
 

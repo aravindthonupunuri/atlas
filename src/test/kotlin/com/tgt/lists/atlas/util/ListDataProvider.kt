@@ -37,11 +37,11 @@ class ListDataProvider {
     }
 
     fun createListItemEntity(listId: UUID, itemId: UUID, itemState: String, itemType: String, itemRefId: String, tcin: String?, itemTitle: String?, itemReqQty: Int?, itemNotes: String?): ListItemEntity {
-        return createListItemEntity(listId, itemId, itemState, itemType, itemRefId, tcin, itemTitle, itemReqQty, itemNotes, null, null)
+        return createListItemEntity(listId, itemId, itemState, itemType, itemRefId, tcin, itemTitle, itemReqQty, itemNotes, null, null, null)
     }
 
-    fun createListItemEntity(listId: UUID, itemId: UUID, itemState: String, itemType: String, itemRefId: String, tcin: String?, itemTitle: String?, itemReqQty: Int?, itemNotes: String?, itemCreatedDate: Instant?, itemUpdatedDate: Instant?): ListItemEntity {
-        return ListItemEntity(id = listId, itemId = itemId, itemState = itemState, itemType = itemType, itemRefId = itemRefId, itemTcin = tcin, itemTitle = itemTitle, itemReqQty = itemReqQty, itemNotes = itemNotes, itemCreatedAt = itemCreatedDate, itemUpdatedAt = itemUpdatedDate)
+    fun createListItemEntity(listId: UUID, itemId: UUID, itemState: String, itemType: String, itemRefId: String, tcin: String?, itemTitle: String?, itemReqQty: Int?, itemNotes: String?, itemMetaData: String?, itemCreatedDate: Instant?, itemUpdatedDate: Instant?): ListItemEntity {
+        return ListItemEntity(id = listId, itemId = itemId, itemState = itemState, itemType = itemType, itemRefId = itemRefId, itemTcin = tcin, itemTitle = itemTitle, itemReqQty = itemReqQty, itemNotes = itemNotes, itemCreatedAt = itemCreatedDate, itemUpdatedAt = itemUpdatedDate, itemMetadata = itemMetaData)
     }
 
     fun createGuestPreferenceEntity(guestId: String, listSortOrder: String?): GuestPreferenceEntity {

@@ -11,9 +11,11 @@ import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toListI
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper.Companion.toUpdateListItemEntity
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.util.ErrorCodes
 import com.tgt.lists.atlas.api.util.ErrorCodes.LIST_ITEM_NOT_FOUND_ERROR_CODE
 import com.tgt.lists.common.components.exception.BadRequestException
 import com.tgt.lists.common.components.exception.ErrorCode
+import com.tgt.lists.common.components.exception.InternalServerException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -52,14 +54,12 @@ class UpdateListItemService(
                 throw BadRequestException(ErrorCode(LIST_ITEM_NOT_FOUND_ERROR_CODE.first, LIST_ITEM_NOT_FOUND_ERROR_CODE.second, listOf("Item: $listItemId not found in listId: $listId")))
             } else {
                 val existingUserItemMetadata = toUserMetaData(existingItemToUpdate.itemMetadata)
-                if (existingUserItemMetadata != null && listItemUpdateRequest.userItemMetaDataTransformationStep != null) {
-                    listItemUpdateRequest.userItemMetaDataTransformationStep.execute(existingUserItemMetadata)
-                            .map { listItemUpdateRequest.copy(metadata = it) }
-                } else {
-                    Mono.just(listItemUpdateRequest)
-                }.flatMap { listItemUpdateRequest ->
-                    updateItem(guestId, listId, listItemUpdateRequest, existingItemToUpdate, existingListItems)
+                if (existingUserItemMetadata != null) {
+                    listItemUpdateRequest.userItemMetaDataTransformationStep?.let {
+                        it.execute(existingUserItemMetadata).map { listItemUpdateRequest.copy(metadata = it) }
+                    } ?: throw InternalServerException(ErrorCode(ErrorCodes.METADATA_TRANSFORMATION_STEP_VIOLATION_ERROR_CODE.first, ErrorCodes.METADATA_TRANSFORMATION_STEP_VIOLATION_ERROR_CODE.second))
                 }
+                updateItem(guestId, listId, listItemUpdateRequest, existingItemToUpdate, existingListItems)
             }
         }
     }
