@@ -67,4 +67,19 @@ class ListCassandraPermissionManagerTest extends Specification {
 
         1 * listRepository.findListById(listId) >> Mono.empty()
     }
+
+    def "test authorize denied with anonymous user"() {
+        given:
+        def userId = com.tgt.lists.common.components.filters.auth.Constants.ANONYMOUS_MEMBER_ID
+        def listId = UUID.randomUUID()
+        def method = HttpMethod.GET
+
+        when:
+        listFallbackPermissionManager.authorize(userId, listId, method).block()
+
+        then:
+        thrown(ForbiddenException)
+
+        0 * listRepository.findListById(listId)
+    }
 }

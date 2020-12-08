@@ -7,7 +7,7 @@ import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.util.ErrorCodes.MAX_LISTS_COUNT_VIOLATION_ERROR_CODE
 import com.tgt.lists.atlas.api.util.ErrorCodes.UPDATE_DEFAULT_LIST_VIOLATION_ERROR_CODE
 import com.tgt.lists.common.components.exception.BadRequestException
-import com.tgt.lists.common.components.exception.BaseErrorCodes
+import com.tgt.lists.common.components.exception.BaseErrorCodes.FORBIDDEN_ERROR_CODE
 import com.tgt.lists.common.components.exception.ErrorCode
 import com.tgt.lists.common.components.exception.ForbiddenException
 import mu.KotlinLogging
@@ -58,7 +58,7 @@ class DefaultListManager(
             // Update can be called with guestId as operation executor who could be different than list owner.
             // So we have a check to block default list indicator processing if its not the owner of the list.
             if (listId != null && guestLists.firstOrNull { it.id == listId } == null) {
-                throw ForbiddenException(BaseErrorCodes.FORBIDDEN_ERROR_CODE(listOf("guestId not authorized to update default list indicator, guestId: $guestId is not the owner of the list")))
+                throw ForbiddenException(ErrorCode(FORBIDDEN_ERROR_CODE, listOf("guestId not authorized to update default list indicator, guestId: $guestId is not the owner of the list")))
             }
             if (fixedDefaultList) {
                 throw BadRequestException(ErrorCode(UPDATE_DEFAULT_LIST_VIOLATION_ERROR_CODE.first, UPDATE_DEFAULT_LIST_VIOLATION_ERROR_CODE.second))
