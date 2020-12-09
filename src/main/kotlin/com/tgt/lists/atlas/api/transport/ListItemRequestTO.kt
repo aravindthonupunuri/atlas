@@ -3,9 +3,9 @@ package com.tgt.lists.atlas.api.transport
 import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.UnitOfMeasure
-import com.tgt.lists.atlas.api.util.ErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE
 import com.tgt.lists.atlas.api.validator.validateItemType
 import com.tgt.lists.common.components.exception.BadRequestException
+import com.tgt.lists.common.components.exception.BaseErrorCodes.REQUEST_BODY_VIOLATION_ERROR_CODE
 import com.tgt.lists.common.components.exception.ErrorCode
 import javax.validation.constraints.NotNull
 

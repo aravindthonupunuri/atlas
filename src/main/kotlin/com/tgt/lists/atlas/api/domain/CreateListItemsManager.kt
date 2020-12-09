@@ -19,10 +19,12 @@ import javax.inject.Singleton
 class CreateListItemsManager(
     @Inject private val deduplicationManager: DeduplicationManager,
     @Inject private val listRepository: ListRepository,
-    @Inject private val eventPublisher: EventPublisher
+    @Inject private val eventPublisher: EventPublisher,
+    @Inject private val configuration: Configuration
 ) {
 
     private val logger = KotlinLogging.logger { CreateListItemsManager::class.java.name }
+    private val listItemsDedupe = configuration.listItemsDedupe
 
     /**
      *
@@ -39,8 +41,13 @@ class CreateListItemsManager(
 
         return listRepository.findListItemsByListIdAndItemState(listId, listItemState.value).collectList()
                 .flatMap {
-                    val itemsToAdd = newItems.map { it.itemRefId to
-                            ListItemMapper.toNewListItemEntity(listId, it) }.toMap().values.toList() // Filtering out duplicate items in the request
+                    val itemsToAdd = if (listItemsDedupe) {
+                        newItems.map {
+                            it.itemRefId to ListItemMapper.toNewListItemEntity(listId, it)
+                        }.toMap().values.toList() // Filtering out duplicate items in the request
+                    } else {
+                        newItems.map { ListItemMapper.toNewListItemEntity(listId, it) }
+                    }
 
                     deduplicationManager.updateDuplicateItems(guestId = guestId, listId = listId, items = itemsToAdd,
                             existingItems = it, itemState = listItemState)

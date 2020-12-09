@@ -37,7 +37,7 @@ class CreateListItemsServiceTest extends Specification {
         deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 10, 10, true, true, false))
-        createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher)
+        createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
         createListItemsService = new CreateListItemsService(createListItemsManager)
 
     }
@@ -159,6 +159,48 @@ class CreateListItemsServiceTest extends Specification {
         }
         // events published
         2 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
+    }
+
+    def "test createListItem() with duplicate items in request and dedupe turned off"() {
+        given:
+        def listId = Uuids.timeBased()
+        def tcin1 = "1234"
+        def tcinTenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+        def gItem1 = "item2"
+        def gItemTenantrefId1 = listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, gItem1)
+
+        def listItemRequest1 = new ListItemRequestTO(ItemType.TCIN, tcinTenantRefId1, TestListChannel.WEB.toString(), null, tcin1, null,
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
+
+        def listItemRequest2 = new ListItemRequestTO(ItemType.GENERIC_ITEM, gItemTenantrefId1, TestListChannel.WEB.toString(), null, null, gItem1,
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
+
+        def listItemRequest3 = new ListItemRequestTO(ItemType.GENERIC_ITEM, gItemTenantrefId1, TestListChannel.WEB.toString(), null, null, gItem1,
+                "test item", null, null, UnitOfMeasure.EACHES, null, null)
+
+        def itemsToAdd = [listItemRequest1, listItemRequest2, listItemRequest3]
+
+        ListItemEntity newListItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tcinTenantRefId1, tcin1,  null, 1, "notes1")
+        ListItemEntity newListItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, gItemTenantrefId1, null,  gItem1, 1, "notes1")
+        ListItemEntity newListItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, gItemTenantrefId1, null,  gItem1, 1, "notes1")
+
+        createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, false, false, false))
+        def recordMetadata = GroovyMock(RecordMetadata)
+        createListItemsService = new CreateListItemsService(createListItemsManager)
+
+        when:
+        createListItemsService.createListItems(guestId, listId, 1357L, itemsToAdd).block()
+
+        then:
+        1 * listRepository.findListItemsByListIdAndItemState(listId, LIST_ITEM_STATE.PENDING.value) >> Flux.empty()
+        // inserting new items
+        1 * listRepository.saveListItems(_ as List<ListItemEntity>) >> { arguments ->
+            final List<ListItemEntity> items = arguments[0]
+            assert items.size() == 3
+            Mono.just([newListItemEntity1, newListItemEntity2, newListItemEntity3])
+        }
+        // events published
+        3 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
     }
 
     def "test ListItemRequestTO tcin item with exception"() {

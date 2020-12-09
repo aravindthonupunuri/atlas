@@ -1,6 +1,6 @@
 package com.tgt.lists.atlas.api.util
 
-import com.tgt.lists.atlas.api.util.ErrorCodes.RESPONSE_BODY_VIOLATION_ERROR_CODE
+import com.tgt.lists.common.components.exception.BaseErrorCodes.RESPONSE_BODY_VIOLATION_ERROR_CODE
 import com.tgt.lists.common.components.exception.ErrorCode
 import com.tgt.lists.common.components.exception.InternalServerException
 import javax.validation.Validation
