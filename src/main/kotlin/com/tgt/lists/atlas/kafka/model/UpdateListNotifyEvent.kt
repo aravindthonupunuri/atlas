@@ -54,7 +54,7 @@ data class UpdateListNotifyEvent(
 
         @JvmStatic
         fun getEventType(): EventType {
-            return "CREATE-LIST-NOTIFY-EVENT"
+            return "UPDATE-LIST-NOTIFY-EVENT"
         }
 
         @JvmStatic
