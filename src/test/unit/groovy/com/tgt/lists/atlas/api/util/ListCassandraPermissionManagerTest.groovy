@@ -11,13 +11,13 @@ import spock.lang.Specification
 
 class ListCassandraPermissionManagerTest extends Specification {
 
-    ListCassandraPermissionManager listFallbackPermissionManager
+    ListCassandraPermissionManager listCassandraPermissionManager
     ListRepository listRepository
     ListDataProvider listDataProvider = new ListDataProvider()
 
     def setup() {
         listRepository = Mock(ListRepository)
-        listFallbackPermissionManager = new ListCassandraPermissionManager(listRepository)
+        listCassandraPermissionManager = new ListCassandraPermissionManager(listRepository)
     }
 
     def "test authorize success"() {
@@ -28,7 +28,7 @@ class ListCassandraPermissionManagerTest extends Specification {
         ListEntity listEntity = listDataProvider.createListEntity(listId, "test-list", "SHOPPING", "", userId, null)
 
         when:
-        def result = listFallbackPermissionManager.authorize(userId, listId, method).block()
+        def result = listCassandraPermissionManager.authorize(userId, listId, method).block()
 
         then:
         result == true
@@ -45,7 +45,7 @@ class ListCassandraPermissionManagerTest extends Specification {
         ListEntity listEntity = listDataProvider.createListEntity(listId, "test-list", "SHOPPING", "", "1000", null)
 
         when:
-        listFallbackPermissionManager.authorize(userId, listId, method).block()
+        listCassandraPermissionManager.authorize(userId, listId, method).block()
 
         then:
         thrown(ForbiddenException)
@@ -60,7 +60,7 @@ class ListCassandraPermissionManagerTest extends Specification {
         def method = HttpMethod.GET
 
         when:
-        listFallbackPermissionManager.authorize(userId, listId, method).block()
+        listCassandraPermissionManager.authorize(userId, listId, method).block()
 
         then:
         thrown(ResourceNotFoundException)
@@ -73,12 +73,14 @@ class ListCassandraPermissionManagerTest extends Specification {
         def userId = com.tgt.lists.common.components.filters.auth.Constants.ANONYMOUS_MEMBER_ID
         def listId = UUID.randomUUID()
         def method = HttpMethod.GET
+        def forbiddenError = false
 
         when:
-        listFallbackPermissionManager.authorize(userId, listId, method).block()
+        listCassandraPermissionManager.authorize(userId, listId, method).doOnError {forbiddenError = true }.block()
 
         then:
         thrown(ForbiddenException)
+        forbiddenError
 
         0 * listRepository.findListById(listId)
     }

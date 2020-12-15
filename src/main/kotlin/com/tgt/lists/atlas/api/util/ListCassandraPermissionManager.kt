@@ -26,7 +26,7 @@ class ListCassandraPermissionManager(
     override fun authorize(userId: String, listId: UUID, requestMethod: HttpMethod): Mono<Boolean> {
         // if user is an anonymous user, we can't authorize using cassandra
         if (userId == ANONYMOUS_MEMBER_ID) {
-            throw ForbiddenException(ErrorCode(FORBIDDEN_ERROR_CODE, listOf("$ANONYMOUS_MEMBER_ID user is not allowed to access List $listId")))
+            return Mono.error(ForbiddenException(ErrorCode(FORBIDDEN_ERROR_CODE, listOf("$ANONYMOUS_MEMBER_ID user is not allowed to access List $listId"))))
         }
 
         return listRepository.findListById(listId)
