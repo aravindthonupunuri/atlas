@@ -7,10 +7,12 @@ import com.datastax.oss.driver.api.mapper.annotations.*
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.micronaut.cassandra.ICassandraDao
+import io.micronaut.context.annotation.Context
 import java.util.*
 import java.util.function.Function
 
 @Dao
+@Context
 interface ListPreferenceDAO : ICassandraDao {
 
     @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)

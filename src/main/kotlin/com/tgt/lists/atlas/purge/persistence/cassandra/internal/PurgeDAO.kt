@@ -9,6 +9,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Select
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy
 import com.tgt.lists.atlas.purge.persistence.entity.PurgeEntity
 import com.tgt.lists.micronaut.cassandra.ICassandraDao
+import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Requires
 import java.time.LocalDate
 import java.util.*
@@ -16,6 +17,7 @@ import java.util.function.Function
 
 @Requires(property = "beacon.client.enabled", value = "true")
 @Dao
+@Context
 interface PurgeDAO : ICassandraDao {
 
     @Insert(nullSavingStrategy = NullSavingStrategy.DO_NOT_SET)

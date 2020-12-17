@@ -5,4 +5,4 @@ import io.micronaut.context.annotation.Primary
 
 @Primary
 @InstrumentedDao("GuestPreferenceDAO")
-interface GuestPreferenceInstrumentalDAO : GuestPreferenceDAO
+interface GuestPreferenceInstrumentedDAO : GuestPreferenceDAO

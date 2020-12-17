@@ -7,10 +7,12 @@ import com.datastax.oss.driver.api.mapper.annotations.*
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy
 import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.micronaut.cassandra.ICassandraDao
+import io.micronaut.context.annotation.Context
 import java.util.*
 import java.util.function.Function
 
 @Dao
+@Context
 interface GuestListDAO : ICassandraDao {
     /**
      * Returns a BoundStatement that can be added to a batch for atomic processing of batch of statements.

@@ -10,10 +10,12 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.micronaut.cassandra.ICassandraDao
+import io.micronaut.context.annotation.Context
 import java.util.*
 import java.util.function.Function
 
 @Dao
+@Context
 interface ListDAO : ICassandraDao {
     /**
      * Returns a BoundStatement that can be added to a batch for atomic processing of batch of statements.

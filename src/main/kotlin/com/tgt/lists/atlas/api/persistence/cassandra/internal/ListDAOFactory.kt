@@ -9,6 +9,7 @@ import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
 
 @Factory
+// @Context
 class ListDAOFactory(
     val cassConfig: CassConfig,
     val cqlSession: CqlSession
