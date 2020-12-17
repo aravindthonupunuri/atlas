@@ -5,7 +5,6 @@ import com.datastax.oss.driver.api.core.CqlSession
 import com.tgt.lists.micronaut.cassandra.CqlStmtsFileReader
 import com.tgt.lists.micronaut.cassandra.DaoFactory
 import io.micronaut.context.annotation.Bean
-import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
 import mu.KotlinLogging
 
@@ -23,7 +22,6 @@ class ListPreferenceDAOFactory(
     }
 
     @Bean
-    @Context
     override fun instance(): ListPreferenceDAO {
         val listPreferenceMapperBuilder = ListPreferenceMapperBuilder(cqlSession).build()
         val listPreferenceDAO = listPreferenceMapperBuilder.listPreferenceDao(CqlIdentifier.fromCql(cassConfig.keyspace))

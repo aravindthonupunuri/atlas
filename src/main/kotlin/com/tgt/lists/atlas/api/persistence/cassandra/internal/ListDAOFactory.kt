@@ -5,11 +5,9 @@ import com.datastax.oss.driver.api.core.CqlSession
 import com.tgt.lists.micronaut.cassandra.CqlStmtsFileReader
 import com.tgt.lists.micronaut.cassandra.DaoFactory
 import io.micronaut.context.annotation.Bean
-import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
 
 @Factory
-// @Context
 class ListDAOFactory(
     val cassConfig: CassConfig,
     val cqlSession: CqlSession
@@ -20,7 +18,6 @@ class ListDAOFactory(
     }
 
     @Bean
-    @Context
     override fun instance(): ListDAO {
         val listMapperBuilder = ListMapperBuilder(cqlSession).build()
         val listDAO = listMapperBuilder.listsDao(CqlIdentifier.fromCql(cassConfig.keyspace))
