@@ -10,12 +10,13 @@ import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
 import java.time.LocalDate
 import java.util.*
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Requires(property = "beacon.client.enabled", value = "true")
 @Singleton
 class PurgeRepository(
-    private val purgeDao: PurgeDAO,
+    @Named("PurgeInstrumentedDAO") private val purgeDao: PurgeDAO,
     private val retryableStatementExecutor: RetryableStatementExecutor
 ) {
 

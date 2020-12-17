@@ -17,12 +17,13 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Singleton
 class ListRepository(
-    private val listDAO: ListDAO,
-    private val guestListDAO: GuestListDAO,
+    @Named("ListInstrumentedDAO") private val listDAO: ListDAO,
+    @Named("GuestListInstrumentedDAO") private val guestListDAO: GuestListDAO,
     private val batchExecutor: BatchExecutor,
     private val dataContextContainerManager: DataContextContainerManager,
     private val retryableStatementExecutor: RetryableStatementExecutor

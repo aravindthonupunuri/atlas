@@ -6,11 +6,12 @@ import com.tgt.lists.atlas.api.type.GuestId
 import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Singleton
 class GuestPreferenceRepository(
-    private val guestPreferenceDAO: GuestPreferenceDAO,
+    @Named("GuestPreferenceInstrumentedDAO") private val guestPreferenceDAO: GuestPreferenceDAO,
     private val retryableStatementExecutor: RetryableStatementExecutor
 ) {
     private val className = GuestPreferenceRepository::class.java.name

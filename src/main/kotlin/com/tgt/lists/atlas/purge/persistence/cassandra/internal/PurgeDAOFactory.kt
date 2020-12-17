@@ -6,6 +6,7 @@ import com.tgt.lists.micronaut.cassandra.DaoFactory
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.CassConfig
 import com.tgt.lists.micronaut.cassandra.CqlStmtsFileReader
 import io.micronaut.context.annotation.Bean
+import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Requires
 import mu.KotlinLogging
@@ -25,6 +26,7 @@ class PurgeDAOFactory(
     }
 
     @Bean
+    @Context // eager create this bean on startup to avoid exception for creating on cassandra io thread
     override fun instance(): PurgeDAO {
         val purgeMapperBuilder = PurgeMapperBuilder(cqlSession).build()
         val purgeDAO = purgeMapperBuilder.purgeDAO(CqlIdentifier.fromCql(cassConfig.keyspace))

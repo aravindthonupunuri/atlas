@@ -7,11 +7,12 @@ import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Singleton
 class ListPreferenceRepository(
-    private val listPreferenceDAO: ListPreferenceDAO,
+    @Named("ListPreferenceInstrumentedDAO") private val listPreferenceDAO: ListPreferenceDAO,
     private val retryableStatementExecutor: RetryableStatementExecutor
 ) {
 

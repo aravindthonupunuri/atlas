@@ -5,6 +5,7 @@ import com.datastax.oss.driver.api.core.CqlSession
 import com.tgt.lists.micronaut.cassandra.CqlStmtsFileReader
 import com.tgt.lists.micronaut.cassandra.DaoFactory
 import io.micronaut.context.annotation.Bean
+import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
 import mu.KotlinLogging
 
@@ -22,6 +23,7 @@ class GuestPreferenceDAOFactory(
     }
 
     @Bean
+    @Context // eager create this bean on startup to avoid exception for creating on cassandra io thread
     override fun instance(): GuestPreferenceDAO {
         val guestPreferenceMapperBuilder = GuestPreferenceMapperBuilder(cqlSession).build()
         val guestPreferenceMapperDAO = guestPreferenceMapperBuilder.guestPreferenceDao(CqlIdentifier.fromCql(cassConfig.keyspace))
