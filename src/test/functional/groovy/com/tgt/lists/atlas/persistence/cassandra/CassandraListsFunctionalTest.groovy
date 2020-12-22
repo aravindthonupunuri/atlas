@@ -9,6 +9,7 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.util.DateUtilKt
 import com.tgt.lists.atlas.util.ListDataProvider
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
@@ -114,10 +115,16 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
 
         when:
-        listsRepository.saveListItems([listItemEntity1, listItemEntity2, listItemEntity3]).block()
+        List<ListItemEntity> result = listsRepository.saveListItems([listItemEntity1, listItemEntity2, listItemEntity3]).block()
+        def currTimeInstant = DateUtilKt.getLocalInstant()
 
         then:
         notThrown(Throwable)
+        result.size() == 3
+        result[0].itemCreatedAt.isBefore(currTimeInstant)
+        result[1].itemCreatedAt.isBefore(currTimeInstant)
+        result[2].itemCreatedAt.isBefore(currTimeInstant)
+
     }
 
     def "test findGuestLists"() {
@@ -154,9 +161,20 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
         when:
         List<ListItemEntity> listItemEntities = listsRepository.findListItemsByListId(listId).collectList().block()
+        def currTimeInstant = DateUtilKt.getLocalInstant()
 
         then:
         listItemEntities.size() == 4
+        listItemEntities[0].itemCreatedAt != null && listItemEntities[0].itemCreatedAt.isBefore(currTimeInstant)
+        listItemEntities[1].itemCreatedAt != null && listItemEntities[1].itemCreatedAt.isBefore(currTimeInstant)
+        listItemEntities[2].itemCreatedAt != null && listItemEntities[2].itemCreatedAt.isBefore(currTimeInstant)
+        listItemEntities[3].itemCreatedAt != null && listItemEntities[3].itemCreatedAt.isBefore(currTimeInstant)
+
+        listItemEntities[0].itemUpdatedAt != null && listItemEntities[0].itemUpdatedAt.isBefore(currTimeInstant)
+        listItemEntities[1].itemUpdatedAt != null && listItemEntities[1].itemUpdatedAt.isBefore(currTimeInstant)
+        listItemEntities[2].itemUpdatedAt != null && listItemEntities[2].itemUpdatedAt.isBefore(currTimeInstant)
+        listItemEntities[3].itemUpdatedAt != null && listItemEntities[3].itemUpdatedAt.isBefore(currTimeInstant)
+
     }
 
     def "test get list items by listId which is not present"() {

@@ -34,8 +34,9 @@ class ListRepository(
     fun saveList(listEntity: ListEntity): Mono<ListEntity> {
         if (listEntity.createdAt == null) {
             // new list getting created
-            listEntity.createdAt = getLocalInstant()
-            listEntity.updatedAt = listEntity.createdAt
+            val createdTime = getLocalInstant()
+            listEntity.createdAt = createdTime
+            listEntity.updatedAt = createdTime
         } else {
             // existing list update
             listEntity.updatedAt = getLocalInstant()
@@ -58,25 +59,25 @@ class ListRepository(
     }
 
     fun saveListItems(listItemsEntity: List<ListItemEntity>): Mono<List<ListItemEntity>> {
-        val now = getLocalInstant()
         val items = arrayListOf<ListItemEntity>()
         listItemsEntity.map {
             if (it.itemCreatedAt == null) {
                 // new list item getting created
-                items.add(it.copy(itemCreatedAt = now, itemUpdatedAt = it.itemCreatedAt))
+                val createdTime = getLocalInstant()
+                items.add(it.copy(itemCreatedAt = createdTime, itemUpdatedAt = createdTime))
             } else {
                 // existing list item update
-                items.add(it.copy(itemUpdatedAt = now))
+                items.add(it.copy(itemUpdatedAt = getLocalInstant()))
             }
         }
 
         return if (items.size > 1) {
             val batchStmts = arrayListOf<BatchableStatement<*>>()
-            listItemsEntity.map { batchStmts.add(listDAO.saveListItemBatch(it.validate())) }
+            items.map { batchStmts.add(listDAO.saveListItemBatch(it.validate())) }
             batchExecutor.executeBatch(batchStmts, this::class.simpleName!!, "saveListItems")
         } else {
             retryableStatementExecutor.write(className, "saveListItem") { consistency ->
-                listDAO.saveListItem(listItemsEntity.first().validate(), consistency) }.map { true }.switchIfEmpty { Mono.just(true) } // TODO: Move switchIfEmpty to library
+                listDAO.saveListItem(items.first().validate(), consistency) }.map { true }.switchIfEmpty { Mono.just(true) } // TODO: Move switchIfEmpty to library
         }.map { items.toList() }
     }
 
