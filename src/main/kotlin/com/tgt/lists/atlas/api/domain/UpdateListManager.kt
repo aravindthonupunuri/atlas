@@ -6,6 +6,7 @@ import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.TestListEvaluator
 import com.tgt.lists.atlas.api.util.getExpirationDate
+import com.tgt.lists.atlas.api.util.getLocalDateTime
 import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import mu.KotlinLogging
@@ -51,7 +52,12 @@ class UpdateListManager(
                                     } else {
                                         it.expiration!!
                                     },
-                                    userMetaData = userMetaDataTO?.metadata),
+                                    userMetaData = userMetaDataTO?.metadata,
+                                    shortDescription = it.description,
+                                    defaultList = !it.marker.isNullOrEmpty(),
+                                    addedDate = getLocalDateTime(it.createdAt),
+                                    lastModifiedDate = getLocalDateTime(it.updatedAt)
+                            ),
                             guestId)
                 }.map { it.t1 }
     }

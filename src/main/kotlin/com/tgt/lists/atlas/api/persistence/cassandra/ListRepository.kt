@@ -37,7 +37,8 @@ class ListRepository(
             val createdTime = getLocalInstant()
             listEntity.createdAt = createdTime
             listEntity.updatedAt = createdTime
-        } else {
+        }
+        if (listEntity.updatedAt == null) {
             // existing list update
             listEntity.updatedAt = getLocalInstant()
         }

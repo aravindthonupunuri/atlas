@@ -5,6 +5,7 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.util.getLocalDateTime
 import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
@@ -42,7 +43,12 @@ class UpdateListItemManager(
                                     channel = it.itemChannel,
                                     subChannel = it.itemSubchannel,
                                     itemRequestedQuantity = it.itemReqQty,
-                                    userItemMetaDataTO = userMetaDataTO?.metadata),
+                                    userItemMetaDataTO = userMetaDataTO?.metadata,
+                                    itemNote = it.itemDesc,
+                                    itemFulfilledQuantity = it.itemQty,
+                                    addedDate = getLocalDateTime(it.itemCreatedAt),
+                                    lastModifiedDate = getLocalDateTime(it.itemUpdatedAt)
+                            ),
                             listId.toString())
         }.map { it.t1 }
     }

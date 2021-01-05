@@ -7,11 +7,14 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.tgt.lists.atlas.api.type.EventType
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -48,6 +51,24 @@ data class CreateListNotifyEvent(
     @JsonDeserialize(using = LocalDateDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     val expiration: LocalDate,
+
+    @JsonProperty("short_description")
+    val shortDescription: String? = null,
+
+    @JsonProperty("default_list")
+    val defaultList: Boolean? = null,
+
+    @JsonProperty("added_date_time")
+    @JsonSerialize(using = LocalDateTimeSerializer::class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer::class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+    val addedDate: LocalDateTime? = null,
+
+    @JsonProperty("last_modified_date_time")
+    @JsonSerialize(using = LocalDateTimeSerializer::class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer::class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+    val lastModifiedDate: LocalDateTime? = null,
 
     @JsonProperty("retry_state")
     var retryState: String? = null

@@ -7,6 +7,7 @@ import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.util.getLocalDateTime
 import com.tgt.lists.atlas.kafka.model.CreateListItemNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
@@ -94,9 +95,15 @@ class CreateListItemsManager(
                                             itemTitle = it.itemTitle,
                                             channel = it.itemChannel,
                                             subChannel = it.itemSubchannel,
-                                            itemRequestedQuantity = it.itemReqQty,
-                                            userItemMetaDataTO = userMetaDataTO?.metadata),
-                                    listId.toString()) }.collectList()
+                                            itemRequestedQuantity = it.itemReqQty!!,
+                                            userItemMetaDataTO = userMetaDataTO?.metadata,
+                                            itemNote = it.itemDesc,
+                                            itemFulfilledQuantity = it.itemQty,
+                                            addedDate = getLocalDateTime(it.itemCreatedAt),
+                                            lastModifiedDate = getLocalDateTime(it.itemUpdatedAt)
+                                    ),
+                                    listId.toString())
+                        }.collectList()
                 }.map { it.t1 }
     }
 }

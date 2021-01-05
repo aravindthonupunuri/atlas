@@ -14,10 +14,13 @@ import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.TestListEvaluator
 import com.tgt.lists.atlas.api.util.getExpirationDate
+import com.tgt.lists.atlas.api.util.getLocalDateTime
 import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
+import java.time.Instant
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -38,14 +41,67 @@ class CreateListService(
         val mapper = jacksonObjectMapper()
     }
 
+    /**
+     *
+     * Create List
+     *
+     * @param guestId: guest id
+     * @param listRequestTO list request body
+     * @return registry list transfer object
+     *
+     */
     fun createList(
         guestId: String, // this is the ownerId of list
         listRequestTO: ListRequestTO
     ): Mono<ListResponseTO> {
+        return processCreateList(
+                guestId = guestId,
+                listRequestTO = listRequestTO,
+                listId = null,
+                createdAt = null,
+                updatedAt = null
+        )
+    }
+
+    /**
+     *
+     * Create List with existing list id; Exclusively used for migration purpose
+     *
+     * @param guestId: guest id
+     * @param listRequestTO list request body
+     * @param listId list id to be created
+     * @param createdAt list id created time stamp
+     * @param updatedAt latest list id updated time stamp
+     * @return registry list transfer object
+     *
+     */
+    fun createList(
+        guestId: String, // this is the ownerId of list
+        listRequestTO: ListRequestTO,
+        listId: UUID,
+        createdAt: Instant,
+        updatedAt: Instant?
+    ): Mono<ListResponseTO> {
+        return processCreateList(
+                guestId = guestId,
+                listRequestTO = listRequestTO,
+                listId = listId,
+                createdAt = createdAt,
+                updatedAt = updatedAt
+        )
+    }
+
+    private fun processCreateList(
+        guestId: String,
+        listRequestTO: ListRequestTO,
+        listId: UUID?,
+        createdAt: Instant?,
+        updatedAt: Instant?
+    ): Mono<ListResponseTO> {
         logger.debug("[createList] guestId: $guestId, listRequestTO: $listRequestTO")
         return defaultListManager.processDefaultListInd(guestId, listRequestTO.defaultList)
                 .flatMap {
-                    val listEntity = toNewListEntity(
+                    var listEntity = toNewListEntity(
                             guestId = guestId,
                             listType = listType,
                             listSubtype = listRequestTO.listSubType,
@@ -56,8 +112,9 @@ class CreateListService(
                             } else {
                                 listRequestTO.expiration
                             },
-                            testList = TestListEvaluator.evaluate())
-
+                            testList = TestListEvaluator.evaluate()
+                    )
+                    listId?.let { listEntity = listEntity.copy(id = listId, createdAt = createdAt, updatedAt = updatedAt) }
                     persistNewList(guestId, listEntity)
                 }.map { toListResponseTO(it) }
     }
@@ -82,7 +139,12 @@ class CreateListService(
                                     } else {
                                         LIST_STATE.INACTIVE },
                                     expiration = it.expiration!!,
-                                    userMetaData = userMetaDataTO?.metadata),
+                                    userMetaData = userMetaDataTO?.metadata,
+                                    shortDescription = it.description,
+                                    defaultList = !it.marker.isNullOrEmpty(),
+                                    addedDate = getLocalDateTime(it.createdAt),
+                                    lastModifiedDate = getLocalDateTime(it.updatedAt)
+                            ),
                             guestId)
                 }.map { it.t1 }
     }

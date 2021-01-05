@@ -4,10 +4,7 @@ import com.tgt.lists.atlas.api.util.Constants.DATE_TIME_PATTERN
 import mu.KotlinLogging
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.*
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -23,6 +20,14 @@ fun convertStringToDate(date: String?): Date? {
 
 fun getLocalInstant(): Instant {
     return LocalDateTime.now().toInstant(ZoneOffset.UTC)
+}
+
+fun getLocalDate(instant: Instant?): LocalDate? {
+    return instant?.let { LocalDate.ofInstant(it, ZoneId.of("UTC")) }
+}
+
+fun getLocalDateTime(instant: Instant?): LocalDateTime? {
+    return instant?.let { LocalDateTime.ofInstant(it, ZoneId.of("UTC")) }
 }
 
 fun getLocalDateTimeFromInstant(instant: Instant?): String? {

@@ -9,8 +9,11 @@ import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toEntityMetadata
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
-import com.tgt.lists.atlas.api.util.*
+import com.tgt.lists.atlas.api.util.getLocalDateTimeFromInstant
+import com.tgt.lists.atlas.api.util.getLocalInstant
+import java.time.Instant
 import java.time.LocalDate
+import java.util.*
 
 class ListMapper {
     companion object {
@@ -21,11 +24,14 @@ class ListMapper {
             listSubtype: String,
             defaultList: Boolean,
             testList: Boolean,
-            expiration: LocalDate
+            expiration: LocalDate,
+            listId: UUID? = Uuids.timeBased(),
+            createdAt: Instant? = null,
+            updatedAt: Instant? = null
         ): ListEntity {
             // Do not set created or updated time in here, set it in the repository instead
             return ListEntity(
-                    id = Uuids.timeBased(),
+                    id = listId,
                     guestId = guestId,
                     type = listType,
                     subtype = listSubtype,
@@ -39,7 +45,10 @@ class ListMapper {
                     metadata = toEntityMetadata(listRequestTO.metadata),
                     state = listRequestTO.listState.value, // Should be set by the app layer
                     expiration = expiration,
-                    testList = testList)
+                    testList = testList,
+                    createdAt = createdAt,
+                    updatedAt = updatedAt
+            )
         }
 
         fun toListEntity(
