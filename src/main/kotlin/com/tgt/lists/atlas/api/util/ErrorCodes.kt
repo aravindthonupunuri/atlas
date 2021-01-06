@@ -11,5 +11,4 @@ object ErrorCodes {
     val DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE = Pair(1008, "Invalid delete list items included field")
     val LIST_SORT_ORDER_ERROR_CODE = Pair(1009, "List sort order exception")
     val LIST_ITEM_SORT_ORDER_ERROR_CODE = Pair(1010, "List item sort order exception")
-    val METADATA_TRANSFORMATION_STEP_VIOLATION_ERROR_CODE = Pair(1011, "Missing metedata transformation step")
 }

@@ -8,15 +8,16 @@ import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.UpdateListItemManager
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.service.transform.list_items.UserItemMetaDataTransformationStep
 import com.tgt.lists.atlas.api.transport.ListItemUpdateRequestTO
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.validator.RefIdValidator
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.kafka.model.UpdateListItemNotifyEvent
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.common.components.exception.BadRequestException
-import com.tgt.lists.common.components.exception.InternalServerException
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.jetbrains.annotations.NotNull
 import reactor.core.publisher.Flux
@@ -35,6 +36,7 @@ class UpdateListItemServiceTest extends Specification {
     String guestId = "1234"
     Long locationId = 1375L
     def mapper = new ObjectMapper()
+    UserItemMetaDataTransformationStep defaultItemMetaDataTransformationStep
 
     def setup() {
         eventPublisher = Mock(EventPublisher)
@@ -44,6 +46,13 @@ class UpdateListItemServiceTest extends Specification {
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
         updateListItemService = new UpdateListItemService(listRepository, updateListItemManager, deleteListItemsManager, deduplicationManager)
         listDataProvider = new ListDataProvider()
+
+        defaultItemMetaDataTransformationStep = new UserItemMetaDataTransformationStep() {
+            @Override
+            Mono<UserMetaData> execute(@NotNull UserMetaData userItemMetaDataTO) {
+                return Mono.just(userItemMetaDataTO)
+            }
+        }
     }
 
     def "test updateListItem() integrity"() {
@@ -61,7 +70,7 @@ class UpdateListItemServiceTest extends Specification {
                      return null
                  }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
         def listId = Uuids.timeBased()
         def itemId = Uuids.timeBased()
         def tcin1 = "1234"
@@ -111,7 +120,7 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
         def listId = Uuids.timeBased()
         def itemId = Uuids.timeBased()
         def tcin1 = "1234"
@@ -166,7 +175,7 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, listDataProvider.getItemRefId(ItemType.TCIN, tcin), tcin, "title", 1, "note")
 
@@ -212,7 +221,7 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, "title"), null, "title", 1, "note")
 
@@ -258,7 +267,7 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
 
         ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, "title"), null, "title", 1, "note")
 
@@ -301,7 +310,7 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
 
         then:
         thrown(BadRequestException)
@@ -323,7 +332,7 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
 
         then:
         thrown(BadRequestException)
@@ -345,7 +354,7 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
 
         then:
         thrown(BadRequestException)
@@ -366,7 +375,7 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, defaultItemMetaDataTransformationStep)
         def listId = Uuids.timeBased()
         def itemId = Uuids.timeBased()
         def tcin1 = "1234"
@@ -401,8 +410,8 @@ class UpdateListItemServiceTest extends Specification {
     }
 
     def "test updateListItem() with existing metadata and missing metadata transformation step"() {
-        given:
-        def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, null, null, new RefIdValidator() {
+        when:
+        new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, null, null, new RefIdValidator() {
             @Override
             String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -416,26 +425,8 @@ class UpdateListItemServiceTest extends Specification {
                 }
             }
         }, null)
-        def listId = Uuids.timeBased()
-        def itemId = Uuids.timeBased()
-        def tcin1 = "1234"
-        def tenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
-
-        Map metadata = [
-                "structure": [
-                        "wallHeight": 12,
-                        "wallDepth": 12
-                ]
-        ]
-
-        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note", mapper.writeValueAsString(metadata), null, null )
-
-        when:
-        updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
-
-        thrown(InternalServerException)
+        thrown(IllegalArgumentException)
     }
  }

@@ -24,7 +24,8 @@ data class ListItemUpdateRequestTO(
     val requestedQuantity: Int? = null,
     val fulfilledQuantity: Int? = null,
     val refIdValidator: RefIdValidator,
-    val userItemMetaDataTransformationStep: UserItemMetaDataTransformationStep? = null
+    // if app chooses to NOT update metadata, provide default transformation which returns back existing metadata
+    val userItemMetaDataTransformationStep: UserItemMetaDataTransformationStep
 ) {
     init {
         this.validate()
@@ -38,8 +39,7 @@ data class ListItemUpdateRequestTO(
                 this.metadata == null &&
                 this.itemState == null &&
                 this.requestedQuantity == null &&
-                this.fulfilledQuantity == null &&
-                this.userItemMetaDataTransformationStep == null) {
+                this.fulfilledQuantity == null) {
             throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Empty request body")))
         }
         if ((itemTitle != null && itemTitle.trim().isBlank())) {

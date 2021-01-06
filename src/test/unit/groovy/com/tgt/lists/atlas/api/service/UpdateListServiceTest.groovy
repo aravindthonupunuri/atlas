@@ -9,13 +9,12 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.transform.list.UserMetaDataTransformationStep
 import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
-import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.api.type.LIST_STATE
+import com.tgt.lists.atlas.api.type.UserMetaData
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.atlas.util.TestListChannel
 import com.tgt.lists.common.components.exception.BadRequestException
-import com.tgt.lists.common.components.exception.InternalServerException
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.jetbrains.annotations.NotNull
 import reactor.core.publisher.Mono
@@ -34,6 +33,7 @@ class UpdateListServiceTest extends Specification {
     String guestId = "1234"
     String listType = "SHOPPING"
     def mapper = new ObjectMapper()
+    UserMetaDataTransformationStep defaultUserMetaDataTransformationStep
 
     def setup() {
         listRepository = Mock(ListRepository)
@@ -42,6 +42,13 @@ class UpdateListServiceTest extends Specification {
         listDataProvider = new ListDataProvider()
         updateListManager = new UpdateListManager(listRepository, eventPublisher,listDataProvider.getConfiguration(3, 5, 5, true, false, false))
         updateListService = new UpdateListService(listRepository, defaultListManager, updateListManager)
+
+        defaultUserMetaDataTransformationStep = new UserMetaDataTransformationStep() {
+            @Override
+            Mono<UserMetaData> execute(@NotNull UserMetaData userMetaData) {
+                return Mono.just(userMetaData)
+            }
+        }
     }
 
     def "Test updateList() integrity"() {
@@ -51,7 +58,7 @@ class UpdateListServiceTest extends Specification {
         def channel = TestListChannel.WEB.toString()
         def desc = "my favorite list"
         def updateDesc = "description updated"
-        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null, LocalDate.of(2100,9,02), null)
+        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, null, LocalDate.of(2100,9,02), defaultUserMetaDataTransformationStep)
 
         UUID listId = Uuids.timeBased()
 
@@ -100,14 +107,7 @@ class UpdateListServiceTest extends Specification {
                 ]
         ]
 
-        UserMetaDataTransformationStep transformationStep = new UserMetaDataTransformationStep() {
-            @Override
-            Mono<UserMetaData> execute(@NotNull UserMetaData userMetaDataTO) {
-                return Mono.just(userMetaDataTO)
-            }
-        }
-
-        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, new UserMetaData(updatedMetadata), LocalDate.of(2100,03,02), transformationStep)
+        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, new UserMetaData(updatedMetadata), LocalDate.of(2100,03,02), defaultUserMetaDataTransformationStep)
 
         UUID listId = Uuids.timeBased()
 
@@ -137,17 +137,8 @@ class UpdateListServiceTest extends Specification {
 
     def "Test updateList() integrity with missing transformation pipeline"() {
         given:
-        def title = "list title"
         def updateTitle = "title updated"
-        def channel = TestListChannel.WEB.toString()
-        def desc = "my favorite list"
         def updateDesc = "description updated"
-        Map metadata = [
-                "structure": [
-                        "wallHeight": 12,
-                        "wallDepth": 12
-                ]
-        ]
         Map updatedMetadata = [
                 "structure": [
                         "wallHeight": 10,
@@ -155,25 +146,16 @@ class UpdateListServiceTest extends Specification {
                 ]
         ]
 
-        def listUpdateRequestTO = new ListUpdateRequestTO(updateTitle, updateDesc, true, null, new UserMetaData(updatedMetadata), LocalDate.of(2100, 03, 02), null)
-
-        UUID listId = Uuids.timeBased()
-        mapper
-        ListEntity existing = new ListEntity(listId, title, listType, null, guestId, desc, channel, null, "D", null, null, LIST_STATE.ACTIVE.value, mapper.writeValueAsString(metadata), null, LocalDate.of(2100, 05, 02), null, null, null)
-
         when:
-        updateListService.updateList(guestId, listId, listUpdateRequestTO).block()
+        new ListUpdateRequestTO(updateTitle, updateDesc, true, null, new UserMetaData(updatedMetadata), LocalDate.of(2100, 03, 02), null)
 
         then:
-        1 * defaultListManager.processDefaultListInd(*_) >> Mono.just(true)
-        1 * listRepository.findListById(_) >> Mono.just(existing)
-
-        thrown(InternalServerException)
+        thrown(IllegalArgumentException)
     }
 
     def "Test updateList() with false default List value"() {
         given:
-        def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", null, false, null, null, LocalDate.of(2100,03,02), null)
+        def ListUpdateRequestTO = new ListUpdateRequestTO("updatedTitle", null, false, null, null, LocalDate.of(2100,03,02), defaultUserMetaDataTransformationStep)
         UUID listId = Uuids.timeBased()
 
         when:

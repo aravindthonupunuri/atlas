@@ -15,7 +15,8 @@ data class ListUpdateRequestTO(
     val listState: LIST_STATE? = null, // app can always change the state of the list depending on its business case
     val metadata: UserMetaData? = null,
     val expiration: LocalDate? = null,
-    val userMetaDataTransformationStep: UserMetaDataTransformationStep? = null
+    // if app chooses to NOT update metadata, provide default transformation which returns back existing metadata
+    val userMetaDataTransformationStep: UserMetaDataTransformationStep
 ) {
     fun validate(): ListUpdateRequestTO {
         if (defaultList == false) throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Default List cannot be updated to false")))

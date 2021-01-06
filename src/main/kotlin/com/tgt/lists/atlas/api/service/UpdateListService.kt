@@ -9,9 +9,6 @@ import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toListResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toUpdateListEntity
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
-import com.tgt.lists.atlas.api.util.ErrorCodes
-import com.tgt.lists.common.components.exception.ErrorCode
-import com.tgt.lists.common.components.exception.InternalServerException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -56,13 +53,13 @@ class UpdateListService(
         val existingUserMetadata = toUserMetaData(existingListEntity.metadata)
 
         existingUserMetadata?.let {
-            listUpdateRequestTO.userMetaDataTransformationStep?.let {
+            listUpdateRequestTO.userMetaDataTransformationStep.let {
                 return it.execute(existingUserMetadata)
                         .map {
                             val updatedMetaData = it
                             toUpdateListEntity(existingListEntity, updatedMetaData, listUpdateRequestTO)
                         }
-            } ?: throw InternalServerException(ErrorCode(ErrorCodes.METADATA_TRANSFORMATION_STEP_VIOLATION_ERROR_CODE.first, ErrorCodes.METADATA_TRANSFORMATION_STEP_VIOLATION_ERROR_CODE.second))
+            }
         }
         return Mono.just(toUpdateListEntity(existingListEntity, existingUserMetadata, listUpdateRequestTO))
     }
