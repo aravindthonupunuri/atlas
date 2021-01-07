@@ -95,7 +95,7 @@ class CreateListItemsManager(
                                             itemTitle = it.itemTitle,
                                             channel = it.itemChannel,
                                             subChannel = it.itemSubchannel,
-                                            itemRequestedQuantity = it.itemReqQty!!,
+                                            itemRequestedQuantity = if (it.itemReqQty != null) it.itemReqQty!! else 0,
                                             userItemMetaDataTO = userMetaDataTO?.metadata,
                                             itemNote = it.itemDesc,
                                             itemFulfilledQuantity = it.itemQty,
