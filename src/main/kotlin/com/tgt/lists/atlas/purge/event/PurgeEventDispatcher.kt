@@ -74,10 +74,6 @@ open class PurgeEventDispatcher(
                 }
                 CronEvent.getEventType() -> {
                     val cronEvent = CronEvent.deserialize(data)
-                    EventTransformedValue("cron_${cronEvent.eventDateTime}", ExecutionSerialization.ID_SERIALIZATION, cronEvent)
-                }
-                CronEvent.getEventType() -> {
-                    val cronEvent = CronEvent.deserialize(data)
                     if (cronEvent.target == "*" || cronEvent.target == source) {
                         EventTransformedValue("cron_${cronEvent.eventDateTime}", ExecutionSerialization.ID_SERIALIZATION, cronEvent)
                     } else {

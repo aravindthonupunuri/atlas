@@ -36,7 +36,7 @@ class PurgeCronEventHandler(
         }
 
         return if (cronEvent.hourOfDay == hourOfDay && cronEvent.minuteBlockOfHour == minuteBlockOfHour) {
-            purgeExecutionService.purgeStaleLists(processingState).map {
+            purgeExecutionService.purgeStaleLists(processingState, cronEvent.eventDateTime.toLocalDate()).map {
                 if (it.completeState()) {
                     logger.debug("PurgeStaleLists processing is complete")
                     EventProcessingResult(true, eventHeaders, cronEvent)

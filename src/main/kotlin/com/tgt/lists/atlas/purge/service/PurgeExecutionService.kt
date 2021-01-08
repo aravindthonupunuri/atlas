@@ -24,15 +24,14 @@ class PurgeExecutionService(
 ) {
     private val logger = KotlinLogging.logger { PurgeExecutionService::class.java.name }
 
-    fun purgeStaleLists(retryState: RetryState): Mono<RetryState> {
+    fun purgeStaleLists(retryState: RetryState, purgeDate: LocalDate): Mono<RetryState> {
         return if (retryState.incompleteState()) {
-            val currentDate = LocalDate.now()
-            purgeRepository.findPurgeExpiration(currentDate).collectList()
+            purgeRepository.findPurgeExpiration(purgeDate).collectList()
                     .flatMap {
                         Flux.fromIterable(it.asIterable()).flatMap { purgeEntity ->
                             listRepository.findListById(purgeEntity.listId!!)
                                     .flatMap {
-                                        if (it.expiration == currentDate) {
+                                        if (it.expiration == purgeDate) {
                                             deleteListService.deleteList(it.guestId!!, it.id!!).map { true }
                                         } else {
                                             logger.debug("From purgeStaleLists(), Skipping deletion of list ${purgeEntity.listId}, with expiration ${it.expiration}")

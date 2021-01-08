@@ -114,7 +114,7 @@ class PurgeConsumerTest extends BaseKafkaFunctionalTest {
     def "Test Purge Create List Notify Event"() {
         given:
         PollingConditions conditions = new PollingConditions(timeout: 30, delay: 1)
-        CronEvent event = dataProvider.createCronEvent(LocalDateTime.of(2100, 03, 01, 02, 01), 1L, 5, timeZoneId)
+        CronEvent event = dataProvider.createCronEvent(LocalDateTime.now(), 2, 1L, 5, timeZoneId)
 
         testEventListener.preDispatchLambda = new PreDispatchLambda() {
             @Override

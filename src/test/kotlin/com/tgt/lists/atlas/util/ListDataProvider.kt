@@ -108,12 +108,12 @@ class ListDataProvider {
         return PurgeEntity(listId = listId, bucket = bucket, expiration = expiration)
     }
 
-    fun createCronEvent(eventLocalDateTime: LocalDateTime, minuteBlockOfHour: Long, eventIntervalMinutes: Long, timeZoneId: ZoneId): CronEvent {
+    fun createCronEvent(eventLocalDateTime: LocalDateTime, hourOfDay: Int, minuteBlockOfHour: Long, eventIntervalMinutes: Long, timeZoneId: ZoneId): CronEvent {
         return CronEvent(eventDateTime = eventLocalDateTime,
                 timeZone = timeZoneId.id,
                 eventIntervalMins = eventIntervalMinutes,
                 minuteBlockOfHour = minuteBlockOfHour,
-                hourOfDay = eventLocalDateTime.hour,
+                hourOfDay = hourOfDay,
                 dayOfWeek = eventLocalDateTime.dayOfWeek,
                 dayOfMonth = eventLocalDateTime.dayOfMonth,
                 monthOfYear = eventLocalDateTime.month
