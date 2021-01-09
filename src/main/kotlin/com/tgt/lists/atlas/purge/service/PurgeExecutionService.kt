@@ -26,24 +26,33 @@ class PurgeExecutionService(
 
     fun purgeStaleLists(retryState: RetryState, purgeDate: LocalDate): Mono<RetryState> {
         return if (retryState.incompleteState()) {
+            logger.info("purgeStaleLists: Executing with incompleteState and purgeDate=$purgeDate")
             purgeRepository.findPurgeExpiration(purgeDate).collectList()
-                    .flatMap {
-                        Flux.fromIterable(it.asIterable()).flatMap { purgeEntity ->
+                    .flatMap { purgeEntities ->
+                        if (purgeEntities.size == 0) {
+                            logger.info("purgeStaleLists: No Lists were found for purgeDate: $purgeDate")
+                        }
+                        Flux.fromIterable(purgeEntities.asIterable()).flatMap { purgeEntity ->
+                            logger.debug("purgeStaleLists: processing listId: ${purgeEntity.listId!!}")
                             listRepository.findListById(purgeEntity.listId!!)
-                                    .flatMap {
-                                        if (it.expiration == purgeDate) {
-                                            deleteListService.deleteList(it.guestId!!, it.id!!).map { true }
+                                    .flatMap { listEntity ->
+                                        if (listEntity.expiration == purgeDate) {
+                                            logger.info("purgeStaleLists: Deleting listId: ${purgeEntity.listId!!}")
+                                            deleteListService.deleteList(listEntity.guestId!!, listEntity.id!!).map { true }
                                         } else {
-                                            logger.debug("From purgeStaleLists(), Skipping deletion of list ${purgeEntity.listId}, with expiration ${it.expiration}")
+                                            logger.info("purgeStaleLists: Skipping deletion of listId ${purgeEntity.listId}, with expiration ${listEntity.expiration}")
                                             Mono.just(true)
                                         }
                                     }
                                     .switchIfEmpty {
-                                        logger.debug("From purgeStaleLists(), List not found: ${purgeEntity.listId}")
+                                        logger.info("purgeStaleLists: List not found: ${purgeEntity.listId}")
                                         Mono.just(true)
                                     }
-                        }.then(Mono.just(true)) }
+                        }
+                        .then(Mono.just(true))
+                    }
                     .map {
+                        logger.info("purgeStaleLists: processing is successfully completed")
                         retryState.purgeStaleLists = true
                         retryState
                     }
@@ -52,7 +61,7 @@ class PurgeExecutionService(
                         Mono.just(retryState)
                     }
         } else {
-            logger.debug("From purgeStaleLists(), processing complete")
+            logger.info("purgeStaleLists: processing is already complete")
             Mono.just(retryState)
         }
     }

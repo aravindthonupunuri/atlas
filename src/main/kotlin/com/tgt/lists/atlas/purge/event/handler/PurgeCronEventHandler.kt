@@ -36,12 +36,13 @@ class PurgeCronEventHandler(
         }
 
         return if (cronEvent.hourOfDay == hourOfDay && cronEvent.minuteBlockOfHour == minuteBlockOfHour) {
+            logger.info("Processing PurgeStaleLists with hourOfDay=$hourOfDay and minuteBlockOfHour=$minuteBlockOfHour [processingState: $processingState]")
             purgeExecutionService.purgeStaleLists(processingState, cronEvent.eventDateTime.toLocalDate()).map {
                 if (it.completeState()) {
-                    logger.debug("PurgeStaleLists processing is complete")
+                    logger.info("PurgeStaleLists processing is complete")
                     EventProcessingResult(true, eventHeaders, cronEvent)
                 } else {
-                    logger.debug("PurgeStaleLists didn't complete, adding it to DLQ for retry")
+                    logger.info("PurgeStaleLists didn't complete, adding it to DLQ for retry")
                     val message = "Error from handlePurgeCronEvent() for cronEvent with hourOfDay: ${cronEvent.hourOfDay} and minuteBlockOfHour: ${cronEvent.minuteBlockOfHour}"
                     val retryHeader = eventHeaderFactory.nextRetryHeaders(eventHeaders = eventHeaders, errorCode = 500, errorMsg = message)
                     cronEvent.retryState = PurgeExecutionService.RetryState.serialize(it)
