@@ -9,12 +9,7 @@ import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformat
 import com.tgt.lists.atlas.api.service.transform.list_items.ListItemsTransformationPipelineConfiguration
 import com.tgt.lists.atlas.api.service.transform.list_items.SortListItemsTransformationConfiguration
 import com.tgt.lists.atlas.api.service.transform.list_items.SortListItemsTransformationStep
-import com.tgt.lists.atlas.api.type.ItemIncludeFields
-import com.tgt.lists.atlas.api.type.ItemSortFieldGroup
-import com.tgt.lists.atlas.api.type.ItemSortOrderGroup
-import com.tgt.lists.atlas.api.type.ItemType
-import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
-import com.tgt.lists.atlas.api.type.LIST_MARKER
+import com.tgt.lists.atlas.api.type.*
 import com.tgt.lists.atlas.util.ListDataProvider
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -174,6 +169,35 @@ class GetListServiceTest extends Specification {
 
         def completedItems = actual.completedListItems
         completedItems.size() == 0
+    }
+
+    def "Test getListWithoutItems()"() {
+        given:
+        UUID listId = Uuids.timeBased()
+        def listTitle = "Testing List Title"
+        def listType = "REGISTRY"
+        def listSubType = "WEDDING"
+
+        def listEntity = dataProvider.createListEntity(listId, listTitle, listType, listSubType, guestId, LIST_MARKER.DEFAULT.value, Instant.now(), Instant.now())
+
+        when:
+        def actual = getListService.getListWithoutItems(guestId, locationId, listId).block()
+
+        then:
+        listRepository.findListById(listId) >> Mono.just(listEntity)
+
+        actual.listId == listEntity.id
+        actual.channel == listEntity.channel
+        actual.listTitle == listEntity.title
+        actual.shortDescription == listEntity.description
+        actual.listType == listEntity.type
+        actual.defaultList
+
+        def pendingItems = actual.pendingListItems
+        pendingItems == null
+
+        def completedItems = actual.completedListItems
+        completedItems == null
     }
 
     def "Test getListService() ItemIncludeFields = PENDING with no items"() {

@@ -12,9 +12,9 @@ import com.tgt.lists.atlas.api.transport.ListItemResponseTO
 import com.tgt.lists.atlas.api.transport.ListResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListItemMapper
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper
-import com.tgt.lists.atlas.api.util.Constants.LIST_ITEM_STATE_KEY
 import com.tgt.lists.atlas.api.type.ItemIncludeFields
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.util.Constants.LIST_ITEM_STATE_KEY
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.util.*
@@ -125,6 +125,17 @@ class GetListService(
                         }
             }
         }
+    }
+
+    fun getListWithoutItems(
+        guestId: String, // this is NOT the ownerId of list, it represents operation executor who could be different than list owner
+        locationId: Long,
+        listId: UUID
+    ): Mono<ListResponseTO> {
+        logger.debug("[getListWithoutItems] guestId: $guestId, listId: $listId, locationId: $locationId")
+
+        return getListResponseWithNoItems(listId)
+                .map { it.copy(pendingListItems = null, completedListItems = null) } // Set pending and completed items to null
     }
 
     private fun toListResponse(
