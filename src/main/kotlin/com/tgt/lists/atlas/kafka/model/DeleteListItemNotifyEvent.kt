@@ -16,7 +16,7 @@ data class DeleteListItemNotifyEvent(
     @JsonProperty("list_id")
     val listId: UUID,
 
-    @JsonProperty("item_id")
+    @JsonProperty("items")
     val deleteListItems: List<MultiDeleteListItem>,
 
     @JsonProperty("retry_state")
