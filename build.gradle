@@ -71,7 +71,7 @@ dependencies {
     implementation "com.tgt.lists:lists-components:2.201.11"
     implementation "com.tgt.cronbeacon:beacon-client:2.201.2"
 
-    implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.201.6'
+    implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.201.9'
     implementation "io.micronaut.cassandra:micronaut-cassandra"
     implementation "com.datastax.oss:java-driver-mapper-processor:${javaDriverVersion}"
 
@@ -93,6 +93,7 @@ dependencies {
     testImplementation("org.spockframework:spock-core") {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
+    testImplementation "io.micronaut:micronaut-http-client:2.0.1"
     testImplementation("io.micronaut.test:micronaut-test-spock")
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.3.0"
     testImplementation "org.junit.platform:junit-platform-suite-api"

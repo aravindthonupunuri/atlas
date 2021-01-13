@@ -1,16 +1,25 @@
 package com.tgt.lists.atlas.persistence.cassandra
 
 import com.datastax.oss.driver.api.core.uuid.Uuids
-import com.tgt.lists.atlas.BaseFunctionalTest
+import com.tgt.lists.atlas.BaseKafkaFunctionalTest
 import com.tgt.lists.atlas.api.domain.model.entity.GuestListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemExtEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.transport.ListRequestTO
+import com.tgt.lists.atlas.api.transport.ListResponseTO
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.util.DateUtilKt
+import com.tgt.lists.atlas.api.util.TestListEvaluator
 import com.tgt.lists.atlas.util.ListDataProvider
+import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Stepwise
@@ -18,13 +27,19 @@ import spock.lang.Unroll
 
 import javax.inject.Inject
 import java.time.Instant
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 @MicronautTest
 @Stepwise
-class CassandraListsFunctionalTest extends BaseFunctionalTest {
+class CassandraListsFunctionalTest extends BaseKafkaFunctionalTest {
 
     @Inject
     ListRepository listsRepository
+
+    @Inject
+    @Client("/")
+    RxHttpClient client
 
     @Shared
     ListDataProvider dataProvider = new ListDataProvider()
@@ -399,6 +414,29 @@ class CassandraListsFunctionalTest extends BaseFunctionalTest {
 
         then:
         listEntity == null
+    }
+
+    def "test creating list in test mode"() {
+        given:
+        def today = LocalDate.now()
+        ListRequestTO listRequestTO = new ListRequestTO("channel", "listTitle", "listSubType", LIST_STATE.ACTIVE, today, null, null, null, false, null, null)
+
+        when:
+        HttpResponse<ListResponseTO> response = client.toBlocking().exchange(HttpRequest.POST("/test/list/12345", listRequestTO).header(TestListEvaluator.TEST_LIST_HEADER, "true"), ListResponseTO)
+
+        ListResponseTO listData = response.body()
+
+        then:
+        response.status() == HttpStatus.OK
+        listData.listId != null
+
+        when:
+        ListEntity listEntity = listsRepository.findListById(listData.listId).block()
+
+        then:
+        listEntity != null
+        listEntity.testList
+        ChronoUnit.DAYS.between(today, listEntity.expiration) == 1
     }
 }
 

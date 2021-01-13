@@ -2,9 +2,31 @@ micronaut:
   application:
     name: atlastest
   metrics:
-    enabled: true
+    binders:
+      web:
+        enabled: false # we are using our own binder via our custom micronaut-metrics lib
+
+filter:
+  server:
+    order:
+      mdc-filter: 50
+      lists-brave-tracing-server-filter: 100
+      list-authorization-filter: 200
+      sanitizing-filter: 300
+  client:
+    order:
+      lists-brave-tracing-client-filter: 900
+      resilience-client-filter: 800
+      oauth-filter: 701
+      oauth-key-filter: 700
+
+api-key: "7ba07fb448c47d7b4e9961174f2c0191112dead6"
+
+mockfilter:
+  paths: /zipkin
 
 resilience4j:
+  filter: false
   circuitbreaker:
     failure-rate-threshold: 50                        # failure rate threshold in percentage (default: 50)
     wait-duration-secs-in-open-state: 10              # time cb waits before transitioning from open to half-open (default: 60s)
@@ -58,7 +80,10 @@ list:
   purge-execution-hour-of-day: 2
   purge-execution-minute-block-of-hour: 1
 
-
+components:
+  server:
+    list-authorization-filter:
+      enabled: false
 
 beacon:
   client:
