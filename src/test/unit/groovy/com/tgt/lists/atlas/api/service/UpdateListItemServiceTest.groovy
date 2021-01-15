@@ -338,28 +338,6 @@ class UpdateListItemServiceTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "test updateListItem() with empty request "() {
-
-        when:
-        new ListItemUpdateRequestTO(null, null, null, null, null, null, null, null, new RefIdValidator() {
-            @Override
-            String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
-                if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
-                    return listDataProvider.getItemRefId(ItemType.TCIN, listItemUpdateRequestTO.tcin)
-                } else if(itemType == ItemType.GENERIC_ITEM && listItemUpdateRequestTO.itemTitle != null) {
-                    return listDataProvider.getItemRefId(ItemType.GENERIC_ITEM, listItemUpdateRequestTO.itemTitle)
-                } else if(listItemUpdateRequestTO.itemType != null && itemType != listItemUpdateRequestTO.itemType) {
-                    return populateRefIdIfRequired(listItemUpdateRequestTO.itemType, listItemUpdateRequestTO)
-                } else {
-                    return null
-                }
-            }
-        }, defaultItemMetaDataTransformationStep)
-
-        then:
-        thrown(BadRequestException)
-    }
-
     def "test updateListItem() integrity1"() {
         given:
         def listItemUpdateRequest = new ListItemUpdateRequestTO(null, null, "updated item note", null, null, LIST_ITEM_STATE.COMPLETED, null, null, new RefIdValidator() {

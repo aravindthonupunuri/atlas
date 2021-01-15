@@ -4,7 +4,6 @@ import com.tgt.lists.atlas.api.service.transform.list_items.UserItemMetaDataTran
 import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData
-import com.tgt.lists.atlas.api.util.isNullOrEmpty
 import com.tgt.lists.atlas.api.validator.RefIdValidator
 import com.tgt.lists.atlas.api.validator.validateItemType
 import com.tgt.lists.common.components.exception.BadRequestException
@@ -32,16 +31,6 @@ data class ListItemUpdateRequestTO(
     }
 
     fun validate(): ListItemUpdateRequestTO {
-        if (isNullOrEmpty(tcin) &&
-                isNullOrEmpty(itemTitle) &&
-                isNullOrEmpty(itemNote) &&
-                this.itemType == null &&
-                this.metadata == null &&
-                this.itemState == null &&
-                this.requestedQuantity == null &&
-                this.fulfilledQuantity == null) {
-            throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Empty request body")))
-        }
         if ((itemTitle != null && itemTitle.trim().isBlank())) {
             throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Empty itemTitle")))
         }
