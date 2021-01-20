@@ -7,10 +7,10 @@ import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.TestListEvaluator
 import com.tgt.lists.atlas.api.util.getExpirationDate
 import com.tgt.lists.atlas.api.util.getLocalDateTime
-import com.tgt.lists.atlas.api.util.getLocalInstant
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
+import java.time.LocalDate
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -48,7 +48,7 @@ class UpdateListManager(
                                         LIST_STATE.values().first { listState -> listState.value == it.state!! }
                                     else LIST_STATE.INACTIVE,
                                     expiration = if (TestListEvaluator.evaluate()) {
-                                        getExpirationDate(getLocalInstant(), testModeExpiration) // expiration should always be 24 hrs for test lists
+                                        getExpirationDate(LocalDate.now(), testModeExpiration) // expiration should always be 24 hrs for test lists
                                     } else {
                                         it.expiration!!
                                     },

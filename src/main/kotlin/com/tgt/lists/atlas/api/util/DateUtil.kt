@@ -34,8 +34,8 @@ fun getLocalDateTimeFromInstant(instant: Instant?): String? {
     return instant?.let { "${LocalDateTime.ofInstant(it, ZoneOffset.UTC).withNano(0)}Z" }
 }
 
-fun getExpirationDate(now: Instant, expirationDays: Long): LocalDate {
-    return LocalDate.ofInstant(now.plus(expirationDays, ChronoUnit.DAYS), ZoneOffset.UTC)
+fun getExpirationDate(now: LocalDate, expirationDays: Long): LocalDate {
+    return now.plus(expirationDays, ChronoUnit.DAYS)
 }
 
 fun addZ(str: LocalDateTime?): String? {
