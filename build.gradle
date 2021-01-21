@@ -184,7 +184,7 @@ task clientJar(type: Jar, dependsOn: classes) {
     // Include Enum classes with <Classname>* rather than <Classname>.* because Enums with companion objects have <Classname>.class and <Classname>$Companion.class
     // Include micronaut's $ prefixed and suffixed classes for compiled time injection to work
     include ("**\\api\\type\\**\\*", "**\\api\\transport\\**\\*", "**\\kafka\\model\\**\\*", "**\\api\\validator\\**\\*")
-    include ("**\\api\\util\\ItemRefIdBuilder*")
+    include ("**\\api\\util\\ItemRefIdBuilder*", "**\\api\\util\\ClientConstants*")
     include ("**\\api\\service\\transform\\list\\ListsTransformationStep*", "**\\api\\service\\transform\\list\\UserMetaDataTransformationStep*")
     include ("**\\api\\service\\transform\\list_items\\ListItemsTransformationStep*", "**\\api\\service\\transform\\list_items\\UserItemMetaDataTransformationStep*")
     include ("**\\api\\service\\transform\\TransformationContext*", "**\\api\\service\\transform\\TransformationPipelineConfiguration*")
@@ -198,7 +198,7 @@ task clientSourcesJar(type: Jar, dependsOn: classes) {
     includeEmptyDirs = false
     from (sourceSets.main.kotlin)
     include ("**\\api\\type\\**\\*", "**\\api\\transport\\**\\*", "**\\kafka\\model\\**\\*", "**\\api\\validator\\**\\*")
-    include ("**\\api\\util\\ItemRefIdBuilder*")
+    include ("**\\api\\util\\ItemRefIdBuilder*", "**\\api\\util\\ClientConstants*")
     include ("**\\api\\service\\transform\\list\\ListsTransformationStep*", "**\\api\\service\\transform\\list\\UserMetaDataTransformationStep*")
     include ("**\\api\\service\\transform\\list_items\\ListItemsTransformationStep*", "**\\api\\service\\transform\\list_items\\UserItemMetaDataTransformationStep*")
     include ("**\\api\\service\\transform\\TransformationContext*", "**\\api\\service\\transform\\TransformationPipelineConfiguration*")

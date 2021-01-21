@@ -1,6 +1,6 @@
 package com.tgt.lists.atlas.api.util
 
-import com.tgt.lists.atlas.api.util.Constants.DATE_TIME_PATTERN
+import com.tgt.lists.atlas.api.util.ClientConstants.DATE_TIME_PATTERN
 import mu.KotlinLogging
 import java.text.ParseException
 import java.text.SimpleDateFormat

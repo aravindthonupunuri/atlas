@@ -2,7 +2,7 @@ package com.tgt.lists.atlas.api.persistence.cassandra
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.internal.ListPreferenceDAO
-import com.tgt.lists.atlas.api.util.Constants.DEFAULT_GUEST_ID
+import com.tgt.lists.atlas.api.util.ClientConstants.DEFAULT_GUEST_ID
 import com.tgt.lists.micronaut.cassandra.RetryableStatementExecutor
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty

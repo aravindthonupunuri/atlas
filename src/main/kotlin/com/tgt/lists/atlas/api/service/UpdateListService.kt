@@ -9,8 +9,12 @@ import com.tgt.lists.atlas.api.transport.ListUpdateRequestTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toListResponseTO
 import com.tgt.lists.atlas.api.transport.mapper.ListMapper.Companion.toUpdateListEntity
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.common.components.exception.BaseErrorCodes
+import com.tgt.lists.common.components.exception.ErrorCode
+import com.tgt.lists.common.components.exception.ResourceNotFoundException
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,6 +41,10 @@ class UpdateListService(
 
     private fun processListUpdate(guestId: String, listId: UUID, listUpdateRequestTO: ListUpdateRequestTO): Mono<ListResponseTO> {
         return listRepository.findListById(listId)
+                .switchIfEmpty {
+                    // Throw an error for trying to update list which doesn't exist
+                    throw ResourceNotFoundException(ErrorCode(BaseErrorCodes.RESOURCE_NOT_FOUND_ERROR_CODE, listOf("List $listId not found")))
+                }
                 .flatMap {
                     val existingListEntity = it
                     updateListEntity(existingListEntity, listUpdateRequestTO)
