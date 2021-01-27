@@ -4,10 +4,10 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
-import com.tgt.lists.atlas.api.util.TestListEvaluator
 import com.tgt.lists.atlas.api.util.getExpirationDate
 import com.tgt.lists.atlas.api.util.getLocalDateTime
 import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
+import com.tgt.lists.common.components.util.TestListEvaluator
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import java.time.LocalDate

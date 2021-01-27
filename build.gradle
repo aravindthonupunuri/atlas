@@ -68,7 +68,7 @@ dependencies {
     implementation "io.swagger.core.v3:swagger-annotations"
     implementation "com.tgt.lists.micronaut:micronaut-metrics:2.201.0"
 
-    implementation "com.tgt.lists:lists-components:2.201.11"
+    implementation "com.tgt.lists:lists-components:2.201.13"
     implementation "com.tgt.cronbeacon:beacon-client:2.201.2"
 
     implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.201.10'

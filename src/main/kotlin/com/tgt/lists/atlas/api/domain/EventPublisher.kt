@@ -1,7 +1,7 @@
 package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.type.EventType
-import com.tgt.lists.atlas.api.util.TestListEvaluator
+import com.tgt.lists.common.components.util.TestListEvaluator
 import com.tgt.lists.msgbus.ListsMessageBusProducer
 import mu.KotlinLogging
 import org.apache.kafka.clients.producer.RecordMetadata

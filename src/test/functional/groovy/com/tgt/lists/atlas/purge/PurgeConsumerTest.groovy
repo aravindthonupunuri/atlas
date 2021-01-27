@@ -153,9 +153,9 @@ class PurgeConsumerTest extends BaseKafkaFunctionalTest {
         listEntity.first().id == listIds[0]
     }
 
-    @KafkaClient(acks = KafkaClient.Acknowledge.ALL, id = "msg-bus-client")
+    @KafkaClient(acks = KafkaClient.Acknowledge.ALL, id = "cronbeacon-client")
     static interface ListMessageBusClient {
-        @Topic("lists-msg-bus")
+        @Topic("cronbeacon")
         String sendMessage(@KafkaKey String id, @Header UUID uuid, @Header String event_type, @Header String source,
                            @Body Object object)
     }
