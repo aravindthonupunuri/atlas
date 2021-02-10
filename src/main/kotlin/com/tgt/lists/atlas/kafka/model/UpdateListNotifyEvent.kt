@@ -49,6 +49,7 @@ data class UpdateListNotifyEvent(
     @JsonProperty("expiration")
     @JsonSerialize(using = LocalDateSerializer::class)
     @JsonDeserialize(using = LocalDateDeserializer::class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     val expiration: LocalDate,
 
     @JsonProperty("short_description")

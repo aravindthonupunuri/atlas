@@ -98,6 +98,7 @@ class DeduplicationManager(
                 val sortedExistingItemList = duplicateItems
                         .sortedBy { listItem -> listItem.itemCreatedAt }
                 var updatedRequestedQuantity = 0
+                var updatedPurchasedQuantity = 0
                 var updatedItemNote = ""
 
                 for (listItem in sortedExistingItemList) {
@@ -109,9 +110,11 @@ class DeduplicationManager(
                         }
                     }
                     updatedRequestedQuantity += listItem.itemReqQty ?: 1
+                    updatedPurchasedQuantity += listItem.itemQty ?: 0
                 }
 
                 updatedRequestedQuantity += (newItem.itemReqQty ?: 1)
+                updatedPurchasedQuantity += (newItem.itemQty ?: 0)
                 updatedItemNote = if (newItem.itemNotes.isNullOrEmpty()) {
                     updatedItemNote
                 } else {
@@ -119,7 +122,7 @@ class DeduplicationManager(
                 }
 
                 val itemToUpdate = sortedExistingItemList.first()
-                        .copy(itemNotes = updatedItemNote, itemReqQty = updatedRequestedQuantity)
+                        .copy(itemNotes = updatedItemNote, itemReqQty = updatedRequestedQuantity, itemQty = updatedPurchasedQuantity)
                 val itemsToDelete = sortedExistingItemList
                         .filter { it.itemId != sortedExistingItemList.first().itemId }
 

@@ -241,15 +241,13 @@ class DeduplicationManagerTest extends Specification {
         ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1", 1, "itemNote")
         ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm4567", null, "genericItem2", 1, "itemNote")
 
-        ListPreferenceEntity preUpdateListPreferenceEntity = listDataProvider.createListPreferenceEntity(listId, guestId, Uuids.timeBased().toString())
-
         ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
-                1, "note1")
+                1, 2,"note1")
 
         ListItemEntity listItemEntity6 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1",
-                1, "note2")
+                1, 3, "note2")
 
         ListItemEntity listItemEntity7 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
                 LIST_ITEM_STATE.PENDING.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1",
@@ -276,6 +274,7 @@ class DeduplicationManagerTest extends Specification {
             final ListItemEntity listItem = arguments[0]
             assert listItem.itemId == listItemEntity5.itemId
             assert listItem.itemReqQty == listItemEntity1.itemReqQty + listItemEntity5.itemReqQty
+            assert listItem.itemQty == listItemEntity1.itemQty?: 0 + listItemEntity5.itemQty?: 0
             Mono.just(updatedListItemEntity1)
         }
         // updating duplicate item
@@ -283,6 +282,7 @@ class DeduplicationManagerTest extends Specification {
             final ListItemEntity listItem = arguments[0]
             assert listItem.itemId == listItemEntity6.itemId
             assert listItem.itemReqQty == listItemEntity3.itemReqQty + listItemEntity6.itemReqQty + listItemEntity7.itemReqQty
+            assert listItem.itemQty == listItemEntity3.itemQty?: 0 + listItemEntity6.itemQty?: 0 + listItemEntity7.itemQty?: 0
             Mono.just(updatedListItemEntity2)
         }
         // deleting duplicate items
