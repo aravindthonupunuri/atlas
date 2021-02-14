@@ -10,7 +10,7 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.micronaut.cassandra.DaoInstrumenter
 import com.tgt.lists.micronaut.cassandra.DatabaseExecTestListener
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.jetbrains.annotations.NotNull
 import reactor.core.publisher.Mono
 import spock.lang.Shared

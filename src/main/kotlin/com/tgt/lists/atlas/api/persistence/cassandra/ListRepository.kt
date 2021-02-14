@@ -83,7 +83,7 @@ class ListRepository(
     }
 
     fun findListById(listId: UUID): Mono<ListEntity> {
-        return Mono.subscriberContext().flatMap {
+        return Mono.deferContextual {
             val context = it
             dataContextContainerManager.getListEntity(context, listId)?.let {
                 Mono.just(it)

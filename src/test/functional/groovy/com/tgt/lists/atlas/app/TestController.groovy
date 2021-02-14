@@ -5,15 +5,10 @@ import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.service.CreateListService
 import com.tgt.lists.atlas.api.transport.ListRequestTO
 import com.tgt.lists.atlas.api.transport.ListResponseTO
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.PathVariable
-import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.*
 import reactor.core.publisher.Mono
 
 import javax.inject.Inject
-import javax.validation.Valid
 
 @Controller("/test")
 class TestController {

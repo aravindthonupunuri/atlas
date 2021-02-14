@@ -7,6 +7,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.CassandraContainer
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.utility.DockerImageName
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -15,12 +16,14 @@ import javax.inject.Inject
 class BaseFunctionalTest extends Specification implements TestPropertyProvider {
     static final Logger logger = LoggerFactory.getLogger(BaseFunctionalTest)
 
+    static final DockerImageName dockerImage = new DockerImageName("rinscy/cassandra","3.11")
+
     @Shared
     // using rinscy/cassandra from https://github.com/saidbouras/cassandra-docker-unit
     // instead of testcontainer's CassandraContainer image because of faster startup time
     // rinscy/cassandra has ~11 seconds faster startup
     static GenericContainer cassandra =
-            new CassandraContainer("rinscy/cassandra:3.11")
+            new CassandraContainer(dockerImage.asCompatibleSubstituteFor("cassandra"))
 //                    .withClasspathResourceMapping("cassandra.yaml",
 //                            "/app/cassandra.yaml", BindMode.READ_ONLY)
 //                    .withCommand("-Dcassandra.config=/app/cassandra.yaml")
@@ -59,6 +62,8 @@ class BaseFunctionalTest extends Specification implements TestPropertyProvider {
         }
 
         logger.info("Using cassandra url: $contactPoints")
+
+        System.setProperty("APP_UUID", UUID.randomUUID().toString())
 
         properties["cassandra.default.basic.contact-points"] = [contactPoints]
 

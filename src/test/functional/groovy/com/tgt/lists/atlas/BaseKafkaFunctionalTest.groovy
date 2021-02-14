@@ -37,9 +37,6 @@ class BaseKafkaFunctionalTest extends BaseFunctionalTest implements TestProperty
     @Value("\${msgbus.kafka.dlq-consumer-group}")
     String dlqConsumerGroup
 
-    private static String MSGBUS_TOPIC = "lists-msg-bus"
-    private static String DLQ_TOPIC = "lists-dlq"
-
     private static long kafkaCheckRetryMillis = 200
     private static long maxkafkaCheckCount = 300
 
@@ -55,7 +52,7 @@ class BaseKafkaFunctionalTest extends BaseFunctionalTest implements TestProperty
                 LOG.info("starting testcontainer kafka")
                 // kafka default for auto.create.topics.enable is "true" which means topics will be auto created
                 // when a producer tries to produce to a topic that doesn't exists yet.
-                kafkaContainer = new KafkaContainer("4.1.2")
+                kafkaContainer = new KafkaContainer("5.2.1")
                 kafkaContainer.start()
             }
 

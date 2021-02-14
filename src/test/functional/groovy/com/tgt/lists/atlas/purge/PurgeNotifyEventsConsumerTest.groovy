@@ -15,7 +15,7 @@ import io.micronaut.configuration.kafka.annotation.KafkaKey
 import io.micronaut.configuration.kafka.annotation.Topic
 import io.micronaut.messaging.annotation.Body
 import io.micronaut.messaging.annotation.Header
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.opentracing.Tracer
 import org.jetbrains.annotations.NotNull
 import spock.lang.Shared

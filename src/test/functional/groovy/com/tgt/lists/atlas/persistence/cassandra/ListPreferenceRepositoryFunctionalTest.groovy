@@ -5,7 +5,7 @@ import com.tgt.lists.atlas.BaseFunctionalTest
 import com.tgt.lists.atlas.api.domain.model.entity.ListPreferenceEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListPreferenceRepository
 import com.tgt.lists.atlas.util.ListDataProvider
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import spock.lang.Shared

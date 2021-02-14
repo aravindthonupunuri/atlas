@@ -8,9 +8,6 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.purge.persistence.cassandra.PurgeRepository
 import com.tgt.lists.atlas.purge.persistence.entity.PurgeEntity
-import com.tgt.lists.atlas.api.type.LIST_STATE
-import com.tgt.lists.atlas.kafka.model.CreateListNotifyEvent
-import com.tgt.lists.atlas.kafka.model.UpdateListNotifyEvent
 import com.tgt.lists.atlas.util.ListDataProvider
 import com.tgt.lists.msgbus.event.EventHeaders
 import com.tgt.lists.msgbus.event.EventLifecycleNotificationProvider
@@ -19,7 +16,7 @@ import io.micronaut.configuration.kafka.annotation.KafkaKey
 import io.micronaut.configuration.kafka.annotation.Topic
 import io.micronaut.messaging.annotation.Body
 import io.micronaut.messaging.annotation.Header
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.opentracing.Tracer
 import org.jetbrains.annotations.NotNull
 import spock.lang.Shared
@@ -28,7 +25,6 @@ import spock.lang.Unroll
 import spock.util.concurrent.PollingConditions
 
 import javax.inject.Inject
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
