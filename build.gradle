@@ -4,7 +4,7 @@ buildscript {
         maven { url "https://binrepo.target.com/artifactory/platform" }
     }
     dependencies {
-        classpath "com.target.platform:platform-connector-gradle:2.0.8"
+        classpath "com.target.platform:platform-connector-gradle:${tapPlatformConnectorVersion}"
     }
 }
 
@@ -35,7 +35,7 @@ apply from: "test.gradle"
 repositories {
     mavenCentral()
     maven { url "https://jcenter.bintray.com" }
-    maven { url 'https://repo.spring.io/milestone' }
+    maven { url "https://binrepo.target.com/artifactory/TargetOSS" }
     maven { url "https://packages.confluent.io/maven/" }
     maven { url "https://binrepo.target.com/artifactory/lists-v4" }
     maven { url "https://binrepo.target.com/artifactory/platform" }
@@ -64,11 +64,11 @@ dependencies {
     implementation "com.tgt.lists.micronaut:micronaut-zipkin:2.231.0"
     implementation "com.tgt.lists:lists-message-bus:2.231.0"
     implementation "com.tgt.lists:lists-logging:2.231.0"
-    implementation "com.tgt.lists:platform-connector-micronaut:2.0.8.1"
+    implementation "com.target.oss:platform-connector-micronaut:${micronautTapPlatformConnectorVersion}"
     implementation "io.swagger.core.v3:swagger-annotations"
     implementation "com.tgt.lists.micronaut:micronaut-metrics:2.231.0"
 
-    implementation "com.tgt.lists:lists-components:2.231.0"
+    implementation "com.tgt.lists:lists-components:2.231.1"
     implementation "com.tgt.cronbeacon:beacon-client:2.231.0"
 
     implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.231.0'
@@ -86,7 +86,7 @@ dependencies {
     kaptTest "io.micronaut:micronaut-inject-java"
 
     runtime "com.fasterxml.jackson.core:jackson-databind:2.9.8"
-    runtime "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9"
 
     testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     testImplementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"
