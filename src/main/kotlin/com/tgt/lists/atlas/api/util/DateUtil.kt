@@ -5,6 +5,7 @@ import mu.KotlinLogging
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.*
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -31,7 +32,7 @@ fun getLocalDateTime(instant: Instant?): LocalDateTime? {
 }
 
 fun getLocalDateTimeFromInstant(instant: Instant?): String? {
-    return instant?.let { "${LocalDateTime.ofInstant(it, ZoneOffset.UTC).withNano(0)}Z" }
+    return instant?.let { "${LocalDateTime.ofInstant(it, ZoneOffset.UTC).withNano(0).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)}Z" }
 }
 
 fun getExpirationDate(now: LocalDate, expirationDays: Long): LocalDate {
