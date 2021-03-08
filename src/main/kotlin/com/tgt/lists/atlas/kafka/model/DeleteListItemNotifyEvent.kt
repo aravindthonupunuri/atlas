@@ -10,14 +10,14 @@ import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class DeleteListItemNotifyEvent(
-    @JsonProperty("guest_id")
-    val guestId: String,
-
     @JsonProperty("list_id")
     val listId: UUID,
 
     @JsonProperty("items")
     val deleteListItems: List<MultiDeleteListItem>,
+
+    @JsonProperty("performed_by")
+    val performedBy: String? = null,
 
     @JsonProperty("retry_state")
     var retryState: String? = null

@@ -33,7 +33,7 @@ class UpdateListItemManager(
                     val userMetaDataTO = toUserMetaData(it.itemMetadata)
                     eventPublisher.publishEvent(
                             UpdateListItemNotifyEvent.getEventType(),
-                            UpdateListItemNotifyEvent(guestId = guestId,
+                            UpdateListItemNotifyEvent(
                                     listId = it.id!!,
                                     itemId = it.itemId!!,
                                     itemState = LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
@@ -47,7 +47,8 @@ class UpdateListItemManager(
                                     itemNote = it.itemDesc,
                                     itemFulfilledQuantity = it.itemQty,
                                     addedDate = getLocalDateTime(it.itemCreatedAt),
-                                    lastModifiedDate = getLocalDateTime(it.itemUpdatedAt)
+                                    lastModifiedDate = getLocalDateTime(it.itemUpdatedAt),
+                                    performedBy = guestId
                             ),
                             listId.toString())
         }.map { it.t1 }

@@ -17,9 +17,6 @@ import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class UpdateListItemNotifyEvent(
-    @JsonProperty("guest_id")
-    val guestId: String,
-
     @JsonProperty("list_id")
     val listId: UUID,
 
@@ -67,6 +64,9 @@ data class UpdateListItemNotifyEvent(
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     val lastModifiedDate: LocalDateTime? = null,
+
+    @JsonProperty("performed_by")
+    val performedBy: String? = null,
 
     @JsonProperty("retry_state")
     var retryState: String? = null

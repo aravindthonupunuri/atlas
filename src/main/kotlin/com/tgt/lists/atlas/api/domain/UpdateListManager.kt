@@ -56,7 +56,8 @@ class UpdateListManager(
                                     shortDescription = it.description,
                                     defaultList = !it.marker.isNullOrEmpty(),
                                     addedDate = getLocalDateTime(it.createdAt),
-                                    lastModifiedDate = getLocalDateTime(it.updatedAt)
+                                    lastModifiedDate = getLocalDateTime(it.updatedAt),
+                                    performedBy = it.guestId
                             ),
                             guestId)
                 }.map { it.t1 }

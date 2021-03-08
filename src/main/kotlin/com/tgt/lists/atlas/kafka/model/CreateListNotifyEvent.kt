@@ -70,6 +70,9 @@ data class CreateListNotifyEvent(
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     val lastModifiedDate: LocalDateTime? = null,
 
+    @JsonProperty("performed_by")
+    val performedBy: String? = null,
+
     @JsonProperty("retry_state")
     var retryState: String? = null
 ) {

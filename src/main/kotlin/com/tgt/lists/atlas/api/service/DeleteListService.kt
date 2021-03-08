@@ -26,7 +26,7 @@ class DeleteListService(
     ): Mono<ListDeleteResponseTO> {
         logger.debug("[deleteList] guestId: $guestId, listId: $listId")
         return listRepository.findListById(listId)
-                .flatMap { doDelete(it) }
+                .flatMap { doDelete(it, guestId) }
                 .map { ListDeleteResponseTO(it.id) }
                 .switchIfEmpty {
                     logger.debug("[deleteList] guestId: $guestId, listId: $listId, List not found")
@@ -34,13 +34,18 @@ class DeleteListService(
                 }
     }
 
-    private fun doDelete(listEntity: ListEntity): Mono<ListEntity> {
+    private fun doDelete(listEntity: ListEntity, guestId: String): Mono<ListEntity> {
         return listRepository.deleteList(listEntity)
                 .zipWhen {
                     val userMetaDataTO = toUserMetaData(listEntity.metadata)
-                    eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(),
-                            DeleteListNotifyEvent(listEntity.guestId!!, listEntity.id!!, listEntity.type!!,
-                                    listEntity.title!!, userMetaDataTO?.metadata), listEntity.guestId!!)
+                    eventPublisher.publishEvent(DeleteListNotifyEvent.getEventType(), DeleteListNotifyEvent(
+                            guestId = listEntity.guestId!!,
+                            listId = listEntity.id!!,
+                            listType = listEntity.type!!,
+                            listTitle = listEntity.title!!,
+                            userMetaData = userMetaDataTO?.metadata,
+                            performedBy = guestId
+                    ), listEntity.guestId!!)
                 }
                 .map { it.t1 }
     }

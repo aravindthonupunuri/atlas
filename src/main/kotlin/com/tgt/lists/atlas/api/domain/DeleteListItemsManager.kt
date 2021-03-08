@@ -41,9 +41,12 @@ class DeleteListItemsManager(
                                     val userMetaDataTO = toUserMetaData(itemEntity.itemMetadata)
 
                                     eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(),
-                                            DeleteListItemNotifyEvent(guestId, itemEntity.id!!,
-                                                    listOf(MultiDeleteListItem(itemEntity.itemId!!, itemEntity.itemTcin, itemEntity.itemTitle,
-                                                            itemEntity.itemReqQty, itemState, userMetaDataTO?.metadata))), listId.toString())
+                                            DeleteListItemNotifyEvent(
+                                                    listId = itemEntity.id!!,
+                                                    deleteListItems = listOf(MultiDeleteListItem(itemEntity.itemId!!, itemEntity.itemTcin, itemEntity.itemTitle,
+                                                            itemEntity.itemReqQty, itemState, userMetaDataTO?.metadata)),
+                                                    performedBy = guestId
+                                            ), listId.toString())
                                 }.collectList()
                     }
                     .map { it.t1 }

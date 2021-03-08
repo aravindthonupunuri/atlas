@@ -86,7 +86,6 @@ class CreateListItemsManager(
                             eventPublisher.publishEvent(
                                     CreateListItemNotifyEvent.getEventType(),
                                     CreateListItemNotifyEvent(
-                                            guestId = guestId,
                                             listId = it.id!!,
                                             itemId = it.itemId!!,
                                             itemState = LIST_ITEM_STATE.values().first { itemState -> itemState.value == it.itemState!! },
@@ -100,7 +99,8 @@ class CreateListItemsManager(
                                             itemNote = it.itemDesc,
                                             itemFulfilledQuantity = it.itemQty,
                                             addedDate = getLocalDateTime(it.itemCreatedAt),
-                                            lastModifiedDate = getLocalDateTime(it.itemUpdatedAt)
+                                            lastModifiedDate = getLocalDateTime(it.itemUpdatedAt),
+                                            performedBy = guestId
                                     ),
                                     listId.toString())
                         }.collectList()

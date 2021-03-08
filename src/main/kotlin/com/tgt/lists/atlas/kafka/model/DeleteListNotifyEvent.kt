@@ -24,6 +24,9 @@ data class DeleteListNotifyEvent(
     @JsonProperty("user_meta_data")
     val userMetaData: Map<String, Any>? = null,
 
+    @JsonProperty("performed_by")
+    val performedBy: String? = null,
+
     @JsonProperty("retry_state")
     var retryState: String? = null
 ) {
