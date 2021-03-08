@@ -36,8 +36,8 @@ class CreateListItemsServiceTest extends Specification {
         listDataProvider = new ListDataProvider()
         deleteListItemsManager = new DeleteListItemsManager(listRepository, eventPublisher)
         updateListItemManager = new UpdateListItemManager(listRepository, eventPublisher)
-        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 10, 10, true, true, false))
-        createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+        deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(100, 10, 10, true, false, true, false))
+        createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false, false))
         createListItemsService = new CreateListItemsService(createListItemsManager)
 
     }
@@ -184,7 +184,7 @@ class CreateListItemsServiceTest extends Specification {
         ListItemEntity newListItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, gItemTenantrefId1, null,  gItem1, 1, "notes1")
         ListItemEntity newListItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, gItemTenantrefId1, null,  gItem1, 1, "notes1")
 
-        createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, false, false, false))
+        createListItemsManager = new CreateListItemsManager(deduplicationManager, listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, false, false, false, false))
         def recordMetadata = GroovyMock(RecordMetadata)
         createListItemsService = new CreateListItemsService(createListItemsManager)
 

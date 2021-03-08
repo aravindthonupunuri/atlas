@@ -25,6 +25,7 @@ class DeduplicationManager(
     private val pendingListRollingUpdate = configuration.pendingListRollingUpdate
     private val maxCompletedItemsCount = configuration.maxCompletedItemsCount
     private val maxPendingItemsCount = configuration.maxPendingItemsCount
+    private val completedListItemsDedupeReplace = configuration.completedListItemsDedupeReplace
 
     /**
      * Implements logic to find all the duplicate items found in the given bulk item list.
@@ -45,7 +46,7 @@ class DeduplicationManager(
             } else {
             val duplicateItemsMap = getDuplicateItemsMap(existingItems, items)
             return checkMaxItemsCount(guestId, listId, existingItems, items, itemState, duplicateItemsMap)
-                    .flatMap { processDedupe(guestId, listId, items, duplicateItemsMap) }
+                    .flatMap { processDedupe(guestId, listId, itemState, items, duplicateItemsMap) }
         }
     }
 
@@ -84,6 +85,7 @@ class DeduplicationManager(
     private fun processDedupe(
         guestId: String,
         listId: UUID,
+        itemState: LIST_ITEM_STATE,
         items: List<ListItemEntity>,
         duplicateItemsMap: MutableMap<String, List<ListItemEntity>>
     ): Mono<List<ListItemEntity>> {
@@ -101,24 +103,32 @@ class DeduplicationManager(
                 var updatedPurchasedQuantity = 0
                 var updatedItemNote = ""
 
-                for (listItem in sortedExistingItemList) {
-                    if (!listItem.itemNotes.isNullOrEmpty()) {
-                        updatedItemNote = if (updatedItemNote.isNotEmpty()) {
-                            listItem.itemNotes.toString() + "\n" + updatedItemNote
-                        } else {
-                            listItem.itemNotes.toString()
-                        }
-                    }
-                    updatedRequestedQuantity += listItem.itemReqQty ?: 1
-                    updatedPurchasedQuantity += listItem.itemQty ?: 0
-                }
-
-                updatedRequestedQuantity += (newItem.itemReqQty ?: 1)
-                updatedPurchasedQuantity += (newItem.itemQty ?: 0)
-                updatedItemNote = if (newItem.itemNotes.isNullOrEmpty()) {
-                    updatedItemNote
+                if (itemState == LIST_ITEM_STATE.COMPLETED && completedListItemsDedupeReplace) {
+                    // code to replace item note and quantity
+                    updatedItemNote = newItem.itemNotes ?: ""
+                    updatedRequestedQuantity = newItem.itemReqQty ?: 1
+                    updatedPurchasedQuantity = newItem.itemQty ?: 0
                 } else {
-                    newItem.itemNotes + "\n" + updatedItemNote
+                    // code to dedupe item note and quantity
+                    for (listItem in sortedExistingItemList) {
+                        if (!listItem.itemNotes.isNullOrEmpty()) {
+                            updatedItemNote = if (updatedItemNote.isNotEmpty()) {
+                                listItem.itemNotes.toString() + "\n" + updatedItemNote
+                            } else {
+                                listItem.itemNotes.toString()
+                            }
+                        }
+                        updatedRequestedQuantity += listItem.itemReqQty ?: 1
+                        updatedPurchasedQuantity += listItem.itemQty ?: 0
+                    }
+
+                    updatedRequestedQuantity += (newItem.itemReqQty ?: 1)
+                    updatedPurchasedQuantity += (newItem.itemQty ?: 0)
+                    updatedItemNote = if (newItem.itemNotes.isNullOrEmpty()) {
+                        updatedItemNote
+                    } else {
+                        newItem.itemNotes + "\n" + updatedItemNote
+                    }
                 }
 
                 val itemToUpdate = sortedExistingItemList.first()
@@ -157,6 +167,9 @@ class DeduplicationManager(
         itemState: LIST_ITEM_STATE,
         duplicateItemsMap: MutableMap<String, List<ListItemEntity>> // map of new item ref id to its duplicate existing items
     ): Mono<Boolean> {
+        if (itemState == LIST_ITEM_STATE.COMPLETED && completedListItemsDedupeReplace) { // Skipping max count check for completed items dedupe replace scenario since the items are getting replaced and no new items are being added
+            return Mono.just(true)
+        }
         // Validate max items count
         val existingItemsCount = existingItems.count() // count before dedup
         var count = 0

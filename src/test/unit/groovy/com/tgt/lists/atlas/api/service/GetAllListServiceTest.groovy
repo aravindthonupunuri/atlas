@@ -42,7 +42,7 @@ class GetAllListServiceTest extends Specification {
         contextContainerManager = new ContextContainerManager()
         transformationPipelineConfiguration = new ListsTransformationPipelineConfiguration(listRepository, contextContainerManager, guestPreferenceSortOrderManager)
         listDataProvider = new ListDataProvider()
-        getListsService = new GetAllListService(listRepository, transformationPipelineConfiguration, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+        getListsService = new GetAllListService(listRepository, transformationPipelineConfiguration, listDataProvider.getConfiguration(3, 5, 5, true, false, false, false))
 
     }
 

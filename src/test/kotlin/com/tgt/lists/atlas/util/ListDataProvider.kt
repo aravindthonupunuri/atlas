@@ -134,7 +134,7 @@ class ListDataProvider {
         return uuid
     }
 
-    fun getConfiguration(maxListsCount: Int, maxCompletedItemsCount: Int, maxPendingItemsCount: Int, listItemsDedupe: Boolean, pendingListRollingUpdate: Boolean, fixedDefaultList: Boolean): Configuration {
+    fun getConfiguration(maxListsCount: Int, maxCompletedItemsCount: Int, maxPendingItemsCount: Int, listItemsDedupe: Boolean, completedListItemsDedupeReplace: Boolean, pendingListRollingUpdate: Boolean, fixedDefaultList: Boolean): Configuration {
         return object : Configuration {
             override val listType: String
                 get() = "SHOPPING"
@@ -146,6 +146,8 @@ class ListDataProvider {
                 get() = maxPendingItemsCount
             override val listItemsDedupe: Boolean
                 get() = listItemsDedupe
+            override val completedListItemsDedupeReplace: Boolean
+                get() = completedListItemsDedupeReplace
             override val pendingListRollingUpdate: Boolean
                 get() = pendingListRollingUpdate
             override val fixedDefaultList: Boolean

@@ -15,7 +15,7 @@ class PaginateListItemsTransformationStepTest extends Specification {
 
     def setup() {
         listDataProvider = new ListDataProvider()
-        PaginateListItemsTransformationConfiguration paginateListItemsTransformationConfiguration = new PaginateListItemsTransformationConfiguration(listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+        PaginateListItemsTransformationConfiguration paginateListItemsTransformationConfiguration = new PaginateListItemsTransformationConfiguration(listDataProvider.getConfiguration(3, 5, 5, true, false, false, false))
         ListItemsTransformationPipelineConfiguration transformationPipelineContext = new ListItemsTransformationPipelineConfiguration(null, paginateListItemsTransformationConfiguration)
         transformationContext = new TransformationContext(transformationPipelineContext)
 

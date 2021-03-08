@@ -28,6 +28,10 @@ interface Configuration {
 
     @get:Bindable(defaultValue = "false")
     @get:NotNull
+    val completedListItemsDedupeReplace: Boolean
+
+    @get:Bindable(defaultValue = "false")
+    @get:NotNull
     val pendingListRollingUpdate: Boolean
 
     @get:Bindable(defaultValue = "false")

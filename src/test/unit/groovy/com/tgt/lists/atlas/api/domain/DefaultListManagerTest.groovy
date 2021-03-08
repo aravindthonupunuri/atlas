@@ -27,8 +27,8 @@ class DefaultListManagerTest extends Specification {
         listRepository = Mock(ListRepository)
         eventPublisher = Mock(EventPublisher)
         listDataProvider = new ListDataProvider()
-        updateListManager = new UpdateListManager(listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
-        defaultListManager = new DefaultListManager(listRepository, updateListManager, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+        updateListManager = new UpdateListManager(listRepository, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false, false))
+        defaultListManager = new DefaultListManager(listRepository, updateListManager, listDataProvider.getConfiguration(3, 5, 5, true, false, false, false))
     }
 
     def "Test processDefaultListInd() while creating a list with default list as true and no preexisting lists present"() {

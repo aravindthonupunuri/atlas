@@ -25,7 +25,7 @@ class EditListSortOrderServiceTest extends Specification {
         listDataProvider = new ListDataProvider()
         listRepository = Mock(ListRepository)
         listSortOrderService = Mock(ListSortOrderService)
-        editListSortOrderService = new EditListSortOrderService(listRepository, listSortOrderService, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+        editListSortOrderService = new EditListSortOrderService(listRepository, listSortOrderService, listDataProvider.getConfiguration(3, 5, 5, true, false, false, false))
     }
 
     def "Test editListPosition() when primary and secondary list id are same"() {

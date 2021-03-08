@@ -35,7 +35,7 @@ class CreateListServiceTest extends Specification {
         eventPublisher = Mock(EventPublisher)
         defaultListManager = Mock(DefaultListManager)
         listDataProvider = new ListDataProvider()
-        createListService = new CreateListService(listRepository, defaultListManager, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+        createListService = new CreateListService(listRepository, defaultListManager, eventPublisher, listDataProvider.getConfiguration(3, 5, 5, true, false, false, false))
     }
 
     def "Test createList() integrity"() {

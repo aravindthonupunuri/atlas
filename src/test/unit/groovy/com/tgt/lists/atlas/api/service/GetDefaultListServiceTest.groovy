@@ -42,8 +42,8 @@ class GetDefaultListServiceTest extends Specification {
         listPreferenceSortOrderManager = new ListPreferenceSortOrderManager(listPreferenceRepository, listRepository)
         SortListItemsTransformationConfiguration sortListItemsTransformationConfiguration = new SortListItemsTransformationConfiguration(listPreferenceSortOrderManager)
         ListItemsTransformationPipelineConfiguration transformationPipelineConfiguration = new ListItemsTransformationPipelineConfiguration(sortListItemsTransformationConfiguration, null)
-        getListService = new GetListService(listRepository, transformationPipelineConfiguration, dataProvider.getConfiguration(3, 5, 5, true, false, false))
-        getDefaultListService = new GetDefaultListService(listRepository, getListService, dataProvider.getConfiguration(100, 5, 5, true, true, false))
+        getListService = new GetListService(listRepository, transformationPipelineConfiguration, dataProvider.getConfiguration(3, 5, 5, true, false, false, false))
+        getDefaultListService = new GetDefaultListService(listRepository, getListService, dataProvider.getConfiguration(100, 5, 5, true, false, true, false))
     }
 
     def "Test getDefaultListService() integrity with valid sub-type"() {

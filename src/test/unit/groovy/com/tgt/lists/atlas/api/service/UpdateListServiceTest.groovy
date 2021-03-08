@@ -40,7 +40,7 @@ class UpdateListServiceTest extends Specification {
         eventPublisher = Mock(EventPublisher)
         defaultListManager = Mock(DefaultListManager)
         listDataProvider = new ListDataProvider()
-        updateListManager = new UpdateListManager(listRepository, eventPublisher,listDataProvider.getConfiguration(3, 5, 5, true, false, false))
+        updateListManager = new UpdateListManager(listRepository, eventPublisher,listDataProvider.getConfiguration(3, 5, 5, true, false, false, false))
         updateListService = new UpdateListService(listRepository, defaultListManager, updateListManager)
 
         defaultUserMetaDataTransformationStep = new UserMetaDataTransformationStep() {
