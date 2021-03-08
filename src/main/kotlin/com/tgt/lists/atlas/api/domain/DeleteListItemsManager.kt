@@ -4,11 +4,13 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.util.getLocalDateTime
 import com.tgt.lists.atlas.kafka.model.DeleteListItemNotifyEvent
 import com.tgt.lists.atlas.kafka.model.MultiDeleteListItem
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.time.Instant
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -45,7 +47,8 @@ class DeleteListItemsManager(
                                                     listId = itemEntity.id!!,
                                                     deleteListItems = listOf(MultiDeleteListItem(itemEntity.itemId!!, itemEntity.itemTcin, itemEntity.itemTitle,
                                                             itemEntity.itemReqQty, itemState, userMetaDataTO?.metadata)),
-                                                    performedBy = guestId
+                                                    performedBy = guestId,
+                                                    lastModifiedDate = getLocalDateTime(Instant.now())
                                             ), listId.toString())
                                 }.collectList()
                     }

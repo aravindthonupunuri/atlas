@@ -5,10 +5,12 @@ import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListDeleteResponseTO
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
+import com.tgt.lists.atlas.api.util.getLocalDateTime
 import com.tgt.lists.atlas.kafka.model.DeleteListNotifyEvent
 import mu.KotlinLogging
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
+import java.time.Instant
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,7 +46,8 @@ class DeleteListService(
                             listType = listEntity.type!!,
                             listTitle = listEntity.title!!,
                             userMetaData = userMetaDataTO?.metadata,
-                            performedBy = guestId
+                            performedBy = guestId,
+                            lastModifiedDate = getLocalDateTime(Instant.now())
                     ), listEntity.guestId!!)
                 }
                 .map { it.t1 }
