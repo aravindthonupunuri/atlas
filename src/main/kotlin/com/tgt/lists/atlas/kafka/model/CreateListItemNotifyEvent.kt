@@ -29,8 +29,20 @@ data class CreateListItemNotifyEvent(
     @JsonProperty("item_type")
     val itemType: ItemType,
 
+    @JsonProperty("item_ref_id")
+    val itemRefId: String?,
+
     @JsonProperty("tcin")
     val tcin: String?,
+
+    @JsonProperty("dpci")
+    val dpci: String?,
+
+    @JsonProperty("bar_code")
+    val barCode: String?,
+
+    @JsonProperty("item_desc")
+    val itemDesc: String?,
 
     @JsonProperty("item_title")
     val itemTitle: String?,
@@ -44,14 +56,20 @@ data class CreateListItemNotifyEvent(
     @JsonProperty("item_requested_quantity")
     val itemRequestedQuantity: Int,
 
+    @JsonProperty("item_uom_quantity")
+    val itemUomQuantity: String?,
+
     @JsonProperty("user_meta_data")
     val userItemMetaDataTO: Map<String, Any>? = null,
 
-    @JsonProperty("item_note")
-    val itemNote: String? = null,
+    @JsonProperty("item_notes")
+    val itemNotes: String? = null,
 
     @JsonProperty("item_fulfilled_quantity")
     val itemFulfilledQuantity: Int? = null,
+
+    @JsonProperty("item_agent_id")
+    val itemAgentId: String? = null,
 
     @JsonProperty("added_date_time")
     @JsonSerialize(using = LocalDateTimeSerializer::class)

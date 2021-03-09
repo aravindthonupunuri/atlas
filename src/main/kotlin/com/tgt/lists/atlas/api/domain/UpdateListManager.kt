@@ -44,6 +44,9 @@ class UpdateListManager(
                                     channel = it.channel,
                                     subChannel = it.subchannel,
                                     listTitle = it.title,
+                                    location = it.location,
+                                    marker = it.marker,
+                                    agentId = it.agentId,
                                     listState = if (it.state != null)
                                         LIST_STATE.values().first { listState -> listState.value == it.state!! }
                                     else LIST_STATE.INACTIVE,

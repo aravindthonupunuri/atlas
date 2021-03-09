@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.tgt.lists.atlas.api.type.EventType
+import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import java.time.LocalDateTime
 import java.util.*
@@ -24,12 +25,6 @@ data class DeleteListItemNotifyEvent(
 
     @JsonProperty("performed_by")
     val performedBy: String? = null,
-
-    @JsonProperty("last_modified_date_time")
-    @JsonSerialize(using = LocalDateTimeSerializer::class)
-    @JsonDeserialize(using = LocalDateTimeDeserializer::class)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    val lastModifiedDate: LocalDateTime? = null,
 
     @JsonProperty("retry_state")
     var retryState: String? = null
@@ -53,20 +48,65 @@ data class DeleteListItemNotifyEvent(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class MultiDeleteListItem(
     @JsonProperty("item_id")
-val itemId: UUID,
+    val itemId: UUID,
 
     @JsonProperty("tcin")
-val tcin: String?,
+    val tcin: String?,
 
     @JsonProperty("item_title")
-val itemTitle: String?,
+    val itemTitle: String?,
 
     @JsonProperty("item_requested_quantity")
-val itemRequestedQuantity: Int?,
+    val itemRequestedQuantity: Int?,
 
     @JsonProperty("item_state")
-val itemState: LIST_ITEM_STATE?,
+    val itemState: LIST_ITEM_STATE?,
+
+    @JsonProperty("item_type")
+    val itemType: ItemType?,
+
+    @JsonProperty("item_ref_id")
+    val itemRefId: String?,
+
+    @JsonProperty("dpci")
+    val dpci: String?,
+
+    @JsonProperty("bar_code")
+    val barCode: String?,
+
+    @JsonProperty("item_desc")
+    val itemDesc: String?,
+
+    @JsonProperty("channel")
+    val channel: String? = null,
+
+    @JsonProperty("sub_channel")
+    val subChannel: String? = null,
+
+    @JsonProperty("item_uom_quantity")
+    val itemUomQuantity: String?,
 
     @JsonProperty("user_meta_data")
-val userItemMetaDataTO: Map<String, Any>? = null
+    val userItemMetaDataTO: Map<String, Any>? = null,
+
+    @JsonProperty("item_notes")
+    val itemNotes: String? = null,
+
+    @JsonProperty("item_fulfilled_quantity")
+    val itemFulfilledQuantity: Int? = null,
+
+    @JsonProperty("item_agent_id")
+    val itemAgentId: String? = null,
+
+    @JsonProperty("added_date_time")
+    @JsonSerialize(using = LocalDateTimeSerializer::class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer::class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+    val addedDate: LocalDateTime? = null,
+
+    @JsonProperty("last_modified_date_time")
+    @JsonSerialize(using = LocalDateTimeSerializer::class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer::class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+    val lastModifiedDate: LocalDateTime? = null
 )

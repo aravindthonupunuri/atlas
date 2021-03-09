@@ -134,6 +134,9 @@ class CreateListService(
                                     listTitle = it.title!!,
                                     channel = it.channel,
                                     subChannel = it.subchannel,
+                                    location = it.location,
+                                    marker = it.marker,
+                                    agentId = it.agentId,
                                     listState = if (it.state != null) {
                                         LIST_STATE.values().first { listState -> listState.value == it.state!! }
                                     } else {

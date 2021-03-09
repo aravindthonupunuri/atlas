@@ -2,6 +2,7 @@ package com.tgt.lists.atlas.api.domain
 
 import com.tgt.lists.atlas.api.domain.model.entity.ListItemEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
+import com.tgt.lists.atlas.api.type.ItemType
 import com.tgt.lists.atlas.api.type.LIST_ITEM_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.getLocalDateTime
@@ -45,10 +46,28 @@ class DeleteListItemsManager(
                                     eventPublisher.publishEvent(DeleteListItemNotifyEvent.getEventType(),
                                             DeleteListItemNotifyEvent(
                                                     listId = itemEntity.id!!,
-                                                    deleteListItems = listOf(MultiDeleteListItem(itemEntity.itemId!!, itemEntity.itemTcin, itemEntity.itemTitle,
-                                                            itemEntity.itemReqQty, itemState, userMetaDataTO?.metadata)),
-                                                    performedBy = guestId,
-                                                    lastModifiedDate = getLocalDateTime(getLocalInstant())
+                                                    deleteListItems = listOf(MultiDeleteListItem(
+                                                            itemId = itemEntity.itemId!!,
+                                                            tcin = itemEntity.itemTcin,
+                                                            itemTitle = itemEntity.itemTitle,
+                                                            itemRequestedQuantity = itemEntity.itemReqQty,
+                                                            itemState = itemState,
+                                                            itemType = ItemType.values().first { itemType -> itemType.value == itemEntity.itemType!! },
+                                                            itemRefId = itemEntity.itemRefId,
+                                                            dpci = itemEntity.itemDpci,
+                                                            barCode = itemEntity.itemBarcode,
+                                                            itemDesc = itemEntity.itemDesc,
+                                                            channel = itemEntity.itemChannel,
+                                                            subChannel = itemEntity.itemSubchannel,
+                                                            itemUomQuantity = itemEntity.itemQtyUom,
+                                                            itemNotes = itemEntity.itemNotes,
+                                                            itemFulfilledQuantity = itemEntity.itemQty,
+                                                            itemAgentId = itemEntity.itemAgentId,
+                                                            userItemMetaDataTO = userMetaDataTO?.metadata,
+                                                            addedDate = getLocalDateTime(itemEntity.itemCreatedAt),
+                                                            lastModifiedDate = getLocalDateTime(getLocalInstant())
+                                                    )),
+                                                    performedBy = guestId
                                             ), listId.toString())
                                 }.collectList()
                     }

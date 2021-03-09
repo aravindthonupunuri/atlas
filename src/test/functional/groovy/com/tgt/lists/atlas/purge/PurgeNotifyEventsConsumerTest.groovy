@@ -58,7 +58,7 @@ class PurgeNotifyEventsConsumerTest extends BaseKafkaFunctionalTest {
     def "Test Purge Create List Notify Event"() {
         given:
         PollingConditions conditions = new PollingConditions(timeout: 30, delay: 1)
-        CreateListNotifyEvent event = new CreateListNotifyEvent(guestId, listId, "shopping", "s", "title", "WEB", "WEB", LIST_STATE.ACTIVE, null, LocalDate.of(2100, 03, 01), null, null,  null, null, guestId, null)
+        CreateListNotifyEvent event = new CreateListNotifyEvent(guestId, listId, "shopping", "s", "title", "WEB", "WEB", "0987", "D", null, LIST_STATE.ACTIVE, null, LocalDate.of(2100, 03, 01), null, null,  null, null, guestId, null)
 
         testEventListener.preDispatchLambda = new PreDispatchLambda() {
             @Override
@@ -100,7 +100,7 @@ class PurgeNotifyEventsConsumerTest extends BaseKafkaFunctionalTest {
     def "Test Purge Update List Notify Event with same expiration"() {
         given:
         PollingConditions conditions = new PollingConditions(timeout: 30, delay: 1)
-        UpdateListNotifyEvent event = new UpdateListNotifyEvent(guestId, listId, "shopping", "s", "title", "WEB", "WEB", LIST_STATE.ACTIVE, null, LocalDate.of(2100, 03, 01), null, null,  null, null, guestId, null)
+        UpdateListNotifyEvent event = new UpdateListNotifyEvent(guestId, listId, "shopping", "s", "title", "WEB", "WEB", "0987", "D", null, LIST_STATE.ACTIVE, null, LocalDate.of(2100, 03, 01), null, null,  null, null, guestId, null)
 
         testEventListener.preDispatchLambda = new PreDispatchLambda() {
             @Override
@@ -141,7 +141,7 @@ class PurgeNotifyEventsConsumerTest extends BaseKafkaFunctionalTest {
     def "Test Purge Update List Notify Event with expiration in future"() {
         given:
         PollingConditions conditions = new PollingConditions(timeout: 30, delay: 1)
-        UpdateListNotifyEvent event = new UpdateListNotifyEvent(guestId, listId, "shopping", "s", "title", "WEB", "WEB", LIST_STATE.ACTIVE, null, LocalDate.of(2100, 04, 02), null, null,  null, null,guestId, null)
+        UpdateListNotifyEvent event = new UpdateListNotifyEvent(guestId, listId, "shopping", "s", "title", "WEB", "WEB", "0987", "D", null, LIST_STATE.ACTIVE, null, LocalDate.of(2100, 04, 02), null, null,  null, null,guestId, null)
         testEventListener.preDispatchLambda = new PreDispatchLambda() {
             @Override
             boolean onPreDispatchConsumerEvent(String topic, @NotNull EventHeaders eventHeaders, @NotNull byte[] data, boolean isPoisonEvent) {

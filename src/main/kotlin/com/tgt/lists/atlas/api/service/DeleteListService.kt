@@ -4,6 +4,7 @@ import com.tgt.lists.atlas.api.domain.EventPublisher
 import com.tgt.lists.atlas.api.domain.model.entity.ListEntity
 import com.tgt.lists.atlas.api.persistence.cassandra.ListRepository
 import com.tgt.lists.atlas.api.transport.ListDeleteResponseTO
+import com.tgt.lists.atlas.api.type.LIST_STATE
 import com.tgt.lists.atlas.api.type.UserMetaData.Companion.toUserMetaData
 import com.tgt.lists.atlas.api.util.getLocalDateTime
 import com.tgt.lists.atlas.api.util.getLocalInstant
@@ -44,9 +45,22 @@ class DeleteListService(
                             guestId = listEntity.guestId!!,
                             listId = listEntity.id!!,
                             listType = listEntity.type!!,
+                            listSubType = listEntity.subtype,
                             listTitle = listEntity.title!!,
+                            channel = listEntity.channel,
+                            subChannel = listEntity.subchannel,
+                            location = listEntity.location,
+                            marker = listEntity.marker,
+                            agentId = listEntity.agentId,
+                            listState = if (listEntity.state != null)
+                                LIST_STATE.values().first { listState -> listState.value == listEntity.state!! }
+                            else LIST_STATE.INACTIVE,
+                            expiration = listEntity.expiration,
+                            shortDescription = listEntity.description,
+                            defaultList = !listEntity.marker.isNullOrEmpty(),
                             userMetaData = userMetaDataTO?.metadata,
                             performedBy = guestId,
+                            addedDate = getLocalDateTime(listEntity.createdAt),
                             lastModifiedDate = getLocalDateTime(getLocalInstant())
                     ), listEntity.guestId!!)
                 }

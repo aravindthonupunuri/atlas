@@ -40,6 +40,15 @@ data class UpdateListNotifyEvent(
     @JsonProperty("sub_channel")
     val subChannel: String? = null,
 
+    @JsonProperty("location")
+    val location: String? = null,
+
+    @JsonProperty("marker")
+    val marker: String? = null,
+
+    @JsonProperty("agentId")
+    val agentId: String? = null,
+
     @JsonProperty("list_state")
     val listState: LIST_STATE?,
 
