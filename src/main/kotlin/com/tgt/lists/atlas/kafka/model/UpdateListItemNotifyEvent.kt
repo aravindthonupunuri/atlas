@@ -56,8 +56,8 @@ data class UpdateListItemNotifyEvent(
     @JsonProperty("item_requested_quantity")
     val itemRequestedQuantity: Int? = null,
 
-    @JsonProperty("item_uom_quantity")
-    val itemUomQuantity: String?,
+    @JsonProperty("item_quantity_uom")
+    val itemQuantityUom: String?,
 
     @JsonProperty("user_meta_data")
     val userItemMetaDataTO: Map<String, Any>? = null,

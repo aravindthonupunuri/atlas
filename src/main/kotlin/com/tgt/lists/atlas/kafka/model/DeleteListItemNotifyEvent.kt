@@ -83,8 +83,8 @@ data class MultiDeleteListItem(
     @JsonProperty("sub_channel")
     val subChannel: String? = null,
 
-    @JsonProperty("item_uom_quantity")
-    val itemUomQuantity: String?,
+    @JsonProperty("item_quantity_uom")
+    val itemQuantityUom: String?,
 
     @JsonProperty("user_meta_data")
     val userItemMetaDataTO: Map<String, Any>? = null,

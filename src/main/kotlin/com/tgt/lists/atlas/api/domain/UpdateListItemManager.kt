@@ -47,7 +47,7 @@ class UpdateListItemManager(
                                     channel = it.itemChannel,
                                     subChannel = it.itemSubchannel,
                                     itemRequestedQuantity = it.itemReqQty,
-                                    itemUomQuantity = it.itemQtyUom,
+                                    itemQuantityUom = it.itemQtyUom,
                                     userItemMetaDataTO = userMetaDataTO?.metadata,
                                     itemNotes = it.itemNotes,
                                     itemFulfilledQuantity = it.itemQty,

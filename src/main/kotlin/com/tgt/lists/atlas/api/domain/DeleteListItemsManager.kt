@@ -59,7 +59,7 @@ class DeleteListItemsManager(
                                                             itemDesc = itemEntity.itemDesc,
                                                             channel = itemEntity.itemChannel,
                                                             subChannel = itemEntity.itemSubchannel,
-                                                            itemUomQuantity = itemEntity.itemQtyUom,
+                                                            itemQuantityUom = itemEntity.itemQtyUom,
                                                             itemNotes = itemEntity.itemNotes,
                                                             itemFulfilledQuantity = itemEntity.itemQty,
                                                             itemAgentId = itemEntity.itemAgentId,
