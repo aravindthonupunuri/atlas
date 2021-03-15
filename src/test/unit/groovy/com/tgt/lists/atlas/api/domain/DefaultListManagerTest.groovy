@@ -62,7 +62,7 @@ class DefaultListManagerTest extends Specification {
         then:
         1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity])
 
-        !actual
+        actual
     }
 
     def "Test processDefaultListInd() while creating a list with default list as true and one non default preexisting list"() {
@@ -185,5 +185,20 @@ class DefaultListManagerTest extends Specification {
         1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3])
 
         thrown(BadRequestException)
+    }
+
+    def "Test processDefaultListInd() with multiple lists but no default list"() {
+        given:
+        def listEntity1 = listDataProvider.createListEntity(Uuids.timeBased(), "title1", listType, "s", guestId, "", Instant.now(), Instant.now())
+        def listEntity2 = listDataProvider.createListEntity(Uuids.timeBased(), "title2", listType, "s", guestId, "", Instant.now(), Instant.now())
+        def listEntity3 = listDataProvider.createListEntity(Uuids.timeBased(), "title3", listType, "s", guestId, "", Instant.now(), Instant.now())
+
+        when:
+        def actual = defaultListManager.processDefaultListInd(guestId, false, null).block()
+
+        then:
+        1 * listRepository.findGuestLists(guestId, listType) >> Mono.just([listEntity1, listEntity2, listEntity3])
+
+        actual
     }
 }

@@ -34,7 +34,7 @@ class DefaultListManager(
     //  2. Update defaultListIndicator
     fun processDefaultListInd(guestId: String, defaultListIndicator: Boolean, listId: UUID? = null): Mono<Boolean> {
         return listRepository.findGuestLists(guestId, listType).flatMap {
-            if (it.isNullOrEmpty()) {
+            if (it.stream().noneMatch { it.marker == LIST_MARKER.DEFAULT.value }) {
                 logger.debug("[processDefaultListInd] No lists found for guest with guestId: $guestId and listType: $listType")
                 Mono.just(true) // No preexisting lists found
             } else {
