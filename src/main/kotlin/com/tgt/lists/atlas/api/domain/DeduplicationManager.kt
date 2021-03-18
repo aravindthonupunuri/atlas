@@ -29,9 +29,9 @@ class DeduplicationManager(
 
     /**
      * Implements logic to find all the duplicate items found in the given bulk item list.
-     * The response of this method is a Triple of existing items, updated items and duplicateItemsMap
+     * The response of this method is a List of updated items
      *
-     * Give a pair of (list of updatedItems, duplicateItemsMap)
+     * Give list of items that have been updated because a duplicate of the same kind already pre exists in the list
      */
     fun updateDuplicateItems(
         guestId: String,
@@ -167,7 +167,7 @@ class DeduplicationManager(
         itemState: LIST_ITEM_STATE,
         duplicateItemsMap: MutableMap<String, List<ListItemEntity>> // map of new item ref id to its duplicate existing items
     ): Mono<Boolean> {
-        if (itemState == LIST_ITEM_STATE.COMPLETED && completedListItemsDedupeReplace) { // Skipping max count check for completed items dedupe replace scenario since the items are getting replaced and no new items are being added
+        if (itemState == LIST_ITEM_STATE.COMPLETED && completedListItemsDedupeReplace && duplicateItemsMap.isNotEmpty()) { // Skipping max count check for completed items dedupe replace scenario since the items are getting replaced and no new items are being added
             return Mono.just(true)
         }
         // Validate max items count

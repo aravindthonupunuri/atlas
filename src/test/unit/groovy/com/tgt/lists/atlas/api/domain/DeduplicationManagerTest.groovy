@@ -355,4 +355,50 @@ class DeduplicationManagerTest extends Specification {
 
         actual.size() == 2
     }
+
+    def "Test updateDuplicateItems() exceeding max completed items count with no duplicate items and completed items dedupe replace turned on"() {
+        given:
+        def listId = Uuids.timeBased()
+        DeduplicationManager deduplicationManager = new DeduplicationManager(updateListItemManager, deleteListItemsManager, listDataProvider.getConfiguration(3, 5, 5, true, true, false, false))
+        ListItemEntity listItemEntity1 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(), LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "tcn2222", "2222", null, 1, 0,  "itemNote")
+
+        ListItemEntity listItemEntity2 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+                LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "tcn1234", "1234", "new item",
+                1, 2,"note1")
+
+        ListItemEntity listItemEntity3 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+                LIST_ITEM_STATE.COMPLETED.value, ItemType.GENERIC_ITEM.value, "itm3456", null, "genericItem1",
+                1, 3, "note2")
+
+        ListItemEntity listItemEntity4 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+                LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "tcn2345", "2345", "new item",
+                1, 2,"note3")
+
+        ListItemEntity listItemEntity5 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+                LIST_ITEM_STATE.COMPLETED.value, ItemType.GENERIC_ITEM.value, "itm0000", null, "genericItem1",
+                1, "note4")
+
+        ListItemEntity listItemEntity6 = listDataProvider.createListItemEntity(listId, Uuids.timeBased(),
+                LIST_ITEM_STATE.COMPLETED.value, ItemType.TCIN.value, "tcn1111", "1111", "new item",
+                1, 2,"note5")
+
+
+        def recordMetadata = GroovyMock(RecordMetadata)
+
+        when:
+        def actual = deduplicationManager.updateDuplicateItems(guestId, listId, [listItemEntity1], [listItemEntity2, listItemEntity3, listItemEntity4, listItemEntity5, listItemEntity6], LIST_ITEM_STATE.COMPLETED).block()
+
+        then:
+        // deleting duplicate items
+        1 * listRepository.deleteListItems(_ as List<ListItemEntity>) >> { arguments ->
+            final List<ListItemEntity> listItems = arguments[0]
+            assert listItems.size() == 1
+            assert listItems[0].id == listId
+            assert listItems[0].itemId == listItemEntity2.itemId
+            Mono.just([listItemEntity2])
+        }
+        1 * eventPublisher.publishEvent(_,_,_) >> Mono.just(recordMetadata)
+
+        actual.size() == 0
+    }
 }
