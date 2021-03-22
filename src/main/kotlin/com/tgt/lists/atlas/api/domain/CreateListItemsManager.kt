@@ -44,10 +44,10 @@ class CreateListItemsManager(
                 .flatMap {
                     val itemsToAdd = if (listItemsDedupe) {
                         newItems.map {
-                            it.itemRefId to ListItemMapper.toNewListItemEntity(listId, it)
+                            it.itemRefId to ListItemMapper.toNewListItemEntity(listId, listItemState, it)
                         }.toMap().values.toList() // Filtering out duplicate items in the request
                     } else {
-                        newItems.map { ListItemMapper.toNewListItemEntity(listId, it) }
+                        newItems.map { ListItemMapper.toNewListItemEntity(listId, listItemState, it) }
                     }
 
                     deduplicationManager.updateDuplicateItems(guestId = guestId, listId = listId, items = itemsToAdd,

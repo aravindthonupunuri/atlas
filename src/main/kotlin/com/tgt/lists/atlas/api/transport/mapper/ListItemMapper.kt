@@ -18,13 +18,14 @@ class ListItemMapper {
     companion object {
         fun toNewListItemEntity(
             listId: UUID,
+            listItemState: LIST_ITEM_STATE,
             listItemRequestTO: ListItemRequestTO
         ): ListItemEntity {
 
             // Do not set created or updated time in here, set it in the repository instead
             return ListItemEntity(
                     id = listId,
-                    itemState = LIST_ITEM_STATE.PENDING.value,
+                    itemState = listItemState.value,
                     itemId = Uuids.timeBased(),
                     itemRefId = listItemRequestTO.itemRefId,
                     itemType = listItemRequestTO.itemType.value,
