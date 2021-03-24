@@ -102,6 +102,7 @@ class ListMapper {
 
             return ListResponseTO(
                     listId = listEntity.id,
+                    guestId = listEntity.guestId,
                     channel = listEntity.channel,
                     subChannel = listEntity.subchannel,
                     listType = listEntity.type,

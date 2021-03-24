@@ -10,6 +10,7 @@ import javax.validation.constraints.*
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ListResponseTO(
     @field:NotEmpty(message = "List id must not be empty") val listId: UUID?,
+    @field:NotEmpty(message = "Guest id must not be empty") val guestId: String?,
     @field:NotEmpty(message = "Channel must not be empty") val channel: String?,
     @field:NotEmpty(message = "List type must not be empty") val listType: String?,
     @field:NotEmpty(message = "List type must not be empty") val listSubType: String?,
