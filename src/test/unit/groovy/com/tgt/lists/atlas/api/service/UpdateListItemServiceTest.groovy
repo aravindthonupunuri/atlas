@@ -24,6 +24,8 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
+import java.time.Instant
+
 class UpdateListItemServiceTest extends Specification {
 
     UpdateListItemService updateListItemService
@@ -387,9 +389,25 @@ class UpdateListItemServiceTest extends Specification {
         actual.itemType.value == dedupedListItemEntity.itemType
     }
 
-    def "test updateListItem() with existing metadata and missing metadata transformation step"() {
-        when:
-        new ListItemUpdateRequestTO(null, null, "updated item note", null, null, null, null, null, new RefIdValidator() {
+    def "test updateListItem() with existing metadata and metadata transformation step"() {
+        given:
+        def tcin1 = "1234"
+        def oldMetadataString = '{"name":"iPhone 5","brand":"Apple"}'
+        def newMetadataString = '{"name":"iPhone 12"}'
+        def mergedNewDataString = '{"name":"iPhone 12","brand":"Apple"}'
+        def dbMetadata = UserMetaData.@Companion.toUserMetaData(oldMetadataString)
+        def newMetadata = UserMetaData.@Companion.toUserMetaData(newMetadataString)
+
+        def testMetaDataTransformationStep = new UserItemMetaDataTransformationStep () {
+            @Override
+            Mono<UserMetaData> execute(@NotNull UserMetaData existingUserItemMetaDataTO) {
+                // merge metadata
+                def mergedNewData = UserMetaData.@Companion.toUserMetaData(mergedNewDataString)
+                return Mono.just(mergedNewData)
+            }
+        }
+
+        def listItemUpdateRequest = new ListItemUpdateRequestTO(tcin1, "new title", "updated item note", null, newMetadata, null, null, null, new RefIdValidator() {
             @Override
             String populateRefIdIfRequired(@NotNull ItemType itemType, @NotNull ListItemUpdateRequestTO listItemUpdateRequestTO) {
                 if (itemType == ItemType.TCIN && listItemUpdateRequestTO.tcin != null) {
@@ -402,9 +420,38 @@ class UpdateListItemServiceTest extends Specification {
                     return null
                 }
             }
-        }, null)
+        }, testMetaDataTransformationStep)
+        def listId = Uuids.timeBased()
+        def itemId = Uuids.timeBased()
+
+        def tenantRefId1 = listDataProvider.getItemRefId(ItemType.TCIN, tcin1)
+
+        ListItemEntity listItemEntity = listDataProvider.createListItemEntity(listId, itemId, LIST_ITEM_STATE.PENDING.value, ItemType.TCIN.value, tenantRefId1, tcin1, "title", 1, "note", UserMetaData.@Companion.toEntityMetadata(dbMetadata), Instant.now(), Instant.now())
+
+        def recordMetadata = GroovyMock(RecordMetadata)
+
+        when:
+        def actual = updateListItemService.updateListItem(guestId, locationId, listId, itemId, listItemUpdateRequest).block()
 
         then:
-        thrown(IllegalArgumentException)
+        1 * listRepository.findListItemsByListId(listId) >> Flux.just(listItemEntity)
+        1 * deduplicationManager.updateDuplicateItems(_,_,_,_,_) >> Mono.just([])
+        1 * listRepository.updateListItem(_ as ListItemEntity, _) >> { arguments ->
+            final ListItemEntity updatedListItem = arguments[0]
+            assert updatedListItem.id == listId
+            assert updatedListItem.itemNotes == listItemUpdateRequest.itemNote
+            assert updatedListItem.itemMetadata == mergedNewDataString
+            Mono.just(updatedListItem)
+        }
+
+        1 * eventPublisher.publishEvent(UpdateListItemNotifyEvent.getEventType(), _, _) >> Mono.just(recordMetadata)
+
+        actual.listItemId == listItemEntity.itemId
+        actual.tcin == listItemEntity.itemTcin
+        actual.itemTitle == listItemUpdateRequest.itemTitle
+        actual.itemNote == listItemUpdateRequest.itemNote
+        actual.itemType.value == listItemEntity.itemType
+        UserMetaData.@Companion.toEntityMetadata(actual.metadata) == mergedNewDataString
+
     }
  }

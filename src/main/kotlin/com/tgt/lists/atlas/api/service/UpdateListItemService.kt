@@ -52,12 +52,16 @@ class UpdateListItemService(
                 throw BadRequestException(ErrorCode(LIST_ITEM_NOT_FOUND_ERROR_CODE.first, LIST_ITEM_NOT_FOUND_ERROR_CODE.second, listOf("Item: $listItemId not found in listId: $listId")))
             } else {
                 val existingUserItemMetadata = toUserMetaData(existingItemToUpdate.itemMetadata)
-                if (existingUserItemMetadata != null) {
+                val listItemUpdateRequestWithMergedMetadata = if (existingUserItemMetadata != null) {
                     listItemUpdateRequest.userItemMetaDataTransformationStep.let {
                         it.execute(existingUserItemMetadata).map { listItemUpdateRequest.copy(metadata = it) }
                     }
+                } else {
+                    Mono.just(listItemUpdateRequest)
                 }
-                updateItem(guestId, listId, listItemUpdateRequest, existingItemToUpdate, existingListItems)
+                listItemUpdateRequestWithMergedMetadata.flatMap {
+                    updateItem(guestId, listId, it, existingItemToUpdate, existingListItems)
+                }
             }
         }
     }
