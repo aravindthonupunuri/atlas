@@ -52,6 +52,11 @@ lists-cassandra:
 cassandra:
   default:
     advanced:
+      request-tracker:
+        class: RequestLogger
+        logs:
+          success:
+            enabled: true
 #      auth-provider:
 #        class: PlainTextAuthProvider
 #        username: cassandra
