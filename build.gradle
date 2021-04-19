@@ -62,16 +62,16 @@ dependencies {
 
     implementation "com.tgt.lists:lists-oauth:2.231.0"
     implementation "com.tgt.lists.micronaut:micronaut-zipkin:2.231.0"
-    implementation "com.tgt.lists:lists-message-bus:2.231.0"
+    implementation "com.tgt.lists:lists-message-bus:2.231.4"
     implementation "com.tgt.lists:lists-logging:2.231.0"
     implementation "com.target.oss:platform-connector-micronaut:${micronautTapPlatformConnectorVersion}"
     implementation "io.swagger.core.v3:swagger-annotations"
     implementation "com.tgt.lists.micronaut:micronaut-metrics:2.231.0"
 
-    implementation "com.tgt.lists:lists-components:2.231.1"
-    implementation "com.tgt.cronbeacon:beacon-client:2.231.0"
+    implementation "com.tgt.lists:lists-components:2.231.6"
+    implementation "com.tgt.cronbeacon:beacon-client:2.231.3"
 
-    implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.231.0'
+    implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.231.2'
     implementation "io.micronaut.cassandra:micronaut-cassandra"
     implementation "com.datastax.oss:java-driver-mapper-processor:${javaDriverVersion}"
 
@@ -85,8 +85,8 @@ dependencies {
     kaptTest platform("io.micronaut:micronaut-bom:$micronautVersion")
     kaptTest "io.micronaut:micronaut-inject-java"
 
-    runtime "com.fasterxml.jackson.core:jackson-databind:2.9.8"
-    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9"
+    runtime "com.fasterxml.jackson.core:jackson-databind:2.11.2"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.2"
 
     testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     testImplementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"

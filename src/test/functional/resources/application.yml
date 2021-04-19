@@ -121,6 +121,47 @@ kafka:
         deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value:
         deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+  producers:
+    # default is a Jackson based JSON serializer for key/value
+    atlas-msg-bus-producer:
+      key:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+      value:
+        serializer: com.tgt.lists.msgbus.ListsJsonSerde
+      compression:
+        type: zstd
+      retries: 3
+      retry:
+        backoff:
+          ms: 1000
+      max:
+        in:
+          flight:
+            requests:
+              per:
+                connection: 1
+        block:
+          ms: 2000
+    atlas-dlq-producer:
+      key:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+      value:
+        serializer: com.tgt.lists.msgbus.ListsJsonSerde
+      compression:
+        type: zstd
+      retries: 3
+      retry:
+        backoff:
+          ms: 1000
+      max:
+        in:
+          flight:
+            requests:
+              per:
+                connection: 1
+        block:
+          ms: 2000
+
 
 msgbus:
   source: atlas
