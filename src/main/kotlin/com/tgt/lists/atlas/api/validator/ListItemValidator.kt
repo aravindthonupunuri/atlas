@@ -14,7 +14,6 @@ fun validateItemType(itemType: ItemType, tcin: String?, itemTitle: String?) {
         ItemType.GENERIC_ITEM -> {
             if (tcin != null) throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Unexpected field tcin present for generic item")))
             val title: String = itemTitle ?: throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Required field item title is missing")))
-            if (title.trim().toIntOrNull() != null) throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Invalid item title")))
         }
         ItemType.OFFER -> {
             if (tcin != null) throw BadRequestException(ErrorCode(REQUEST_BODY_VIOLATION_ERROR_CODE.first, REQUEST_BODY_VIOLATION_ERROR_CODE.second, arrayListOf("Unexpected field tcin present for offer item")))
