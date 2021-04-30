@@ -40,7 +40,7 @@ class EditListSortOrderService(
                                     val isAuthorisedPrimaryList = it.find { it.id == editListSortOrderRequestTO.primaryListId }
                                     val isAuthorisedSecondaryList = it.find { it.id == editListSortOrderRequestTO.secondaryListId }
                                     if (isAuthorisedPrimaryList == null || isAuthorisedSecondaryList == null) {
-                                        throw BadRequestException(ErrorCode(LIST_NOT_FOUND_ERROR_CODE.first, LIST_NOT_FOUND_ERROR_CODE.second, listOf("User is not authorized to do this sort")))
+                                        throw BadRequestException(ErrorCode(LIST_NOT_FOUND_ERROR_CODE.first, LIST_NOT_FOUND_ERROR_CODE.second, listOf("User is not authorized to do this sort for lists [primary: ${editListSortOrderRequestTO.primaryListId}, secondary: ${editListSortOrderRequestTO.secondaryListId}]")))
                                     }
                                     editListSortOrderRequestTO
                                 }
@@ -50,7 +50,7 @@ class EditListSortOrderService(
                                 }
                     }
         } else {
-            throw BadRequestException(ErrorCode(LIST_SORT_ORDER_ERROR_CODE.first, LIST_SORT_ORDER_ERROR_CODE.second, arrayListOf("Authorized list Id from Url does not match primary or secondary listId")))
+            throw BadRequestException(ErrorCode(LIST_SORT_ORDER_ERROR_CODE.first, LIST_SORT_ORDER_ERROR_CODE.second, arrayListOf("Authorized list Id [$authorizedListId] from Url does not match primary [${editListSortOrderRequestTO.primaryListId}] or secondary [${editListSortOrderRequestTO.secondaryListId}] listId")))
         }
     }
 }

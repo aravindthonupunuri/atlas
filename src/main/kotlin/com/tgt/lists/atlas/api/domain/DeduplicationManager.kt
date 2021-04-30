@@ -179,7 +179,7 @@ class DeduplicationManager(
 
         val finalItemsCount = (existingItemsCount - duplicateItemsCount) + newItemsCount // final items count after dedupe
         if (itemState == LIST_ITEM_STATE.PENDING && !pendingListRollingUpdate && finalItemsCount > maxPendingItemsCount) {
-            throw BadRequestException(ErrorCode(MAX_LIST_ITEMS_COUNT_VIOLATION_ERROR_CODE.first, MAX_LIST_ITEMS_COUNT_VIOLATION_ERROR_CODE.second, listOf("Exceeding max items count in pending list")))
+            throw BadRequestException(ErrorCode(MAX_LIST_ITEMS_COUNT_VIOLATION_ERROR_CODE.first, MAX_LIST_ITEMS_COUNT_VIOLATION_ERROR_CODE.second, listOf("Exceeding max items count in pending list $listId")))
         } else if ((itemState == LIST_ITEM_STATE.PENDING && pendingListRollingUpdate && finalItemsCount > maxPendingItemsCount) ||
                 (itemState == LIST_ITEM_STATE.COMPLETED && finalItemsCount > maxCompletedItemsCount)) {
             logger.error("Exceeding max items count in list, so deleting stale items")

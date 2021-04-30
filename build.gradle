@@ -62,13 +62,13 @@ dependencies {
 
     implementation "com.tgt.lists:lists-oauth:2.231.0"
     implementation "com.tgt.lists.micronaut:micronaut-zipkin:2.231.0"
-    implementation "com.tgt.lists:lists-message-bus:2.231.4"
-    implementation "com.tgt.lists:lists-logging:2.231.0"
+    implementation "com.tgt.lists:lists-message-bus:2.231.5"
+    implementation "com.tgt.lists:lists-logging:2.231.3"
     implementation "com.target.oss:platform-connector-micronaut:${micronautTapPlatformConnectorVersion}"
     implementation "io.swagger.core.v3:swagger-annotations"
     implementation "com.tgt.lists.micronaut:micronaut-metrics:2.231.0"
 
-    implementation "com.tgt.lists:lists-components:2.231.6"
+    implementation "com.tgt.lists:lists-components:2.231.7"
     implementation "com.tgt.cronbeacon:beacon-client:2.231.3"
 
     implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.231.2'

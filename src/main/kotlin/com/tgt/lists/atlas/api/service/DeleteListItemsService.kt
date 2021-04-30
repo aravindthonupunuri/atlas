@@ -34,9 +34,9 @@ class DeleteListItemsService(
         itemIdList: List<UUID>? = null,
         itemIncludeFields: ItemIncludeFields? = null
     ): Mono<ListItemsDeleteResponseTO> {
-        logger.debug("[deleteMultipleListItem] guestId: $guestId, listId: $listId")
+        logger.debug("[deleteMultipleListItem] listId: $listId")
         if (!itemIdList.isNullOrEmpty() && itemIncludeFields != null) {
-            throw BadRequestException(ErrorCode(DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE.first, DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE.second))
+            throw BadRequestException(ErrorCode(DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE.first, "${DELETE_LIST_ITEMS_VIOLATION_ERROR_CODE.second} [listId: $listId]"))
         } else {
             return if (itemIdList.isNullOrEmpty()) {
                 // delete items according to ItemIncludeFields
@@ -44,7 +44,7 @@ class DeleteListItemsService(
                     ItemIncludeFields.ALL -> deleteItemsByState(guestId, listId)
                     ItemIncludeFields.COMPLETED -> deleteItemsByState(guestId, listId, LIST_ITEM_STATE.COMPLETED)
                     ItemIncludeFields.PENDING -> deleteItemsByState(guestId, listId, LIST_ITEM_STATE.PENDING)
-                    else -> throw BadRequestException(ErrorCode(DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE.first, DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE.second))
+                    else -> throw BadRequestException(ErrorCode(DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE.first, "${DELETE_LIST_ITEMS_INCLUDED_FIELD_VIOLATION_ERROR_CODE.second} [listId: $listId]"))
                 }
             } else {
                 deleteItemsByItemIds(guestId, listId, itemIdList)

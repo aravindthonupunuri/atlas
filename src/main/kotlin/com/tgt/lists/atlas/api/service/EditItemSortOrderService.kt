@@ -28,7 +28,7 @@ class EditItemSortOrderService(
                     val isAuthorisedPrimaryItem = it.find { it.itemId == editItemSortOrderRequestTO.primaryItemId }
                     val isAuthorisedSecondaryItem = it.find { it.itemId == editItemSortOrderRequestTO.secondaryItemId }
                     if (isAuthorisedPrimaryItem == null || isAuthorisedSecondaryItem == null) {
-                        throw BadRequestException(ErrorCode(LIST_ITEM_NOT_FOUND_ERROR_CODE.first, LIST_ITEM_NOT_FOUND_ERROR_CODE.second, listOf("User is not authorized to do this sort")))
+                        throw BadRequestException(ErrorCode(LIST_ITEM_NOT_FOUND_ERROR_CODE.first, LIST_ITEM_NOT_FOUND_ERROR_CODE.second, listOf("User is not authorized to do this sort [primary: ${editItemSortOrderRequestTO.primaryItemId}, secondary: ${editItemSortOrderRequestTO.secondaryItemId}]")))
                     }
                     editItemSortOrderRequestTO
                 }
