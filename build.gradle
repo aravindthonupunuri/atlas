@@ -71,7 +71,7 @@ dependencies {
     implementation "com.tgt.lists:lists-components:2.231.7"
     implementation "com.tgt.cronbeacon:beacon-client:2.231.3"
 
-    implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.231.2'
+    implementation 'com.tgt.lists.micronaut:micronaut-cassandra:2.231.3'
     implementation "io.micronaut.cassandra:micronaut-cassandra"
     implementation "com.datastax.oss:java-driver-mapper-processor:${javaDriverVersion}"
 
